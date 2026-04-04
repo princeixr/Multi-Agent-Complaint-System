@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 
+from app.observability.events import log_workflow_event
 from app.orchestrator.state import WorkflowState
 
 logger = logging.getLogger(__name__)
@@ -43,9 +44,21 @@ def review_decision_router(state: WorkflowState) -> str:
     retry_count = state.get("retry_count", 0)
     if decision == "revise" and retry_count < MAX_RETRIES:
         logger.info("Review requested revision (attempt %d)", retry_count + 1)
+        log_workflow_event(
+            "retry_triggered",
+            node_name="review_gate",
+            trigger_reason="review_revise",
+            retry_number=retry_count + 1,
+        )
         return "revise"
     if decision == "escalate":
         logger.warning("Review requested escalation")
+        log_workflow_event(
+            "retry_triggered",
+            node_name="review_gate",
+            trigger_reason="review_escalate",
+            retry_number=retry_count,
+        )
         return "escalate"
 
     return "route"
@@ -64,6 +77,12 @@ def low_confidence_gate(state: WorkflowState) -> str:
         retry = state.get("retry_count", 0)
         if retry < MAX_RETRIES:
             logger.info("Low confidence (%.2f) – reclassifying", classification.confidence)
+            log_workflow_event(
+                "retry_triggered",
+                node_name="classify",
+                trigger_reason="low_confidence",
+                retry_number=retry + 1,
+            )
             return "reclassify"
 
     return "continue"

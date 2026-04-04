@@ -10,11 +10,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api import router as api_router
 from app.db.session import init_db
 from app.observability.logging import setup_logging
+from app.observability.tracing import setup_tracing
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     setup_logging()
+    setup_tracing()
     init_db()
     yield
 

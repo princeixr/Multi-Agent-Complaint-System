@@ -174,6 +174,65 @@ class ComplaintEmbedding(Base):
     )
 
 
+class WorkflowRun(Base):
+    """One row per LangGraph complaint execution (durable audit)."""
+
+    __tablename__ = "workflow_runs"
+
+    run_id = Column(String(64), primary_key=True)
+    case_id = Column(String(32), index=True, nullable=True)
+    company_id = Column(String(64), nullable=False)
+    trace_id = Column(String(64), index=True, nullable=True)
+
+    started_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    ended_at = Column(DateTime, nullable=True)
+
+    run_status = Column(String(40), nullable=False, default="running")
+    final_route = Column(String(120), nullable=True)
+    final_severity = Column(String(40), nullable=True)
+    manual_review_required = Column(Boolean, default=False)
+    retry_count_total = Column(Integer, default=0)
+
+    token_total = Column(Integer, nullable=True)
+    cost_estimate_total = Column(Float, nullable=True)
+
+    workflow_version = Column(String(32), nullable=True)
+    prompt_version = Column(String(64), nullable=True)
+    knowledge_pack_version = Column(String(64), nullable=True)
+    model_version = Column(String(64), nullable=True)
+
+    steps = relationship("WorkflowStep", back_populates="run")
+
+
+class WorkflowStep(Base):
+    """One row per LangGraph node execution within a run."""
+
+    __tablename__ = "workflow_steps"
+
+    id = Column(String(32), primary_key=True, default=lambda: uuid.uuid4().hex)
+    run_id = Column(String(64), ForeignKey("workflow_runs.run_id"), nullable=False, index=True)
+
+    node_name = Column(String(64), nullable=False, index=True)
+    sequence_number = Column(Integer, nullable=False)
+    started_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    ended_at = Column(DateTime, nullable=True)
+    latency_ms = Column(Float, nullable=True)
+
+    status = Column(String(32), nullable=False, default="success")
+    retry_number = Column(Integer, default=0)
+    model_name = Column(String(80), nullable=True)
+
+    input_snapshot_json = Column(Text, nullable=True)
+    output_snapshot_json = Column(Text, nullable=True)
+    state_diff_json = Column(Text, nullable=True)
+    confidence = Column(Float, nullable=True)
+
+    error_type = Column(String(120), nullable=True)
+    error_message = Column(Text, nullable=True)
+
+    run = relationship("WorkflowRun", back_populates="steps")
+
+
 class ResolutionEmbedding(Base):
     """Historical complaint + resolution outcome embeddings.
 

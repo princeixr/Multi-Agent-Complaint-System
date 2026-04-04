@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import json
 import logging
+import uuid
 
 from langgraph.graph import END, StateGraph
+from opentelemetry.trace import Status, StatusCode
 
 from app.agents.classification import run_classification
 from app.agents.compliance import run_compliance_check
@@ -22,6 +24,16 @@ from app.orchestrator.rules import (
     review_decision_router,
 )
 from app.orchestrator.retrieval_gate import vector_db_available
+from app.observability.context import ActiveRun, reset_active_run, set_active_run, set_trace_id
+from app.observability.events import log_workflow_event
+from app.observability.instrumentation import wrap_node
+from app.observability.persistence import (
+    derive_run_outcome,
+    finalize_workflow_run,
+    insert_workflow_run,
+)
+from app.observability.tracing import get_workflow_tracer, setup_tracing, trace_id_hex_from_span
+from app.observability.versions import workflow_version
 from app.orchestrator.state import WorkflowState
 from app.retrieval.complaint_index import ComplaintIndex
 from app.retrieval.resolution_index import ResolutionIndex
@@ -267,17 +279,19 @@ def build_workflow() -> StateGraph:
 
     graph = StateGraph(WorkflowState)
 
-    # Add nodes
-    graph.add_node("intake", intake_node)
-    # Node name must not collide with WorkflowState keys (LangGraph reserves state keys).
-    graph.add_node("retrieve_company_context", company_context_node)
-    graph.add_node("classify", classify_node)
-    graph.add_node("risk", risk_node)
-    graph.add_node("root_cause", root_cause_node)
-    graph.add_node("propose_resolution", resolution_node)
-    graph.add_node("run_compliance", compliance_node)
-    graph.add_node("review_gate", review_node)
-    graph.add_node("route", routing_node)
+    # Add nodes (wrapped for OTel spans, JSON logs, and workflow_steps audit rows)
+    graph.add_node("intake", wrap_node("intake", intake_node))
+    graph.add_node(
+        "retrieve_company_context",
+        wrap_node("retrieve_company_context", company_context_node),
+    )
+    graph.add_node("classify", wrap_node("classify", classify_node))
+    graph.add_node("risk", wrap_node("risk", risk_node))
+    graph.add_node("root_cause", wrap_node("root_cause", root_cause_node))
+    graph.add_node("propose_resolution", wrap_node("propose_resolution", resolution_node))
+    graph.add_node("run_compliance", wrap_node("run_compliance", compliance_node))
+    graph.add_node("review_gate", wrap_node("review_gate", review_node))
+    graph.add_node("route", wrap_node("route", routing_node))
 
     # Set entry point
     graph.set_entry_point("intake")
@@ -324,11 +338,89 @@ workflow = build_workflow()
 
 def process_complaint(payload: dict) -> WorkflowState:
     """Run the full complaint pipeline and return the final state."""
+    setup_tracing()
+
+    run_id = uuid.uuid4().hex
+    company_id = payload.get("company_id") or "mock_bank"
+    ar = ActiveRun(run_id=run_id, company_id=company_id)
+    ctx_token = set_active_run(ar)
+    tracer = get_workflow_tracer()
+
     initial_state: WorkflowState = {
         "raw_payload": payload,
         "retry_count": 0,
-        "company_id": payload.get("company_id") or "mock_bank",
+        "company_id": company_id,
     }
-    final_state = workflow.invoke(initial_state)
-    logger.info("Workflow complete – routed to %s", final_state.get("routed_to"))
-    return final_state
+
+    invoke_config = {
+        "run_name": f"complaint-{run_id}",
+        "tags": [f"company_id:{company_id}", f"run_id:{run_id}"],
+        "metadata": {
+            "run_id": run_id,
+            "company_id": company_id,
+            "workflow_version": workflow_version(),
+        },
+    }
+
+    final_state: WorkflowState | None = None
+    try:
+        with tracer.start_as_current_span("process_complaint") as root:
+            tid = trace_id_hex_from_span(root)
+            if tid:
+                set_trace_id(tid)
+            root.set_attribute("complaint.run_id", run_id)
+            root.set_attribute("complaint.company_id", company_id)
+
+            log_workflow_event(
+                "workflow_started",
+                run_id=run_id,
+                company_id=company_id,
+                trace_id=tid or "",
+            )
+            insert_workflow_run(run_id, company_id, tid or None)
+
+            try:
+                final_state = workflow.invoke(initial_state, config=invoke_config)
+            except Exception as exc:
+                root.record_exception(exc)
+                root.set_status(Status(StatusCode.ERROR, str(exc)))
+                log_workflow_event(
+                    "workflow_failed",
+                    run_id=run_id,
+                    node_name="process_complaint",
+                    error_type=type(exc).__name__,
+                    error_message=str(exc)[:500],
+                )
+                finalize_workflow_run(
+                    run_id,
+                    run_status="failed",
+                    final_route=None,
+                    final_severity=None,
+                    manual_review_required=False,
+                    retry_count_total=int(initial_state.get("retry_count") or 0),
+                )
+                raise
+
+            root.set_status(Status(StatusCode.OK))
+
+        assert final_state is not None
+        status, route, sev, manual, retries = derive_run_outcome(final_state)
+        finalize_workflow_run(
+            run_id,
+            run_status=status,
+            final_route=route,
+            final_severity=sev,
+            manual_review_required=manual,
+            retry_count_total=retries,
+        )
+        log_workflow_event(
+            "workflow_completed",
+            run_id=run_id,
+            final_route=route,
+            run_status=status,
+            total_retry_count=retries,
+        )
+        logger.info("Workflow complete – routed to %s", final_state.get("routed_to"))
+        return final_state
+    finally:
+        reset_active_run(ctx_token)

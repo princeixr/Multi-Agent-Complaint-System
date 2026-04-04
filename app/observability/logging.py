@@ -8,6 +8,19 @@ import sys
 from datetime import datetime, timezone
 
 
+_STANDARD_LOG_ATTRS = frozenset(
+    logging.LogRecord(
+        name="",
+        level=0,
+        pathname="",
+        lineno=0,
+        msg="",
+        args=(),
+        exc_info=None,
+    ).__dict__.keys()
+)
+
+
 class JSONFormatter(logging.Formatter):
     """Emit structured JSON log lines for easy ingestion by log aggregators."""
 
@@ -25,7 +38,17 @@ class JSONFormatter(logging.Formatter):
         }
         if record.exc_info and record.exc_info[1]:
             log_entry["exception"] = self.formatException(record.exc_info)
-        return json.dumps(log_entry)
+
+        for key, val in record.__dict__.items():
+            if key in _STANDARD_LOG_ATTRS or key.startswith("_"):
+                continue
+            try:
+                json.dumps(val, default=str)
+            except (TypeError, ValueError):
+                val = str(val)
+            log_entry[key] = val
+
+        return json.dumps(log_entry, default=str)
 
 
 def setup_logging(level: str | None = None) -> None:

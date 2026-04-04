@@ -1,9 +1,10 @@
-# Single-row pipeline test: load one CFPB-style CSV row and run ``process_complaint``.
+# Batch pipeline test: load N CFPB-style CSV rows and run ``process_complaint`` on each.
 
 from __future__ import annotations
 
 import json
 import os
+import traceback
 from datetime import datetime
 
 try:
@@ -13,6 +14,13 @@ except ModuleNotFoundError:
 
 if load_dotenv:
     load_dotenv()
+
+try:
+    from app.observability.logging import setup_logging
+    from app.observability.tracing import setup_tracing
+except ImportError:
+    setup_logging = None  # type: ignore[assignment, misc]
+    setup_tracing = None  # type: ignore[assignment, misc]
 
 try:
     import pandas as pd
@@ -30,6 +38,7 @@ OUTPUT_CSV = os.getenv(
     "TEST_PIPELINE_OUTPUT_CSV",
     "testing_sample_pipeline_output.csv",
 )
+SAMPLE_COUNT = max(1, int(os.getenv("TEST_SAMPLE_COUNT", "10")))
 
 
 def get_first_existing(df: pd.DataFrame, col_candidates: list[str]) -> str | None:
@@ -55,7 +64,9 @@ def build_row_record(
     case: object,
     *,
     source_csv: str,
-) -> dict[str, str | None]:
+    sample_index: int,
+    pipeline_error: str | None = None,
+) -> dict[str, str | int | None]:
     """Flatten CaseRead (or dict) into one CSV row."""
     if hasattr(case, "model_dump"):
         c = case.model_dump()
@@ -74,6 +85,7 @@ def build_row_record(
         st = st.value
 
     return {
+        "sample_index": sample_index,
         "run_at_utc": datetime.utcnow().isoformat() + "Z",
         "source_csv": source_csv,
         "company_id": payload.get("company_id"),
@@ -95,14 +107,83 @@ def build_row_record(
         "proposed_resolution_json": _safe_json(res),
         "root_cause_json": _safe_json(rc),
         "evidence_trace_json": _safe_json(c.get("evidence_trace")),
+        "pipeline_error": pipeline_error or "",
+    }
+
+
+def row_to_payload(
+    row: pd.Series,
+    *,
+    col_narrative: str,
+    col_product: str | None,
+    col_sub_product: str | None,
+    col_company: str | None,
+    col_state: str | None,
+    col_zip: str | None,
+    col_channel: str | None,
+    col_response: str | None,
+    col_date_received: str | None,
+    col_issue: str | None,
+) -> dict:
+    channel_raw = (
+        str(row[col_channel]).strip() if col_channel else "web"
+    ).lower()
+    channel_map = {
+        "web": "web",
+        "online": "web",
+        "phone": "phone",
+        "email": "email",
+        "fax": "fax",
+        "postal": "postal",
+        "mail": "postal",
+        "referral": "referral",
+    }
+    channel = channel_map.get(channel_raw, "web")
+
+    submitted_at = None
+    if col_date_received:
+        val = row[col_date_received]
+        if pd.notna(val):
+            try:
+                submitted_at = pd.to_datetime(val, errors="coerce").to_pydatetime()
+            except Exception:
+                submitted_at = None
+
+    narrative_val = row[col_narrative]
+    if pd.isna(narrative_val) or len(str(narrative_val).strip()) < 10:
+        raise ValueError("Row has invalid narrative")
+
+    return {
+        "company_id": DEFAULT_COMPANY_ID,
+        "consumer_narrative": str(narrative_val),
+        "product": (str(row[col_product]).strip() if col_product else None) or None,
+        "sub_product": (str(row[col_sub_product]).strip() if col_sub_product else None)
+        or None,
+        "company": (str(row[col_company]).strip() if col_company else None) or None,
+        "state": (str(row[col_state]).strip() if col_state else None) or None,
+        "zip_code": (str(row[col_zip]).strip() if col_zip else None) or None,
+        "channel": channel,
+        "submitted_at": submitted_at.isoformat() if submitted_at else None,
+        "external_product_category": (str(row[col_product]).strip() if col_product else None)
+        or None,
+        "external_issue_type": (str(row[col_issue]).strip() if col_issue else None)
+        or None,
+        "requested_resolution": (str(row[col_response]).strip() if col_response else None)
+        or None,
     }
 
 
 def main() -> None:
+    if setup_logging:
+        setup_logging()
+    if setup_tracing:
+        setup_tracing()
+
     openai_key = os.getenv("OPENAI_API_KEY")
     print("OPENAI_API_KEY set:", bool(openai_key))
     print("CSV_PATH:", CSV_PATH)
     print("DEFAULT_COMPANY_ID:", DEFAULT_COMPANY_ID)
+    print("SAMPLE_COUNT:", SAMPLE_COUNT)
     print("Pipeline output CSV:", OUTPUT_CSV)
 
     df = pd.read_csv(CSV_PATH)
@@ -142,6 +223,8 @@ def main() -> None:
             "CSV is missing required columns for the test: " + ", ".join(missing)
         )
 
+    assert col_narrative is not None and col_issue is not None
+
     print("Using columns:")
     print(
         {
@@ -167,62 +250,12 @@ def main() -> None:
             "No rows in the CSV have a narrative with at least 10 characters."
         )
 
-    row = df.loc[valid_mask].iloc[0]
-
-    channel_raw = (
-        str(row[col_channel]).strip() if col_channel else "web"
-    ).lower()
-    channel_map = {
-        "web": "web",
-        "online": "web",
-        "phone": "phone",
-        "email": "email",
-        "fax": "fax",
-        "postal": "postal",
-        "mail": "postal",
-        "referral": "referral",
-    }
-    channel = channel_map.get(channel_raw, "web")
-
-    submitted_at = None
-    if col_date_received:
-        val = row[col_date_received]
-        if pd.notna(val):
-            try:
-                submitted_at = pd.to_datetime(val, errors="coerce").to_pydatetime()
-            except Exception:
-                submitted_at = None
-
-    narrative_val = row[col_narrative]
-    if pd.isna(narrative_val) or len(str(narrative_val).strip()) < 10:
-        raise RuntimeError("Selected row has an invalid narrative.")
-
-    payload = {
-        "company_id": DEFAULT_COMPANY_ID,
-        "consumer_narrative": str(narrative_val),
-        "product": (str(row[col_product]).strip() if col_product else None) or None,
-        "sub_product": (str(row[col_sub_product]).strip() if col_sub_product else None)
-        or None,
-        "company": (str(row[col_company]).strip() if col_company else None) or None,
-        "state": (str(row[col_state]).strip() if col_state else None) or None,
-        "zip_code": (str(row[col_zip]).strip() if col_zip else None) or None,
-        "channel": channel,
-        "submitted_at": submitted_at.isoformat() if submitted_at else None,
-        "external_product_category": (str(row[col_product]).strip() if col_product else None)
-        or None,
-        "external_issue_type": (str(row[col_issue]).strip() if col_issue else None)
-        or None,
-        "requested_resolution": (str(row[col_response]).strip() if col_response else None)
-        or None,
-    }
-
-    print("\nConstructed CaseCreate payload (trimmed):")
-    print(
-        {
-            k: (str(v)[:120] + "..." if isinstance(v, str) and len(v) > 120 else v)
-            for k, v in payload.items()
-        }
-    )
+    sample_df = df.loc[valid_mask].head(SAMPLE_COUNT)
+    n_available = int(valid_mask.sum())
+    n_run = len(sample_df)
+    print(f"\nValid rows in file: {n_available}; running first {n_run} (SAMPLE_COUNT={SAMPLE_COUNT}).")
+    if n_run < SAMPLE_COUNT:
+        print(f"Note: fewer than {SAMPLE_COUNT} valid rows; only {n_run} executed.")
 
     if not openai_key:
         print(
@@ -230,54 +263,73 @@ def main() -> None:
         )
         return
 
-    final_state = process_complaint(payload)
-    case = final_state["case"]
+    out_rows: list[dict] = []
 
-    print("\nPipeline completed.")
-    print("Routed to:", getattr(case, "routed_to", None) or case.get("routed_to"))
+    for i, (_, row) in enumerate(sample_df.iterrows(), start=1):
+        print(f"\n{'='*60}\n--- Complaint {i}/{n_run} ---\n{'='*60}")
+        try:
+            payload = row_to_payload(
+                row,
+                col_narrative=col_narrative,
+                col_product=col_product,
+                col_sub_product=col_sub_product,
+                col_company=col_company,
+                col_state=col_state,
+                col_zip=col_zip,
+                col_channel=col_channel,
+                col_response=col_response,
+                col_date_received=col_date_received,
+                col_issue=col_issue,
+            )
+        except ValueError as e:
+            print(f"Skip row {i}: {e}")
+            continue
 
-    cls = getattr(case, "classification", None) or (
-        case.get("classification") if isinstance(case, dict) else None
-    )
-    print("\nClassification:")
-    print(json.dumps(cls, indent=2, default=str))
+        trimmed = {
+            k: (str(v)[:120] + "..." if isinstance(v, str) and len(v) > 120 else v)
+            for k, v in payload.items()
+        }
+        print("Payload (trimmed):", trimmed)
 
-    risk = getattr(case, "risk_assessment", None) or (
-        case.get("risk_assessment") if isinstance(case, dict) else None
-    )
-    print("\nRisk assessment:")
-    print(json.dumps(risk, indent=2, default=str))
+        try:
+            final_state = process_complaint(payload)
+        except Exception as exc:
+            err = f"{type(exc).__name__}: {exc}"
+            print(f"Pipeline error: {err}")
+            traceback.print_exc()
+            out_rows.append(
+                build_row_record(
+                    payload,
+                    {},
+                    source_csv=CSV_PATH,
+                    sample_index=i,
+                    pipeline_error=err[:2000],
+                )
+            )
+            continue
 
-    rc = getattr(case, "root_cause_hypothesis", None) or (
-        case.get("root_cause_hypothesis") if isinstance(case, dict) else None
-    )
-    print("\nRoot-cause hypothesis:")
-    print(json.dumps(rc, indent=2, default=str))
+        case = final_state["case"]
+        routed = getattr(case, "routed_to", None) or (
+            case.get("routed_to") if isinstance(case, dict) else None
+        )
+        print("Routed to:", routed)
 
-    pr = getattr(case, "proposed_resolution", None) or (
-        case.get("proposed_resolution") if isinstance(case, dict) else None
-    )
-    print("\nProposed resolution:")
-    print(json.dumps(pr, indent=2, default=str))
+        if i == 1:
+            cls = getattr(case, "classification", None) or (
+                case.get("classification") if isinstance(case, dict) else None
+            )
+            print("\nClassification (sample detail for complaint 1):")
+            print(json.dumps(cls, indent=2, default=str))
 
-    cf = getattr(case, "compliance_flags", None) or (
-        case.get("compliance_flags") if isinstance(case, dict) else None
-    )
-    print("\nCompliance flags:")
-    print(json.dumps(cf, indent=2, default=str))
+        out_rows.append(
+            build_row_record(payload, case, source_csv=CSV_PATH, sample_index=i)
+        )
 
-    et = getattr(case, "evidence_trace", None) or (
-        case.get("evidence_trace") if isinstance(case, dict) else None
-    )
-    print("\nEvidence trace (first 3 items if present):")
-    if isinstance(et, dict) and isinstance(et.get("items"), list):
-        print(json.dumps({"items": et["items"][:3]}, indent=2, default=str))
+    if out_rows:
+        pd.DataFrame(out_rows).to_csv(OUTPUT_CSV, index=False)
+        print(f"\nWrote {len(out_rows)} row(s) to {OUTPUT_CSV!r}")
     else:
-        print(json.dumps(et, indent=2, default=str))
-
-    out_row = build_row_record(payload, case, source_csv=CSV_PATH)
-    pd.DataFrame([out_row]).to_csv("testing_sample_pipeline_output.csv", index=False)
-    print(f"\nWrote pipeline summary row to testing_sample_pipeline_output.csv")
+        print("\nNo output rows to write.")
 
 
 if __name__ == "__main__":
