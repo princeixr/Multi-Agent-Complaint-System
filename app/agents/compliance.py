@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import json
 import logging
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 
+from app.agents.llm_json import parse_llm_json
 from app.schemas.classification import ClassificationResult
 from app.schemas.resolution import ResolutionRecommendation
 from app.schemas.risk import RiskAssessment
@@ -27,13 +27,13 @@ communications, disclosures/notice adequacy, unfair/deceptive/abusive acts),
 but do not invent company-specific rules not present in the retrieved guidance.
 
 Return a JSON object:
-{
+{{
   "flags": ["<flag_1>", "<flag_2>", ...],
   "passed": true/false,
   "notes": "<optional free‑text note>"
-}
+}}
 
-If no concerns exist, return `{"flags": [], "passed": true, "notes": null}`.
+If no concerns exist, return `{{"flags": [], "passed": true, "notes": null}}`.
 """
 
 
@@ -74,7 +74,7 @@ def run_compliance_check(
     chain = prompt | llm
 
     response = chain.invoke({"input": user_message})
-    result = json.loads(response.content)
+    result = parse_llm_json(getattr(response, "content", None))
 
     logger.info(
         "Compliance check complete – passed=%s, flags=%d",

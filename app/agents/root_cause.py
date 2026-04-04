@@ -4,6 +4,7 @@ import json
 import logging
 from pathlib import Path
 
+from app.agents.llm_json import parse_llm_json
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 
@@ -26,13 +27,13 @@ You will be given:
 - an evidence trace describing what information you should ground on
 
 Return a JSON object matching the RootCauseHypothesis schema:
-{
+{{
   "root_cause_category": "<string>",
   "confidence": <0.0..1.0>,
   "reasoning": "<brief explanation grounded in evidence>",
   "controls_to_check": ["<control_1>", ...],
   "notes": "<optional notes>"
-}
+}}
 
 Rules:
 - Prefer grounding in provided control knowledge and evidence trace.
@@ -72,7 +73,7 @@ def run_root_cause_hypothesis(
     chain = prompt | llm
 
     response = chain.invoke({"input": user_message})
-    result_data = json.loads(response.content)
+    result_data = parse_llm_json(getattr(response, "content", None))
     result = RootCauseHypothesis(**result_data)
 
     logger.info(

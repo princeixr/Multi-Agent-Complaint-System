@@ -21,6 +21,7 @@ from app.orchestrator.rules import (
     needs_compliance_review,
     review_decision_router,
 )
+from app.orchestrator.retrieval_gate import vector_db_available
 from app.orchestrator.state import WorkflowState
 from app.retrieval.complaint_index import ComplaintIndex
 from app.retrieval.resolution_index import ResolutionIndex
@@ -36,15 +37,19 @@ _resolution_index: ResolutionIndex | None = None
 _company_knowledge_by_id: dict[str, CompanyKnowledgeService] = {}
 
 
-def _complaint_index_singleton() -> ComplaintIndex:
+def _complaint_index_singleton() -> ComplaintIndex | None:
     global _complaint_index
+    if not vector_db_available():
+        return None
     if _complaint_index is None:
         _complaint_index = ComplaintIndex()
     return _complaint_index
 
 
-def _resolution_index_singleton() -> ResolutionIndex:
+def _resolution_index_singleton() -> ResolutionIndex | None:
     global _resolution_index
+    if not vector_db_available():
+        return None
     if _resolution_index is None:
         _resolution_index = ResolutionIndex()
     return _resolution_index
@@ -264,21 +269,22 @@ def build_workflow() -> StateGraph:
 
     # Add nodes
     graph.add_node("intake", intake_node)
-    graph.add_node("company_context", company_context_node)
+    # Node name must not collide with WorkflowState keys (LangGraph reserves state keys).
+    graph.add_node("retrieve_company_context", company_context_node)
     graph.add_node("classify", classify_node)
     graph.add_node("risk", risk_node)
     graph.add_node("root_cause", root_cause_node)
-    graph.add_node("resolution", resolution_node)
-    graph.add_node("compliance", compliance_node)
-    graph.add_node("review", review_node)
+    graph.add_node("propose_resolution", resolution_node)
+    graph.add_node("run_compliance", compliance_node)
+    graph.add_node("review_gate", review_node)
     graph.add_node("route", routing_node)
 
     # Set entry point
     graph.set_entry_point("intake")
 
     # Linear edges
-    graph.add_edge("intake", "company_context")
-    graph.add_edge("company_context", "classify")
+    graph.add_edge("intake", "retrieve_company_context")
+    graph.add_edge("retrieve_company_context", "classify")
 
     # Conditional: after classification, check confidence
     graph.add_conditional_edges(
@@ -288,22 +294,22 @@ def build_workflow() -> StateGraph:
     )
 
     graph.add_edge("risk", "root_cause")
-    graph.add_edge("root_cause", "resolution")
+    graph.add_edge("root_cause", "propose_resolution")
 
     # Conditional: after resolution, decide if compliance check is needed
     graph.add_conditional_edges(
-        "resolution",
+        "propose_resolution",
         _compliance_router,
-        {"compliance": "compliance", "review": "review"},
+        {"compliance": "run_compliance", "review": "review_gate"},
     )
 
-    graph.add_edge("compliance", "review")
+    graph.add_edge("run_compliance", "review_gate")
 
     # Conditional: after review, decide next step
     graph.add_conditional_edges(
-        "review",
+        "review_gate",
         _review_router,
-        {"route": "route", "revise": "resolution", "escalate": "route"},
+        {"route": "route", "revise": "propose_resolution", "escalate": "route"},
     )
 
     graph.add_edge("route", END)

@@ -39,12 +39,14 @@ message.
 
 ## Input Format
 
+The human turn supplies narrative and metadata. For reference, fields look like:
+
 ```
-Narrative: {consumer_narrative}
-Product (if provided): {product}
-Sub‑product (if provided): {sub_product}
-Company: {company}
-State: {state}
+Narrative: {{consumer_narrative}}
+Product (if provided): {{product}}
+Sub‑product (if provided): {{sub_product}}
+Company: {{company}}
+State: {{state}}
 ```
 
 ## Output Format

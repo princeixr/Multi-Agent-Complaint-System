@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-import json
 import logging
 from pathlib import Path
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 
+from app.agents.llm_json import parse_llm_json
 from app.retrieval.complaint_index import ComplaintIndex
 from app.schemas.classification import ClassificationResult
 from app.schemas.risk import RiskAssessment
@@ -68,7 +68,7 @@ def run_risk_assessment(
     chain = prompt | llm
 
     response = chain.invoke({"input": user_message})
-    result_data = json.loads(response.content)
+    result_data = parse_llm_json(getattr(response, "content", None))
 
     result = RiskAssessment(**result_data)
     logger.info(

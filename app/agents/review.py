@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import json
 import logging
 
+from app.agents.llm_json import parse_llm_json
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 
@@ -23,11 +23,11 @@ resolution, and compliance flags). Your task is to:
 4. Provide a final recommendation: **approve**, **revise**, or **escalate**.
 
 Return a JSON object:
-{
+{{
   "decision": "approve" | "revise" | "escalate",
   "notes": "<brief explanation>",
   "suggested_changes": ["<change_1>", ...] or []
-}
+}}
 """
 
 
@@ -59,7 +59,7 @@ def run_review(
     chain = prompt | llm
 
     response = chain.invoke({"input": user_message})
-    result = json.loads(response.content)
+    result = parse_llm_json(getattr(response, "content", None))
 
     logger.info("Review complete – decision=%s", result.get("decision"))
     return result

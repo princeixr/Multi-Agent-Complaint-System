@@ -13,7 +13,7 @@ produce a structured risk assessment.
 | -------------------------- | ----------------------------------------------- |
 | risk_level                 | low / medium / high / critical                  |
 | risk_score                 | Numeric score 0–100                             |
-| factors                    | List of { name, description, weight } objects   |
+| factors                    | List of {{ name, description, weight }} objects   |
 | regulatory_risk            | true if potential regulatory exposure exists     |
 | financial_impact_estimate  | Estimated USD impact (null if unknown)           |
 | escalation_required        | true if the case needs immediate escalation      |
@@ -32,9 +32,9 @@ produce a structured risk assessment.
 ## Input Format
 
 ```
-Narrative: {consumer_narrative}
-Classification: {classification_json}
-Similar complaints context: {retrieved_context}
+Narrative: {{consumer_narrative}}
+Classification: {{classification_json}}
+Similar complaints context: {{retrieved_context}}
 ```
 
 ## Output Format

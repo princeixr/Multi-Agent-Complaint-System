@@ -26,12 +26,17 @@ DATABASE_URL = os.getenv(
     "postgresql+psycopg2://postgres:postgres@localhost:5432/complaints",
 )
 
+_connect_args: dict = {}
+if DATABASE_URL.startswith("postgresql"):
+    _connect_args["connect_timeout"] = int(os.getenv("PG_CONNECT_TIMEOUT", "5"))
+
 engine = create_engine(
     DATABASE_URL,
     echo=bool(os.getenv("SQL_ECHO", "")),
     pool_pre_ping=True,
     pool_size=10,
     max_overflow=20,
+    connect_args=_connect_args,
 )
 
 SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)

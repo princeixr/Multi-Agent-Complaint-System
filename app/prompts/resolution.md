@@ -39,10 +39,10 @@ Produce a structured resolution recommendation.
 ## Input Format
 
 ```
-Narrative: {consumer_narrative}
-Classification: {classification_json}
-Risk Assessment: {risk_json}
-Similar resolutions: {retrieved_resolutions}
+Narrative: {{consumer_narrative}}
+Classification: {{classification_json}}
+Risk Assessment: {{risk_json}}
+Similar resolutions: {{retrieved_resolutions}}
 ```
 
 ## Output Format
