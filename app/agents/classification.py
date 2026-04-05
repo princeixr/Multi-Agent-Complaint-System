@@ -1,15 +1,16 @@
-"""Classification agent – assigns product category and issue type."""
+"""Classification agent – assigns product category and issue type.
+
+Uses tools to autonomously retrieve similar complaints and company taxonomy.
+"""
 
 from __future__ import annotations
 
 import logging
 from pathlib import Path
 
-from langchain_core.prompts import ChatPromptTemplate
-
 from app.agents.llm_factory import create_llm
-from app.agents.llm_json import parse_llm_json
-from app.retrieval.complaint_index import ComplaintIndex
+from app.agents.tool_loop import run_agent_with_tools
+from app.agents.tools import lookup_company_taxonomy, search_similar_complaints
 from app.schemas.classification import ClassificationResult
 
 logger = logging.getLogger(__name__)
@@ -27,73 +28,44 @@ def run_classification(
     sub_product: str | None = None,
     company: str | None = None,
     state: str | None = None,
-    complaint_index: ComplaintIndex | None = None,
-    company_context: dict | None = None,
+    company_id: str = "mock_bank",
+    instructions: str = "",
     model_name: str | None = None,
     temperature: float = 0.0,
 ) -> ClassificationResult:
     """Classify the complaint and return a structured result.
 
-    Optionally retrieves similar complaints to provide few‑shot context.
+    The agent has access to tools for retrieving similar complaints and
+    company taxonomy candidates. It decides autonomously whether and how
+    to use them.
     """
     logger.info("Classification agent running")
-
-    # Retrieve similar complaints for context (RAG)
-    similar_context = ""
-    if complaint_index is not None:
-        similar_docs = complaint_index.search(narrative, k=3)
-        if similar_docs:
-            similar_context = "\n---\n".join(doc.page_content for doc in similar_docs)
-
-    if company_context is None:
-        # Evaluation harnesses and standalone runs may not pass company_context.
-        # Fall back to the demo mock pack so the prompt always has candidates.
-        from app.knowledge import CompanyKnowledgeService
-
-        ctx = CompanyKnowledgeService().build_company_context(narrative)
-        company_context = {
-            "taxonomy_candidates": ctx.taxonomy_candidates,
-            "company_id": ctx.company_id,
-        }
-
-    taxonomy_snippet = ""
-    if company_context:
-        candidates = company_context.get("taxonomy_candidates", {})
-        prod_candidates = candidates.get("product_categories", [])
-        issue_candidates = candidates.get("issue_types", [])
-
-        if prod_candidates or issue_candidates:
-            taxonomy_snippet = (
-                "Company operational taxonomy candidates:\n"
-                f"Product candidates: {prod_candidates}\n"
-                f"Issue candidates: {issue_candidates}\n"
-            )
 
     system_prompt = _load_prompt()
 
     user_message = (
         f"Narrative: {narrative}\n"
         f"Product (if provided): {product or 'N/A'}\n"
-        f"Sub‑product (if provided): {sub_product or 'N/A'}\n"
+        f"Sub-product (if provided): {sub_product or 'N/A'}\n"
         f"Company: {company or 'N/A'}\n"
         f"State: {state or 'N/A'}\n"
+        f"Company ID: {company_id}\n"
     )
-    if similar_context:
-        user_message += f"\nSimilar complaints for reference:\n{similar_context}\n"
-    if taxonomy_snippet:
-        user_message += f"\n{taxonomy_snippet}\n"
+    if instructions:
+        user_message += f"\nSupervisor instructions: {instructions}\n"
 
-    prompt = ChatPromptTemplate.from_messages(
-        [("system", system_prompt), ("human", "{input}")]
+    user_message += (
+        "\nYou have tools available to search for similar complaints and look up "
+        "the company's product/issue taxonomy. Use them to ground your classification. "
+        "When done, respond with the classification JSON."
     )
 
     llm = create_llm(model_name=model_name, temperature=temperature)
-    chain = prompt | llm
+    tools = [search_similar_complaints, lookup_company_taxonomy]
 
-    response = chain.invoke({"input": user_message})
-    result_data = parse_llm_json(getattr(response, "content", None))
-
+    result_data = run_agent_with_tools(llm, system_prompt, user_message, tools)
     result = ClassificationResult(**result_data)
+
     logger.info(
         "Classification complete – category=%s, confidence=%.2f",
         result.product_category,

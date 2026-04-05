@@ -1,15 +1,16 @@
-"""Resolution agent – recommends a resolution based on precedent."""
+"""Resolution agent – recommends a resolution based on precedent.
+
+Uses tools to autonomously search similar resolutions and look up policies.
+"""
 
 from __future__ import annotations
 
 import logging
 from pathlib import Path
 
-from langchain_core.prompts import ChatPromptTemplate
-
 from app.agents.llm_factory import create_llm
-from app.agents.llm_json import parse_llm_json
-from app.retrieval.resolution_index import ResolutionIndex
+from app.agents.tool_loop import run_agent_with_tools
+from app.agents.tools import lookup_routing_rules, lookup_severity_rubric, search_similar_resolutions
 from app.schemas.classification import ClassificationResult
 from app.schemas.resolution import ResolutionRecommendation
 from app.schemas.risk import RiskAssessment
@@ -27,58 +28,46 @@ def run_resolution(
     narrative: str,
     classification: ClassificationResult,
     risk: RiskAssessment,
-    resolution_index: ResolutionIndex | None = None,
     root_cause_hypothesis: object | None = None,
-    company_context: dict | None = None,
+    company_id: str = "mock_bank",
+    instructions: str = "",
     model_name: str | None = None,
     temperature: float = 0.0,
 ) -> ResolutionRecommendation:
-    """Propose a resolution for the complaint."""
+    """Propose a resolution for the complaint.
+
+    The agent has access to tools for searching similar resolutions and
+    looking up severity/policy rubrics and routing rules.
+    """
     logger.info("Resolution agent running")
 
-    similar_resolutions = ""
-    if resolution_index is not None:
-        similar_docs = resolution_index.search(narrative, k=3)
-        if similar_docs:
-            similar_resolutions = "\n---\n".join(doc.page_content for doc in similar_docs)
-
     system_prompt = _load_prompt()
-
-    policy_snippet = ""
-    if company_context:
-        policy_candidates = company_context.get("policy_candidates", [])
-        routing_candidates = company_context.get("routing_candidates", {})
-        policy_snippet = (
-            "Company policy candidates relevant to the resolution:\n"
-            f"{policy_candidates}\n\n"
-            "Company routing/ownership candidates (may influence remediation steps):\n"
-            f"{routing_candidates}\n"
-        )
 
     user_message = (
         f"Narrative: {narrative}\n"
         f"Classification: {classification.model_dump_json()}\n"
         f"Risk Assessment: {risk.model_dump_json()}\n"
-        f"Similar resolutions: {similar_resolutions or 'None available'}\n"
-        f"{policy_snippet}\n"
+        f"Company ID: {company_id}\n"
     )
-
     if root_cause_hypothesis is not None:
         user_message += (
             f"Root-cause hypothesis (grounding context): {root_cause_hypothesis}\n"
         )
+    if instructions:
+        user_message += f"\nSupervisor instructions: {instructions}\n"
 
-    prompt = ChatPromptTemplate.from_messages(
-        [("system", system_prompt), ("human", "{input}")]
+    user_message += (
+        "\nYou have tools available to search for similar resolutions and look up "
+        "severity rubrics, policies, and routing rules. Use them to ground your "
+        "resolution recommendation. When done, respond with the resolution JSON."
     )
 
     llm = create_llm(model_name=model_name, temperature=temperature)
-    chain = prompt | llm
+    tools = [search_similar_resolutions, lookup_severity_rubric, lookup_routing_rules]
 
-    response = chain.invoke({"input": user_message})
-    result_data = parse_llm_json(getattr(response, "content", None))
-
+    result_data = run_agent_with_tools(llm, system_prompt, user_message, tools)
     result = ResolutionRecommendation(**result_data)
+
     logger.info(
         "Resolution complete – action=%s, confidence=%.2f",
         result.recommended_action,

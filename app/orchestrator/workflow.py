@@ -1,4 +1,9 @@
-"""LangGraph workflow that orchestrates all complaint‑processing agents."""
+"""Agentic LangGraph workflow — supervisor-driven complaint processing.
+
+Hub-and-spoke architecture: a supervisor LLM decides which specialist
+agent to invoke next. Specialists use tools to autonomously retrieve
+context (similar complaints, policies, taxonomy, etc.).
+"""
 
 from __future__ import annotations
 
@@ -12,18 +17,12 @@ from opentelemetry.trace import Status, StatusCode
 from app.agents.classification import run_classification
 from app.agents.compliance import run_compliance_check
 from app.agents.intake import run_intake
-from app.agents.root_cause import run_root_cause_hypothesis
 from app.agents.resolution import run_resolution
 from app.agents.review import run_review
 from app.agents.risk import run_risk_assessment
+from app.agents.root_cause import run_root_cause_hypothesis
 from app.agents.routing import run_routing
-from app.knowledge import CompanyKnowledgeService
-from app.orchestrator.rules import (
-    low_confidence_gate,
-    needs_compliance_review,
-    review_decision_router,
-)
-from app.orchestrator.retrieval_gate import vector_db_available
+from app.agents.supervisor import run_supervisor
 from app.observability.context import ActiveRun, reset_active_run, set_active_run, set_trace_id
 from app.observability.events import log_workflow_event
 from app.observability.instrumentation import wrap_node
@@ -35,123 +34,64 @@ from app.observability.persistence import (
 from app.observability.tracing import get_workflow_tracer, setup_tracing, trace_id_hex_from_span
 from app.observability.versions import workflow_version
 from app.orchestrator.state import WorkflowState
-from app.retrieval.complaint_index import ComplaintIndex
-from app.retrieval.resolution_index import ResolutionIndex
 from app.schemas.case import CaseCreate, CaseStatus
 from app.schemas.evidence import EvidenceItem, EvidenceTrace
-from app.schemas.root_cause import RootCauseHypothesis
 
 logger = logging.getLogger(__name__)
 
-# ── Lazy retrieval indices (avoid loading embedding models at import time) ──
-_complaint_index: ComplaintIndex | None = None
-_resolution_index: ResolutionIndex | None = None
-_company_knowledge_by_id: dict[str, CompanyKnowledgeService] = {}
+# Node names that avoid collisions with WorkflowState keys.
+# LangGraph does not allow a node name to match a state key.
+_NODE_CLASSIFY = "classify"
+_NODE_RISK = "risk"
+_NODE_ROOT_CAUSE = "root_cause"
+_NODE_RESOLVE = "resolve"
+_NODE_COMPLIANCE = "check_compliance"
+_NODE_REVIEW = "qa_review"
+_NODE_ROUTE = "route"
 
-
-def _complaint_index_singleton() -> ComplaintIndex | None:
-    global _complaint_index
-    if not vector_db_available():
-        return None
-    if _complaint_index is None:
-        _complaint_index = ComplaintIndex()
-    return _complaint_index
-
-
-def _resolution_index_singleton() -> ResolutionIndex | None:
-    global _resolution_index
-    if not vector_db_available():
-        return None
-    if _resolution_index is None:
-        _resolution_index = ResolutionIndex()
-    return _resolution_index
-
-
-def _company_knowledge_singleton(company_id: str) -> CompanyKnowledgeService:
-    if company_id not in _company_knowledge_by_id:
-        _company_knowledge_by_id[company_id] = CompanyKnowledgeService(
-            company_id=company_id
-        )
-    return _company_knowledge_by_id[company_id]
+# Supervisor knows these names for routing decisions
+SPECIALIST_NODES = frozenset(
+    {_NODE_CLASSIFY, _NODE_RISK, _NODE_ROOT_CAUSE, _NODE_RESOLVE,
+     _NODE_COMPLIANCE, _NODE_REVIEW, _NODE_ROUTE}
+)
 
 
 # ── Node functions ───────────────────────────────────────────────────────────
 
 def intake_node(state: WorkflowState) -> WorkflowState:
+    """Deterministic intake: PII redaction, validation, normalisation."""
     payload = CaseCreate(**state["raw_payload"])
     case = run_intake(payload)
-    return {**state, "case": case}
-
-
-def company_context_node(state: WorkflowState) -> WorkflowState:
-    case = state["case"]
-    company_id = state["company_id"]
-
-    company_knowledge = _company_knowledge_singleton(company_id)
-    context = company_knowledge.build_company_context(case.consumer_narrative)
-
-    # Evidence trace begins with the company knowledge slices we retrieved.
-    evidence_trace = EvidenceTrace(
-        items=[
-            EvidenceItem(
-                evidence_type="company_taxonomy_candidates",
-                summary="Operational taxonomy slices selected for this narrative",
-                source_ref=company_id,
-                metadata=context.taxonomy_candidates,
-            ),
-            EvidenceItem(
-                evidence_type="company_severity_candidates",
-                summary="Company severity rubric snippets selected for this narrative",
-                source_ref=company_id,
-                metadata={"severity_candidates": context.severity_candidates},
-            ),
-            EvidenceItem(
-                evidence_type="company_policy_candidates",
-                summary="Company policy snippets selected for this narrative",
-                source_ref=company_id,
-                metadata={"policy_candidates": context.policy_candidates},
-            ),
-            EvidenceItem(
-                evidence_type="company_root_cause_controls",
-                summary="Control knowledge selected for root-cause inference",
-                source_ref=company_id,
-                metadata={"controls": context.root_cause_controls},
-            ),
-        ]
-    )
-
-    case.evidence_trace = evidence_trace.model_dump()
     return {
         **state,
-        "company_context": {
-            "company_id": company_id,
-            "taxonomy_candidates": context.taxonomy_candidates,
-            "severity_candidates": context.severity_candidates,
-            "policy_candidates": context.policy_candidates,
-            "routing_candidates": context.routing_candidates,
-            "root_cause_controls": context.root_cause_controls,
-        },
-        "evidence_trace": evidence_trace,
         "case": case,
+        "completed_steps": [],
+        "step_count": 0,
+        "max_steps": state.get("max_steps", 15),
     }
 
 
+def supervisor_node(state: WorkflowState):
+    """Supervisor: decides which specialist to invoke next. Returns Command."""
+    return run_supervisor(state)
+
+
 def classify_node(state: WorkflowState) -> WorkflowState:
+    """Classification specialist with tool access."""
     case = state["case"]
-    retry = state.get("classification") is not None
-    if retry:
-        # Fix retry-counter progression: when we loop back to classification,
-        # increment the counter so downstream gates can stop after MAX_RETRIES.
-        state["retry_count"] = state.get("retry_count", 0) + 1  # type: ignore[misc]
+    company_id = state.get("company_id", "mock_bank")
+    instructions = state.get("supervisor_instructions", "")
+
     result = run_classification(
         narrative=case.consumer_narrative,
         product=case.product,
         sub_product=case.sub_product,
         company=case.company,
         state=case.state,
-        complaint_index=_complaint_index_singleton(),
-        company_context=state.get("company_context"),
+        company_id=company_id,
+        instructions=instructions,
     )
+
     case.classification = result.model_dump()
     case.status = CaseStatus.CLASSIFIED
     case.operational_mapping = {
@@ -159,88 +99,137 @@ def classify_node(state: WorkflowState) -> WorkflowState:
         "issue_type": result.issue_type.value,
         "sub_issue": result.sub_issue,
     }
-    return {**state, "case": case, "classification": result}
+
+    completed = list(state.get("completed_steps", []))
+    completed.append("classify")
+
+    return {**state, "case": case, "classification": result, "completed_steps": completed}
 
 
 def risk_node(state: WorkflowState) -> WorkflowState:
+    """Risk assessment specialist with tool access."""
     case = state["case"]
+    company_id = state.get("company_id", "mock_bank")
+    instructions = state.get("supervisor_instructions", "")
+
     result = run_risk_assessment(
         narrative=case.consumer_narrative,
         classification=state["classification"],
-        complaint_index=_complaint_index_singleton(),
-        company_context=state.get("company_context"),
+        company_id=company_id,
+        instructions=instructions,
     )
+
     case.risk_assessment = result.model_dump()
     case.severity_class = result.risk_level.value
     case.status = CaseStatus.RISK_ASSESSED
-    return {**state, "case": case, "risk_assessment": result}
+
+    completed = list(state.get("completed_steps", []))
+    completed.append("risk")
+
+    return {**state, "case": case, "risk_assessment": result, "completed_steps": completed}
 
 
 def root_cause_node(state: WorkflowState) -> WorkflowState:
+    """Root cause hypothesis specialist with tool access."""
     case = state["case"]
-    company_context = state.get("company_context", {})
+    company_id = state.get("company_id", "mock_bank")
+    instructions = state.get("supervisor_instructions", "")
 
-    result: RootCauseHypothesis = run_root_cause_hypothesis(
+    result = run_root_cause_hypothesis(
         narrative=case.consumer_narrative,
         classification=state["classification"],
         risk=state["risk_assessment"],
-        company_root_cause_controls=company_context.get("root_cause_controls", []),
-        evidence_trace=state.get("evidence_trace"),
+        company_id=company_id,
+        instructions=instructions,
     )
+
     case.root_cause_hypothesis = result.model_dump()
-    case.status = CaseStatus.RISK_ASSESSED  # root-cause doesn't change main stage enum yet
-    return {**state, "case": case, "root_cause_hypothesis": result}
+
+    completed = list(state.get("completed_steps", []))
+    completed.append("root_cause")
+
+    return {**state, "case": case, "root_cause_hypothesis": result, "completed_steps": completed}
 
 
 def resolution_node(state: WorkflowState) -> WorkflowState:
+    """Resolution specialist with tool access."""
     case = state["case"]
-    if state.get("resolution") is not None:
-        state["retry_count"] = state.get("retry_count", 0) + 1  # type: ignore[misc]
+    company_id = state.get("company_id", "mock_bank")
+    instructions = state.get("supervisor_instructions", "")
+
     result = run_resolution(
         narrative=case.consumer_narrative,
         classification=state["classification"],
         risk=state["risk_assessment"],
-        resolution_index=_resolution_index_singleton(),
         root_cause_hypothesis=state.get("root_cause_hypothesis"),
-        company_context=state.get("company_context"),
+        company_id=company_id,
+        instructions=instructions,
     )
+
     case.proposed_resolution = result.model_dump()
     case.status = CaseStatus.RESOLUTION_PROPOSED
-    return {**state, "case": case, "resolution": result}
+
+    completed = list(state.get("completed_steps", []))
+    completed.append("resolve")
+
+    return {**state, "case": case, "resolution": result, "completed_steps": completed}
 
 
 def compliance_node(state: WorkflowState) -> WorkflowState:
+    """Compliance specialist with tool access."""
     case = state["case"]
+    company_id = state.get("company_id", "mock_bank")
+    instructions = state.get("supervisor_instructions", "")
+
     result = run_compliance_check(
         narrative=case.consumer_narrative,
         classification=state["classification"],
         risk=state["risk_assessment"],
         resolution=state["resolution"],
-        company_context=state.get("company_context"),
+        company_id=company_id,
+        instructions=instructions,
     )
+
     case.compliance_flags = result.get("flags", [])
-    case.evidence_trace = (
-        state.get("evidence_trace").model_dump() if state.get("evidence_trace") else None
-    )
     case.status = CaseStatus.COMPLIANCE_CHECKED
-    return {**state, "case": case, "compliance": result}
+
+    completed = list(state.get("completed_steps", []))
+    completed.append("check_compliance")
+
+    return {**state, "case": case, "compliance": result, "completed_steps": completed}
 
 
 def review_node(state: WorkflowState) -> WorkflowState:
+    """Review specialist — QA pass with structured feedback."""
     case = state["case"]
+    instructions = state.get("supervisor_instructions", "")
+
     result = run_review(
         narrative=case.consumer_narrative,
         classification_json=json.dumps(state["classification"].model_dump()),
         risk_json=json.dumps(state["risk_assessment"].model_dump()),
         resolution_json=json.dumps(state["resolution"].model_dump()),
         compliance_json=json.dumps(state.get("compliance", {})),
+        instructions=instructions,
     )
+
     case.review_notes = result.get("notes", "")
     case.status = CaseStatus.REVIEWED
-    return {**state, "case": case, "review": result}
+
+    completed = list(state.get("completed_steps", []))
+    completed.append("qa_review")
+
+    update: dict = {**state, "case": case, "review": result, "completed_steps": completed}
+
+    # Store structured feedback if review requests revision
+    if result.get("decision") == "revise" and result.get("review_feedback"):
+        update["review_feedback"] = result["review_feedback"]
+
+    return update
 
 
 def routing_node(state: WorkflowState) -> WorkflowState:
+    """Deterministic routing based on company knowledge pack rules."""
     case = state["case"]
     destination = run_routing(
         case=case,
@@ -250,83 +239,55 @@ def routing_node(state: WorkflowState) -> WorkflowState:
         review_decision=state.get("review", {}).get("decision", "approve"),
         company_context=state.get("company_context"),
     )
+
     case.routed_to = destination
     case.team_assignment = destination
     case.status = CaseStatus.ROUTED
-    return {**state, "case": case, "routed_to": destination}
+
+    completed = list(state.get("completed_steps", []))
+    completed.append("route")
+
+    return {**state, "case": case, "routed_to": destination, "completed_steps": completed}
 
 
-# ── Conditional‑edge helpers (must return node names) ────────────────────────
-
-def _confidence_router(state: WorkflowState) -> str:
-    return low_confidence_gate(state)
-
-
-def _compliance_router(state: WorkflowState) -> str:
-    if needs_compliance_review(state):
-        return "compliance"
-    return "review"
-
-
-def _review_router(state: WorkflowState) -> str:
-    return review_decision_router(state)
-
-
-# ── Build the graph ──────────────────────────────────────────────────────────
+# ── Build the agentic graph ─────────────────────────────────────────────────
 
 def build_workflow() -> StateGraph:
-    """Construct and return the compiled LangGraph workflow."""
+    """Construct the hub-and-spoke agentic workflow.
 
+    Architecture:
+        intake → supervisor → {specialists} → supervisor → ... → END
+
+    The supervisor node returns Command(goto=...) so LangGraph handles
+    routing dynamically — no hardcoded conditional edges.
+    """
     graph = StateGraph(WorkflowState)
 
-    # Add nodes (wrapped for OTel spans, JSON logs, and workflow_steps audit rows)
+    # Deterministic entry
     graph.add_node("intake", wrap_node("intake", intake_node))
-    graph.add_node(
-        "retrieve_company_context",
-        wrap_node("retrieve_company_context", company_context_node),
-    )
-    graph.add_node("classify", wrap_node("classify", classify_node))
-    graph.add_node("risk", wrap_node("risk", risk_node))
-    graph.add_node("root_cause", wrap_node("root_cause", root_cause_node))
-    graph.add_node("propose_resolution", wrap_node("propose_resolution", resolution_node))
-    graph.add_node("run_compliance", wrap_node("run_compliance", compliance_node))
-    graph.add_node("review_gate", wrap_node("review_gate", review_node))
-    graph.add_node("route", wrap_node("route", routing_node))
 
-    # Set entry point
+    # Supervisor (the brain — routes via Command)
+    graph.add_node("supervisor", supervisor_node)
+
+    # Specialist nodes (wrapped for observability)
+    graph.add_node(_NODE_CLASSIFY, wrap_node("classify", classify_node))
+    graph.add_node(_NODE_RISK, wrap_node("risk", risk_node))
+    graph.add_node(_NODE_ROOT_CAUSE, wrap_node("root_cause", root_cause_node))
+    graph.add_node(_NODE_RESOLVE, wrap_node("resolve", resolution_node))
+    graph.add_node(_NODE_COMPLIANCE, wrap_node("check_compliance", compliance_node))
+    graph.add_node(_NODE_REVIEW, wrap_node("qa_review", review_node))
+    graph.add_node(_NODE_ROUTE, wrap_node("route", routing_node))
+
+    # Entry: intake always runs first, then supervisor takes over
     graph.set_entry_point("intake")
+    graph.add_edge("intake", "supervisor")
 
-    # Linear edges
-    graph.add_edge("intake", "retrieve_company_context")
-    graph.add_edge("retrieve_company_context", "classify")
+    # Every specialist returns to supervisor after completing
+    for node_name in SPECIALIST_NODES:
+        graph.add_edge(node_name, "supervisor")
 
-    # Conditional: after classification, check confidence
-    graph.add_conditional_edges(
-        "classify",
-        _confidence_router,
-        {"continue": "risk", "reclassify": "classify"},
-    )
-
-    graph.add_edge("risk", "root_cause")
-    graph.add_edge("root_cause", "propose_resolution")
-
-    # Conditional: after resolution, decide if compliance check is needed
-    graph.add_conditional_edges(
-        "propose_resolution",
-        _compliance_router,
-        {"compliance": "run_compliance", "review": "review_gate"},
-    )
-
-    graph.add_edge("run_compliance", "review_gate")
-
-    # Conditional: after review, decide next step
-    graph.add_conditional_edges(
-        "review_gate",
-        _review_router,
-        {"route": "route", "revise": "propose_resolution", "escalate": "route"},
-    )
-
-    graph.add_edge("route", END)
+    # Supervisor routes via Command(goto=...) — no conditional edges needed.
+    # When supervisor returns Command(goto="__end__"), the graph terminates.
 
     return graph.compile()
 
@@ -337,7 +298,7 @@ workflow = build_workflow()
 
 
 def process_complaint(payload: dict) -> WorkflowState:
-    """Run the full complaint pipeline and return the final state."""
+    """Run the full agentic complaint pipeline and return the final state."""
     setup_tracing()
 
     run_id = uuid.uuid4().hex

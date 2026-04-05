@@ -24,9 +24,10 @@ _LLM_NODES = frozenset(
         "classify",
         "risk",
         "root_cause",
-        "propose_resolution",
-        "run_compliance",
-        "review_gate",
+        "resolve",
+        "check_compliance",
+        "qa_review",
+        "supervisor",
     }
 )
 
@@ -51,7 +52,7 @@ def _confidence_after(node_name: str, state: WorkflowState) -> float | None:
             if v is None and isinstance(rc, dict):
                 v = rc.get("confidence")
             return float(v) if v is not None else None
-        if node_name == "propose_resolution":
+        if node_name == "resolve":
             res = state.get("resolution")
             if res is None:
                 return None
