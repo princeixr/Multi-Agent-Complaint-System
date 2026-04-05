@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from app.agents.classification import run_classification
+from app.agents.llm_factory import default_model_name
 from app.schemas.classification import ClassificationResult
 
 logger = logging.getLogger(__name__)
@@ -55,7 +56,7 @@ def load_dataset(filename: str) -> list[dict[str, Any]]:
 
 def evaluate_classification(
     dataset_file: str = "classification_eval.csv",
-    model_name: str = "gpt-4o",
+    model_name: str | None = None,
 ) -> dict[str, float]:
     """Run classification evaluation and return metric summary.
 
@@ -107,7 +108,11 @@ if __name__ == "__main__":
         default="classification_eval.csv",
         help="Dataset filename inside datasets/",
     )
-    parser.add_argument("--model", default="gpt-4o", help="Model name")
+    parser.add_argument(
+        "--model",
+        default=None,
+        help="Model name (defaults to provider's default)",
+    )
     args = parser.parse_args()
 
     from app.observability.logging import setup_logging
