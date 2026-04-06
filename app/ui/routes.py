@@ -7,6 +7,7 @@ import logging
 from pathlib import Path
 
 from fastapi import APIRouter, Request
+from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from app.db.session import get_db
@@ -105,17 +106,51 @@ async def complaint_detail(request: Request, case_id: str):
     })
 
 
+@router.get("/trace/latest", include_in_schema=False)
+async def latest_trace(request: Request):
+    """Resolve sidebar Trace link to the most recent workflow run."""
+    with get_db() as db:
+        latest = (
+            db.query(WorkflowRun)
+            .order_by(WorkflowRun.started_at.desc())
+            .first()
+        )
+        latest_run_id = latest.run_id if latest is not None else None
+
+    if latest_run_id is None:
+        return templates.TemplateResponse(request, "trace.html", context={
+            "run": None,
+            "steps": [],
+            "total_latency": 0,
+            "step_count": 0,
+            "active_nav": "trace",
+        })
+
+    return RedirectResponse(url=f"/trace/{latest_run_id}", status_code=302)
+
+
 @router.get("/trace/{run_id}", include_in_schema=False)
 async def supervisor_trace(request: Request, run_id: str):
     """Supervisor trace — step-by-step flow visualization."""
     with get_db() as db:
-        run = db.query(WorkflowRun).filter(WorkflowRun.run_id == run_id).first()
+        run_row = db.query(WorkflowRun).filter(WorkflowRun.run_id == run_id).first()
         steps = (
             db.query(WorkflowStep)
             .filter(WorkflowStep.run_id == run_id)
             .order_by(WorkflowStep.sequence_number)
             .all()
         )
+
+        run = None
+        if run_row is not None:
+            run = {
+                "run_id": run_row.run_id,
+                "run_status": run_row.run_status,
+                "started_at": run_row.started_at,
+                "company_id": run_row.company_id,
+                "final_route": run_row.final_route,
+                "final_severity": run_row.final_severity,
+            }
 
         step_data = []
         for s in steps:

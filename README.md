@@ -4,7 +4,7 @@ FastAPI service that runs an **agentic LangGraph** workflow over consumer compla
 
 Specialists are equipped with **LangChain tools** for autonomous RAG retrieval (similar complaints, company policies, severity rubrics) via **PostgreSQL + pgvector**. Chat calls use the **OpenAI** or **DeepSeek** API. A built-in **web dashboard** provides real-time visibility into complaints, agent traces, and analytics.
 
-## Architecture
+## Agentic AI Architecture
 
 ```
                     ┌──────────┐
@@ -30,6 +30,71 @@ Specialists are equipped with **LangChain tools** for autonomous RAG retrieval (
 - **Safety limits**: Max 15 steps per workflow, max 3 invocations per agent, fallback routing on LLM parse failures
 - **Observability**: Every node wrapped with OpenTelemetry spans, structured workflow events, and audit DB rows
 - **PII redaction**: Applied at both ingestion time (historical data) and runtime intake (incoming complaints)
+
+## Backend Architecture and Control Flow
+
+The UI is server-rendered. FastAPI route handlers query SQLAlchemy models,
+prepare plain context objects, and render Jinja templates.
+
+```text
+┌──────────────────────────── Browser (User) ─────────────────────────────┐
+│                                                                         │
+│  GET /                     GET /complaints/{id}      GET /trace/{id}    │
+│   │                               │                        │            │
+└───┼───────────────────────────────┼────────────────────────┼────────────┘
+    │                               │                        │
+    ▼                               ▼                        ▼
+┌────────────────────────────── FastAPI App ───────────────────────────────┐
+│ main.py                                                                  │
+│  - include_router(app.ui.routes)                                         │
+│  - include_router(app.api.routes)                                        │
+│  - mount /static                                                         │
+└───────────────┬───────────────────────────────────────────────┬──────────┘
+                │                                               │
+                ▼                                               ▼
+    ┌──────────────────────┐                        ┌──────────────────────┐
+    │ UI routes            │                        │ API routes           │
+    │ app/ui/routes.py     │                        │ app/api/routes.py    │
+    │                      │                        │                      │
+    │ - dashboard()        │                        │ - create_complaint() │
+    │ - complaint_detail() │                        │ - get/list complaints│
+    │ - supervisor_trace() │                        │                      │
+    └──────────┬───────────┘                        └──────────┬───────────┘
+               │                                               │
+               │ uses                                          │ uses
+               ▼                                               ▼
+    ┌───────────────────────────────┐               ┌───────────────────────────────┐
+    │ SQLAlchemy Session + Models   │               │ Agentic Workflow (LangGraph)  │
+    │ app/db/session.py             │               │ app/orchestrator/workflow.py  │
+    │ app/db/models.py              │               │ + specialist agents/tools     │
+    └──────────┬────────────────────┘               └──────────┬────────────────────┘
+               │                                               │
+               ▼                                               ▼
+    ┌───────────────────────────────┐               ┌────────────────────────────────┐
+    │ PostgreSQL (+pgvector)        │               │ Persist outputs / traces       │
+    │ complaint_cases, workflow_*   │◄──────────────│ complaint_cases, workflow_runs │
+    └───────────────────────────────┘               │ workflow_steps, etc.           │
+                                                    └────────────────────────────────┘
+
+        UI Render Path (server-side HTML)
+        ----------------------------------
+        UI route -> build context dict ->
+        templates.TemplateResponse(request, "*.html", context={...})
+                  │
+                  ▼
+           app/templates/base.html + page template
+                  │
+                  ▼
+            HTML response (+ /static/css, /static/js)
+```
+
+**Key relationships**
+
+- FastAPI handles routing and request lifecycle.
+- SQLAlchemy handles DB reads/writes used by both UI pages and API workflows.
+- Jinja templates render server-side HTML using route-provided context.
+- The same DB tables power both API responses and dashboard/trace pages.
+- Static assets in `app/static` provide theme and UI behavior on top of rendered HTML.
 
 ## Prerequisites
 
