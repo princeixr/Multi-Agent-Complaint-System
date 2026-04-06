@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Annotated, Optional
+from typing import Optional
 
 from typing_extensions import TypedDict
 
@@ -55,3 +55,12 @@ class WorkflowState(TypedDict, total=False):
     # ── Meta ─────────────────────────────────────────────────────────────
     error: Optional[str]
     retry_count: int
+
+    # ── Supervisor (agentic orchestration) ───────────────────────────────
+    supervisor_plan: list[dict]       # planned steps (revisable by supervisor)
+    supervisor_instructions: str      # guidance for the active specialist
+    supervisor_reasoning: str         # why the supervisor chose this step
+    completed_steps: list[str]        # history of completed agent names
+    step_count: int                   # supervisor iteration counter
+    review_feedback: dict             # structured feedback from review agent
+    max_steps: int                    # safety cap (default 15)

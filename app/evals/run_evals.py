@@ -1,4 +1,4 @@
-"""Evaluation harness for the complaint‑classification pipeline.
+"""Evaluation harness for the complaint-classification pipeline.
 
 Loads labelled datasets from ``datasets/`` and measures accuracy,
 precision and recall across the key pipeline outputs.
@@ -23,7 +23,7 @@ DATASETS_DIR = Path(__file__).resolve().parent / "datasets"
 # ── Dataset loading ──────────────────────────────────────────────────────────
 
 def load_dataset(filename: str) -> list[dict[str, Any]]:
-    """Load a CSV or JSON‑lines evaluation dataset.
+    """Load a CSV or JSON-lines evaluation dataset.
 
     Expected columns / keys:
         narrative, expected_product_category, expected_issue_type
@@ -60,7 +60,7 @@ def evaluate_classification(
     """Run classification evaluation and return metric summary.
 
     Returns
-    ───────
+    -------
     dict with keys: total, correct_product, correct_issue,
                     product_accuracy, issue_accuracy, avg_confidence
     """

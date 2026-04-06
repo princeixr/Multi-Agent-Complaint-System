@@ -1,13 +1,15 @@
-"""Compliance agent – checks for regulatory and policy violations."""
+"""Compliance agent – checks for regulatory and policy violations.
+
+Uses tools to autonomously look up severity rubric and policy snippets.
+"""
 
 from __future__ import annotations
 
 import logging
 
-from langchain_core.prompts import ChatPromptTemplate
-
 from app.agents.llm_factory import create_llm
-from app.agents.llm_json import parse_llm_json
+from app.agents.tool_loop import run_agent_with_tools
+from app.agents.tools import lookup_severity_rubric
 from app.schemas.classification import ClassificationResult
 from app.schemas.resolution import ResolutionRecommendation
 from app.schemas.risk import RiskAssessment
@@ -16,21 +18,23 @@ logger = logging.getLogger(__name__)
 
 _SYSTEM_PROMPT = """\
 You are a compliance officer reviewing a consumer complaint case that has
-already been classified, risk‑assessed, and assigned a proposed resolution.
+already been classified, risk-assessed, and assigned a proposed resolution.
 
 Your job is to flag any **regulatory or policy compliance concerns**.
 
-Ground your review in the **company policy candidates** and compliance guidance
-provided in the user message. You may consider well-known consumer-protection
-themes (non-exhaustive examples: fair credit reporting, debt collection
-communications, disclosures/notice adequacy, unfair/deceptive/abusive acts),
-but do not invent company-specific rules not present in the retrieved guidance.
+You have a tool available to look up the company's severity rubric and policy
+snippets. Use it to ground your compliance review.
+
+You may consider well-known consumer-protection themes (non-exhaustive examples:
+fair credit reporting, debt collection communications, disclosures/notice
+adequacy, unfair/deceptive/abusive acts), but do not invent company-specific
+rules not present in the retrieved guidance.
 
 Return a JSON object:
 {{
   "flags": ["<flag_1>", "<flag_2>", ...],
   "passed": true/false,
-  "notes": "<optional free‑text note>"
+  "notes": "<optional free-text note>"
 }}
 
 If no concerns exist, return `{{"flags": [], "passed": true, "notes": null}}`.
@@ -42,39 +46,33 @@ def run_compliance_check(
     classification: ClassificationResult,
     risk: RiskAssessment,
     resolution: ResolutionRecommendation,
-    company_context: dict | None = None,
+    company_id: str = "mock_bank",
+    instructions: str = "",
     model_name: str | None = None,
     temperature: float = 0.0,
 ) -> dict:
     """Run the compliance check and return flags."""
     logger.info("Compliance agent running")
 
-    policy_snippet = ""
-    if company_context:
-        policy_candidates = company_context.get("policy_candidates", [])
-        if policy_candidates:
-            policy_snippet = (
-                "Company policy candidates relevant to compliance review:\n"
-                f"{policy_candidates}\n"
-            )
-
     user_message = (
         f"Narrative: {narrative}\n"
         f"Classification: {classification.model_dump_json()}\n"
         f"Risk Assessment: {risk.model_dump_json()}\n"
         f"Proposed Resolution: {resolution.model_dump_json()}\n"
-        f"{policy_snippet}"
+        f"Company ID: {company_id}\n"
     )
+    if instructions:
+        user_message += f"\nSupervisor instructions: {instructions}\n"
 
-    prompt = ChatPromptTemplate.from_messages(
-        [("system", _SYSTEM_PROMPT), ("human", "{input}")]
+    user_message += (
+        "\nUse your tool to look up severity rubrics and policy snippets. "
+        "When done, respond with the compliance check JSON."
     )
 
     llm = create_llm(model_name=model_name, temperature=temperature)
-    chain = prompt | llm
+    tools = [lookup_severity_rubric]
 
-    response = chain.invoke({"input": user_message})
-    result = parse_llm_json(getattr(response, "content", None))
+    result = run_agent_with_tools(llm, _SYSTEM_PROMPT, user_message, tools)
 
     logger.info(
         "Compliance check complete – passed=%s, flags=%d",
