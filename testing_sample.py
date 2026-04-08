@@ -38,7 +38,7 @@ OUTPUT_CSV = os.getenv(
     "TEST_PIPELINE_OUTPUT_CSV",
     "testing_sample_pipeline_output.csv",
 )
-SAMPLE_COUNT = max(1, int(os.getenv("TEST_SAMPLE_COUNT", "5")))
+SAMPLE_COUNT = max(1, 5 )#int(os.getenv("TEST_SAMPLE_COUNT", "10")))
 
 
 def get_first_existing(df: pd.DataFrame, col_candidates: list[str]) -> str | None:
@@ -111,12 +111,23 @@ def build_row_record(
     }
 
 
+def _cell_str(row: pd.Series, col: str | None) -> str | None:
+    if not col or col not in row.index:
+        return None
+    val = row[col]
+    if pd.isna(val):
+        return None
+    s = str(val).strip()
+    return s or None
+
+
 def row_to_payload(
     row: pd.Series,
     *,
-    col_narrative: str,
+    col_narrative: str | None,
     col_product: str | None,
     col_sub_product: str | None,
+    col_sub_issue: str | None,
     col_company: str | None,
     col_state: str | None,
     col_zip: str | None,
@@ -149,27 +160,41 @@ def row_to_payload(
             except Exception:
                 submitted_at = None
 
-    narrative_val = row[col_narrative]
-    if pd.isna(narrative_val) or len(str(narrative_val).strip()) < 10:
-        raise ValueError("Row has invalid narrative")
+    if col_narrative:
+        nar_raw = row[col_narrative]
+        nar_str = "" if pd.isna(nar_raw) else str(nar_raw).strip()
+    else:
+        nar_str = ""
+
+    product_str = _cell_str(row, col_product)
+    sub_product_str = _cell_str(row, col_sub_product)
+    issue_str = _cell_str(row, col_issue)
+    sub_issue_str = _cell_str(row, col_sub_issue)
+
+    has_rich_narrative = len(nar_str) >= 10
+    has_cfpb_core = bool(product_str and issue_str)
+    if not has_rich_narrative and not has_cfpb_core:
+        raise ValueError(
+            "Row needs either consumer_narrative (>=10 chars) or Product+Issue for CFPB structured path"
+        )
 
     return {
         "company_id": DEFAULT_COMPANY_ID,
-        "consumer_narrative": str(narrative_val),
-        "product": (str(row[col_product]).strip() if col_product else None) or None,
-        "sub_product": (str(row[col_sub_product]).strip() if col_sub_product else None)
-        or None,
-        "company": (str(row[col_company]).strip() if col_company else None) or None,
-        "state": (str(row[col_state]).strip() if col_state else None) or None,
-        "zip_code": (str(row[col_zip]).strip() if col_zip else None) or None,
+        "consumer_narrative": nar_str if nar_str else None,
+        "product": product_str,
+        "sub_product": sub_product_str,
+        "cfpb_product": product_str,
+        "cfpb_sub_product": sub_product_str,
+        "cfpb_issue": issue_str,
+        "cfpb_sub_issue": sub_issue_str,
+        "company": _cell_str(row, col_company),
+        "state": _cell_str(row, col_state),
+        "zip_code": _cell_str(row, col_zip),
         "channel": channel,
         "submitted_at": submitted_at.isoformat() if submitted_at else None,
-        "external_product_category": (str(row[col_product]).strip() if col_product else None)
-        or None,
-        "external_issue_type": (str(row[col_issue]).strip() if col_issue else None)
-        or None,
-        "requested_resolution": (str(row[col_response]).strip() if col_response else None)
-        or None,
+        "external_product_category": product_str,
+        "external_issue_type": issue_str,
+        "requested_resolution": _cell_str(row, col_response),
     }
 
 
@@ -212,21 +237,22 @@ def main() -> None:
     )
     col_date_received = get_first_existing(df, ["Date received", "date_received"])
     col_issue = get_first_existing(df, ["Issue", "issue"])
+    col_sub_issue = get_first_existing(
+        df, ["Sub-issue", "Sub-Issue", "sub_issue", "Sub issue"]
+    )
 
-    missing = [
-        name
-        for name, val in [
-            ("narrative", col_narrative),
-            ("issue", col_issue),
-        ]
-        if val is None
-    ]
+    missing = [name for name, val in [("issue", col_issue)] if val is None]
     if missing:
         raise RuntimeError(
             "CSV is missing required columns for the test: " + ", ".join(missing)
         )
 
-    assert col_narrative is not None and col_issue is not None
+    assert col_issue is not None
+    if col_narrative is None and not (col_product and col_issue):
+        raise RuntimeError(
+            "CSV needs a narrative column, or both Product and Issue columns, "
+            "for structured-only CFPB rows."
+        )
 
     print("Using columns:")
     print(
@@ -241,16 +267,28 @@ def main() -> None:
             "channel": col_channel,
             "date_received": col_date_received,
             "requested_resolution": col_response,
+            "sub_issue": col_sub_issue,
         }
     )
 
-    valid_mask = (
+    narrative_ok = (
         df[col_narrative].notna()
         & (df[col_narrative].astype(str).str.len() >= 10)
+        if col_narrative
+        else pd.Series(False, index=df.index)
     )
+    structured_ok = pd.Series(False, index=df.index)
+    if col_product and col_issue:
+        structured_ok = (
+            df[col_product].notna()
+            & df[col_issue].notna()
+            & (df[col_product].astype(str).str.strip() != "")
+            & (df[col_issue].astype(str).str.strip() != "")
+        )
+    valid_mask = narrative_ok | structured_ok
     if not valid_mask.any():
         raise RuntimeError(
-            "No rows in the CSV have a narrative with at least 10 characters."
+            "No valid rows: need narrative >= 10 characters or non-empty Product+Issue."
         )
 
     valid_df = df.loc[valid_mask]
@@ -277,6 +315,7 @@ def main() -> None:
                 col_narrative=col_narrative,
                 col_product=col_product,
                 col_sub_product=col_sub_product,
+                col_sub_issue=col_sub_issue,
                 col_company=col_company,
                 col_state=col_state,
                 col_zip=col_zip,

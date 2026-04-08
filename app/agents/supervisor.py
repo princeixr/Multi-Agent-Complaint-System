@@ -56,6 +56,11 @@ def _build_state_summary(state: dict[str, Any]) -> str:
     if case:
         narrative = getattr(case, "consumer_narrative", None) or ""
         parts.append(f"Case narrative (first 300 chars): {narrative[:300]}")
+        if len(narrative.strip()) < 10:
+            parts.append(
+                "Consumer narrative is absent or short — specialists use portal fields "
+                "and classification; do not assume rich free-text detail."
+            )
         parts.append(f"Product hint: {getattr(case, 'product', None) or 'N/A'}")
     else:
         parts.append("Case: not yet ingested")
@@ -79,6 +84,12 @@ def _build_state_summary(state: dict[str, Any]) -> str:
             f"Classification: product={cat_val}, issue={issue_val}, "
             f"confidence={conf:.2f}" if conf is not None else f"Classification: product={cat_val}, issue={issue_val}"
         )
+        rr = getattr(cls, "review_recommended", False)
+        if rr:
+            rc = getattr(cls, "reason_codes", []) or []
+            parts.append(
+                f"Classification review_recommended=true; reason_codes={list(rc)}"
+            )
 
     # Risk
     risk = state.get("risk_assessment")

@@ -9,8 +9,10 @@ import logging
 from pathlib import Path
 
 from app.agents.llm_factory import create_llm
+from app.agents.narrative_context import narrative_for_agent_prompt
 from app.agents.tool_loop import run_agent_with_tools
 from app.agents.tools import lookup_routing_rules, lookup_severity_rubric, search_similar_resolutions
+from app.schemas.case import CaseRead
 from app.schemas.classification import ClassificationResult
 from app.schemas.resolution import ResolutionRecommendation
 from app.schemas.risk import RiskAssessment
@@ -25,11 +27,13 @@ def _load_prompt() -> str:
 
 
 def run_resolution(
-    narrative: str,
+    *,
     classification: ClassificationResult,
     risk: RiskAssessment,
     root_cause_hypothesis: object | None = None,
     company_id: str = "mock_bank",
+    case: CaseRead | None = None,
+    narrative: str = "",
     instructions: str = "",
     model_name: str | None = None,
     temperature: float = 0.0,
@@ -43,8 +47,17 @@ def run_resolution(
 
     system_prompt = _load_prompt()
 
+    narrative_text = narrative_for_agent_prompt(case) if case is not None else narrative
+    review_hint = ""
+    if classification.review_recommended:
+        review_hint = (
+            "\nNote: Classification has review_recommended=true; "
+            "prefer conservative, well-documented resolution steps.\n"
+        )
+
     user_message = (
-        f"Narrative: {narrative}\n"
+        f"Narrative / case text:\n{narrative_text}\n"
+        f"{review_hint}"
         f"Classification: {classification.model_dump_json()}\n"
         f"Risk Assessment: {risk.model_dump_json()}\n"
         f"Company ID: {company_id}\n"

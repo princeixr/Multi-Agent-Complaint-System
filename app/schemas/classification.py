@@ -5,7 +5,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class ProductCategory(str, Enum):
@@ -51,3 +51,54 @@ class ClassificationResult(BaseModel):
         default_factory=list,
         description="Key phrases extracted from the narrative",
     )
+    review_recommended: bool = Field(
+        default=False,
+        description="True if downstream QA or human review is advised",
+    )
+    reason_codes: list[str] = Field(
+        default_factory=list,
+        description="Machine-readable tags for audit (e.g. narrative_missing)",
+    )
+    alternate_candidates: list[dict] = Field(
+        default_factory=list,
+        description="Optional runner-up label hypotheses for reconciliation",
+    )
+
+    @field_validator("reason_codes", mode="before")
+    @classmethod
+    def _reason_codes_as_list(cls, v: object) -> list[str]:
+        if v is None:
+            return []
+        if isinstance(v, str):
+            return [v.strip()] if v.strip() else []
+        if isinstance(v, list):
+            return [str(x).strip() for x in v if str(x).strip()]
+        return []
+
+    @field_validator("keywords", mode="before")
+    @classmethod
+    def _keywords_as_list(cls, v: object) -> list[str]:
+        if v is None:
+            return []
+        if isinstance(v, str):
+            s = v.strip()
+            if not s:
+                return []
+            for sep in (";", ","):
+                if sep in s:
+                    return [p.strip() for p in s.split(sep) if p.strip()]
+            return [s]
+        if isinstance(v, list):
+            return [str(x).strip() for x in v if str(x).strip()]
+        return []
+
+    @field_validator("alternate_candidates", mode="before")
+    @classmethod
+    def _alternate_candidates_as_list(cls, v: object) -> list[dict]:
+        if v is None:
+            return []
+        if isinstance(v, dict):
+            return [v]
+        if isinstance(v, list):
+            return [x for x in v if isinstance(x, dict)]
+        return []

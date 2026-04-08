@@ -35,6 +35,8 @@ def _classification_summary(clf: Any) -> dict[str, Any] | None:
         "product_category": d.get("product_category"),
         "issue_type": d.get("issue_type"),
         "confidence": d.get("confidence"),
+        "review_recommended": d.get("review_recommended"),
+        "reason_codes": d.get("reason_codes"),
     }
 
 

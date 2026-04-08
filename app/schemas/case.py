@@ -5,12 +5,13 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 from enum import Enum
-from typing import Optional
+from typing import Any, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 # ── Enums ────────────────────────────────────────────────────────────────────
+
 
 class CaseStatus(str, Enum):
     RECEIVED = "received"
@@ -35,17 +36,28 @@ class Channel(str, Enum):
 
 # ── Core schema ──────────────────────────────────────────────────────────────
 
+
 class CaseCreate(BaseModel):
-    """Payload accepted from the API to open a new case."""
+    """Payload accepted from the API to open a new case.
+
+    CFPB-style data: ``cfpb_*`` fields are **consumer selections from the portal**
+    (noisy priors, not ground truth). ``consumer_narrative`` is optional when
+    enough structured portal fields are present.
+    """
 
     company_id: Optional[str] = Field(
         None, description="Optional company identifier for company-specific routing/policy"
     )
 
-    consumer_narrative: str = Field(
-        ..., min_length=10, description="Free‑text complaint narrative"
+    consumer_narrative: Optional[str] = Field(
+        None,
+        description="Free-text complaint narrative (may be absent if CFPB portal fields suffice).",
     )
-    product: Optional[str] = Field(None, description="Financial product or service")
+
+    product: Optional[str] = Field(
+        None,
+        description="Financial product or service (legacy / may mirror CFPB product label)",
+    )
     sub_product: Optional[str] = None
     company: Optional[str] = None
     state: Optional[str] = Field(None, max_length=2)
@@ -53,9 +65,21 @@ class CaseCreate(BaseModel):
     channel: Channel = Channel.WEB
     submitted_at: Optional[datetime] = None
 
-    # Optional external labels (e.g., CFPB-provided fields or internal intake
-    # classifications). These allow mapping/validation during the company-aware
-    # classification step.
+    # Explicit CFPB portal selections (public complaint database columns).
+    cfpb_product: Optional[str] = Field(
+        None, description="Consumer-selected CFPB product (portal)"
+    )
+    cfpb_sub_product: Optional[str] = Field(
+        None, description="Consumer-selected CFPB sub-product (portal)"
+    )
+    cfpb_issue: Optional[str] = Field(
+        None, description="Consumer-selected CFPB issue (portal)"
+    )
+    cfpb_sub_issue: Optional[str] = Field(
+        None, description="Consumer-selected CFPB sub-issue (portal)"
+    )
+
+    # Legacy external labels (still supported for CSV/API compatibility).
     external_product_category: Optional[str] = Field(
         None, description="Optional externally provided product category"
     )
@@ -66,13 +90,33 @@ class CaseCreate(BaseModel):
         None, description="Optional externally requested resolution"
     )
 
+    @model_validator(mode="after")
+    def require_narrative_or_structured_path(self) -> CaseCreate:
+        """At least one of: rich narrative, or minimal CFPB/legacy structured path."""
+        nar = (self.consumer_narrative or "").strip()
+        has_rich_narrative = len(nar) >= 10
+
+        has_cfpb_core = bool(self.cfpb_product and self.cfpb_issue)
+        has_legacy_structured = bool(
+            self.product and (self.cfpb_issue or self.external_issue_type)
+        )
+        has_structured = has_cfpb_core or has_legacy_structured
+
+        if not has_rich_narrative and not has_structured:
+            raise ValueError(
+                "Provide either consumer_narrative (at least 10 characters) or "
+                "structured portal fields: (cfpb_product AND cfpb_issue), OR "
+                "(product AND (cfpb_issue OR external_issue_type))."
+            )
+        return self
+
 
 class CaseRead(BaseModel):
     """Full case representation returned by the API."""
 
     id: str = Field(default_factory=lambda: uuid.uuid4().hex)
     status: CaseStatus = CaseStatus.RECEIVED
-    consumer_narrative: str
+    consumer_narrative: str = ""
     product: Optional[str] = None
     sub_product: Optional[str] = None
     company: Optional[str] = None
@@ -83,8 +127,15 @@ class CaseRead(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
+    # CFPB portal fields (copied from intake payload for agent access).
+    cfpb_product: Optional[str] = None
+    cfpb_sub_product: Optional[str] = None
+    cfpb_issue: Optional[str] = None
+    cfpb_sub_issue: Optional[str] = None
+
     # Downstream enrichment (populated by agents)
     classification: Optional[dict] = None
+    classification_audit: Optional[dict] = None
     risk_assessment: Optional[dict] = None
     proposed_resolution: Optional[dict] = None
     compliance_flags: Optional[list[str]] = None

@@ -71,28 +71,41 @@ def init_db() -> None:
             ("compliance_flags_json", "TEXT"),
             ("review_notes", "TEXT"),
             ("routed_to", "VARCHAR(120)"),
+            ("classification_audit_json", "TEXT"),
         ]
 
-        existing = conn.execute(
-            text(
-                """
-                SELECT column_name
-                FROM information_schema.columns
-                WHERE table_name = 'complaint_cases'
-                AND column_name = ANY(:cols)
-                """
-            ),
-            {"cols": [c[0] for c in columns_to_ensure]},
-        ).fetchall()
-        existing_cols = {r[0] for r in existing}
+        classification_columns: list[tuple[str, str]] = [
+            ("review_recommended", "BOOLEAN DEFAULT FALSE"),
+            ("reason_codes_json", "TEXT"),
+            ("keywords_json", "TEXT"),
+        ]
 
-        for col_name, col_type in columns_to_ensure:
-            if col_name in existing_cols:
-                continue
-            logger.info("Adding missing column to complaint_cases: %s", col_name)
-            conn.execute(
-                text(f"ALTER TABLE complaint_cases ADD COLUMN {col_name} {col_type}")
-            )
+        for table_name, columns in (
+            ("complaint_cases", complaint_case_columns),
+            ("classifications", classification_columns),
+        ):
+            existing = conn.execute(
+                text(
+                    """
+                    SELECT column_name
+                    FROM information_schema.columns
+                    WHERE table_name = :table_name
+                    AND column_name = ANY(:cols)
+                    """
+                ),
+                {"table_name": table_name, "cols": [c[0] for c in columns]},
+            ).fetchall()
+            existing_cols = {r[0] for r in existing}
+
+            for col_name, col_type in columns:
+                if col_name in existing_cols:
+                    continue
+                logger.info("Adding missing column to %s: %s", table_name, col_name)
+                conn.execute(
+                    text(
+                        f"ALTER TABLE {table_name} ADD COLUMN {col_name} {col_type}"
+                    )
+                )
         conn.commit()
 
 

@@ -28,17 +28,31 @@ def _json_or_none(value: object | None) -> str | None:
     return json.dumps(value, ensure_ascii=False)
 
 
+def _json_list_from_db(raw: str | None) -> list:
+    if not raw:
+        return []
+    try:
+        data = json.loads(raw)
+        return data if isinstance(data, list) else []
+    except json.JSONDecodeError:
+        return []
+
+
 def _case_read_from_db(db_case: ComplaintCase) -> CaseRead:
     """Build CaseRead from ORM entities (including related agent outputs)."""
     classification = None
     if db_case.classification is not None:
+        cr = db_case.classification
         classification = {
-            "product_category": db_case.classification.product_category,
-            "issue_type": db_case.classification.issue_type,
-            "sub_issue": db_case.classification.sub_issue,
-            "confidence": db_case.classification.confidence,
-            "reasoning": db_case.classification.reasoning,
-            "keywords": [],
+            "product_category": cr.product_category,
+            "issue_type": cr.issue_type,
+            "sub_issue": cr.sub_issue,
+            "confidence": cr.confidence,
+            "reasoning": cr.reasoning,
+            "keywords": _json_list_from_db(getattr(cr, "keywords_json", None)),
+            "review_recommended": bool(getattr(cr, "review_recommended", False)),
+            "reason_codes": _json_list_from_db(getattr(cr, "reason_codes_json", None)),
+            "alternate_candidates": [],
         }
 
     risk_assessment = None
@@ -91,6 +105,24 @@ def _case_read_from_db(db_case: ComplaintCase) -> CaseRead:
         else None
     )
 
+    classification_audit = None
+    raw_audit = getattr(db_case, "classification_audit_json", None)
+    if raw_audit:
+        try:
+            classification_audit = json.loads(raw_audit)
+        except json.JSONDecodeError:
+            classification_audit = None
+
+    cfpb_product = None
+    cfpb_sub_product = None
+    cfpb_issue = None
+    cfpb_sub_issue = None
+    if external_schema and isinstance(external_schema, dict):
+        cfpb_product = external_schema.get("cfpb_product")
+        cfpb_sub_product = external_schema.get("cfpb_sub_product")
+        cfpb_issue = external_schema.get("cfpb_issue")
+        cfpb_sub_issue = external_schema.get("cfpb_sub_issue")
+
     return CaseRead(
         id=db_case.id,
         status=db_case.status,  # CaseStatus conversion happens via pydantic
@@ -105,11 +137,16 @@ def _case_read_from_db(db_case: ComplaintCase) -> CaseRead:
         created_at=db_case.created_at,
         updated_at=db_case.updated_at,
         classification=classification,
+        classification_audit=classification_audit,
         risk_assessment=risk_assessment,
         proposed_resolution=proposed_resolution,
         compliance_flags=compliance_flags,
         review_notes=db_case.review_notes,
         routed_to=db_case.routed_to,
+        cfpb_product=cfpb_product,
+        cfpb_sub_product=cfpb_sub_product,
+        cfpb_issue=cfpb_issue,
+        cfpb_sub_issue=cfpb_sub_issue,
         external_schema=external_schema,
         operational_mapping=operational_mapping,
         evidence_trace=evidence_trace,
@@ -156,6 +193,7 @@ async def create_complaint(payload: CaseCreate) -> CaseRead:
                 root_cause_hypothesis_json=_json_or_none(case.root_cause_hypothesis),
                 compliance_flags_json=_json_or_none(case.compliance_flags),
                 review_notes=case.review_notes,
+                classification_audit_json=_json_or_none(case.classification_audit),
             )
             db.add(db_case)
 
@@ -176,6 +214,9 @@ async def create_complaint(payload: CaseCreate) -> CaseRead:
                         sub_issue=c.get("sub_issue"),
                         confidence=c.get("confidence", 0.0),
                         reasoning=c.get("reasoning"),
+                        review_recommended=bool(c.get("review_recommended", False)),
+                        reason_codes_json=_json_or_none(c.get("reason_codes")),
+                        keywords_json=_json_or_none(c.get("keywords")),
                     )
                 )
 

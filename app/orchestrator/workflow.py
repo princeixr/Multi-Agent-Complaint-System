@@ -15,6 +15,7 @@ from langgraph.graph import END, StateGraph
 from opentelemetry.trace import Status, StatusCode
 
 from app.agents.classification import run_classification
+from app.agents.narrative_context import narrative_for_agent_prompt
 from app.agents.compliance import run_compliance_check
 from app.agents.intake import run_intake
 from app.agents.resolution import run_resolution
@@ -81,17 +82,15 @@ def classify_node(state: WorkflowState) -> WorkflowState:
     company_id = state.get("company_id", "mock_bank")
     instructions = state.get("supervisor_instructions", "")
 
-    result = run_classification(
-        narrative=case.consumer_narrative,
-        product=case.product,
-        sub_product=case.sub_product,
-        company=case.company,
-        state=case.state,
+    pipeline_out = run_classification(
+        case=case,
         company_id=company_id,
         instructions=instructions,
     )
+    result = pipeline_out.result
 
     case.classification = result.model_dump()
+    case.classification_audit = pipeline_out.audit.model_dump(mode="json")
     case.status = CaseStatus.CLASSIFIED
     case.operational_mapping = {
         "product_category": result.product_category.value,
@@ -112,7 +111,7 @@ def risk_node(state: WorkflowState) -> WorkflowState:
     instructions = state.get("supervisor_instructions", "")
 
     result = run_risk_assessment(
-        narrative=case.consumer_narrative,
+        case=case,
         classification=state["classification"],
         company_id=company_id,
         instructions=instructions,
@@ -135,7 +134,7 @@ def root_cause_node(state: WorkflowState) -> WorkflowState:
     instructions = state.get("supervisor_instructions", "")
 
     result = run_root_cause_hypothesis(
-        narrative=case.consumer_narrative,
+        case=case,
         classification=state["classification"],
         risk=state["risk_assessment"],
         company_id=company_id,
@@ -157,7 +156,7 @@ def resolution_node(state: WorkflowState) -> WorkflowState:
     instructions = state.get("supervisor_instructions", "")
 
     result = run_resolution(
-        narrative=case.consumer_narrative,
+        case=case,
         classification=state["classification"],
         risk=state["risk_assessment"],
         root_cause_hypothesis=state.get("root_cause_hypothesis"),
@@ -181,7 +180,7 @@ def compliance_node(state: WorkflowState) -> WorkflowState:
     instructions = state.get("supervisor_instructions", "")
 
     result = run_compliance_check(
-        narrative=case.consumer_narrative,
+        case=case,
         classification=state["classification"],
         risk=state["risk_assessment"],
         resolution=state["resolution"],
@@ -204,7 +203,7 @@ def review_node(state: WorkflowState) -> WorkflowState:
     instructions = state.get("supervisor_instructions", "")
 
     result = run_review(
-        narrative=case.consumer_narrative,
+        narrative=narrative_for_agent_prompt(case),
         classification_json=json.dumps(state["classification"].model_dump()),
         risk_json=json.dumps(state["risk_assessment"].model_dump()),
         resolution_json=json.dumps(state["resolution"].model_dump()),

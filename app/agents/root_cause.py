@@ -9,8 +9,10 @@ from __future__ import annotations
 import logging
 
 from app.agents.llm_factory import create_llm
+from app.agents.narrative_context import narrative_for_agent_prompt
 from app.agents.tool_loop import run_agent_with_tools
 from app.agents.tools import lookup_root_cause_controls, search_similar_complaints
+from app.schemas.case import CaseRead
 from app.schemas.classification import ClassificationResult
 from app.schemas.risk import RiskAssessment
 from app.schemas.root_cause import RootCauseHypothesis
@@ -45,10 +47,12 @@ that can validate the hypothesis.
 
 
 def run_root_cause_hypothesis(
-    narrative: str,
+    *,
     classification: ClassificationResult,
     risk: RiskAssessment,
     company_id: str = "mock_bank",
+    case: CaseRead | None = None,
+    narrative: str = "",
     instructions: str = "",
     model_name: str | None = None,
     temperature: float = 0.0,
@@ -56,8 +60,10 @@ def run_root_cause_hypothesis(
     """Generate a root cause hypothesis with tool access."""
     logger.info("Root-cause agent running")
 
+    narrative_text = narrative_for_agent_prompt(case) if case is not None else narrative
+
     user_message = (
-        f"Narrative: {narrative}\n"
+        f"Narrative / case text:\n{narrative_text}\n"
         f"Operational classification: {classification.model_dump_json()}\n"
         f"Risk assessment: {risk.model_dump_json()}\n"
         f"Company ID: {company_id}\n"

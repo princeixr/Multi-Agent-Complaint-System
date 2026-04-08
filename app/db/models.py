@@ -70,6 +70,7 @@ class ComplaintCase(Base):
     compliance_flags_json = Column(Text)
     review_notes = Column(Text)
     routed_to = Column(String(120))
+    classification_audit_json = Column(Text)
 
     # Relationships
     classification = relationship(
@@ -93,6 +94,9 @@ class ClassificationRecord(Base):
     sub_issue = Column(String(120))
     confidence = Column(Float, nullable=False)
     reasoning = Column(Text)
+    review_recommended = Column(Boolean, default=False)
+    reason_codes_json = Column(Text)
+    keywords_json = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     case = relationship("ComplaintCase", back_populates="classification")

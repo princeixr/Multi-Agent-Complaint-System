@@ -27,7 +27,8 @@ def run_agent_with_tools(
     user_message: str,
     tools: list[BaseTool],
     max_rounds: int = MAX_TOOL_ROUNDS,
-) -> dict[str, Any]:
+    return_evidence: bool = False,
+) -> dict[str, Any] | tuple[dict[str, Any], dict[str, bool]]:
     """Run an LLM agent with tools in a ReAct-style loop.
 
     The agent calls tools zero or more times, then produces a final text
@@ -45,14 +46,18 @@ def run_agent_with_tools(
         Available tools the agent can call.
     max_rounds : int
         Maximum number of tool-calling rounds before forcing a final response.
+    return_evidence : bool
+        When True, return ``(parsed_json, evidence_flags)`` where flags record
+        which tool names were invoked (for audit).
 
     Returns
     -------
-    dict
-        Parsed JSON from the agent's final text response.
+    dict | tuple[dict, dict[str, bool]]
+        Parsed JSON from the agent's final text response, optionally with evidence.
     """
     tool_map = {t.name: t for t in tools}
     llm_with_tools = llm.bind_tools(tools)
+    tools_called: set[str] = set()
 
     messages: list = [
         SystemMessage(content=system_prompt),
@@ -65,11 +70,15 @@ def run_agent_with_tools(
 
         # If no tool calls, this is the final response
         if not response.tool_calls:
-            return parse_llm_json(response.content)
+            parsed = parse_llm_json(response.content)
+            if return_evidence:
+                return parsed, _evidence_flags(tools_called)
+            return parsed
 
         # Execute each tool call
         for tool_call in response.tool_calls:
             tool_name = tool_call["name"]
+            tools_called.add(tool_name)
             tool_args = tool_call["args"]
             tool_id = tool_call["id"]
 

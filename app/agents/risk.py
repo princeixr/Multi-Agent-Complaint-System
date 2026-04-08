@@ -9,8 +9,10 @@ import logging
 from pathlib import Path
 
 from app.agents.llm_factory import create_llm
+from app.agents.narrative_context import narrative_for_agent_prompt
 from app.agents.tool_loop import run_agent_with_tools
 from app.agents.tools import lookup_severity_rubric, search_similar_complaints
+from app.schemas.case import CaseRead
 from app.schemas.classification import ClassificationResult
 from app.schemas.risk import RiskAssessment
 
@@ -24,9 +26,11 @@ def _load_prompt() -> str:
 
 
 def run_risk_assessment(
-    narrative: str,
+    *,
     classification: ClassificationResult,
     company_id: str = "mock_bank",
+    case: CaseRead | None = None,
+    narrative: str = "",
     instructions: str = "",
     model_name: str | None = None,
     temperature: float = 0.0,
@@ -40,8 +44,17 @@ def run_risk_assessment(
 
     system_prompt = _load_prompt()
 
+    narrative_text = narrative_for_agent_prompt(case) if case is not None else narrative
+    review_hint = ""
+    if classification.review_recommended:
+        review_hint = (
+            "\nNote: Classification has review_recommended=true; "
+            f"reason_codes={classification.reason_codes}. Treat regulatory sensitivity carefully.\n"
+        )
+
     user_message = (
-        f"Narrative: {narrative}\n"
+        f"Narrative / case text:\n{narrative_text}\n"
+        f"{review_hint}"
         f"Classification: {classification.model_dump_json()}\n"
         f"Company ID: {company_id}\n"
     )

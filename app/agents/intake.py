@@ -25,14 +25,16 @@ def run_intake(payload: CaseCreate) -> CaseRead:
     Responsibilities
     ────────────────
     • Validate required fields (Pydantic handles most of this).
-    • Redact obvious PII from the narrative.
+    • Redact obvious PII from the narrative when present.
     • Normalise whitespace and casing.
     • Stamp ``submitted_at`` if missing.
     • Set status → ``intake_complete``.
+    • Preserve CFPB portal fields and legacy external labels on the case.
     """
     logger.info("Intake agent processing new complaint")
 
-    clean_narrative = _normalise_text(payload.consumer_narrative)
+    raw_narrative = (payload.consumer_narrative or "").strip()
+    clean_narrative = _normalise_text(raw_narrative) if raw_narrative else ""
 
     case = CaseRead(
         consumer_narrative=clean_narrative,
@@ -44,12 +46,21 @@ def run_intake(payload: CaseCreate) -> CaseRead:
         channel=payload.channel,
         submitted_at=payload.submitted_at or datetime.utcnow(),
         status=CaseStatus.INTAKE_COMPLETE,
+        cfpb_product=payload.cfpb_product,
+        cfpb_sub_product=payload.cfpb_sub_product,
+        cfpb_issue=payload.cfpb_issue,
+        cfpb_sub_issue=payload.cfpb_sub_issue,
     )
 
     case.external_schema = {
         "external_product_category": payload.external_product_category,
         "external_issue_type": payload.external_issue_type,
         "requested_resolution": payload.requested_resolution,
+        "cfpb_product": payload.cfpb_product,
+        "cfpb_sub_product": payload.cfpb_sub_product,
+        "cfpb_issue": payload.cfpb_issue,
+        "cfpb_sub_issue": payload.cfpb_sub_issue,
+        "narrative_absent_or_short": len(clean_narrative) < 10,
     }
 
     logger.info("Intake complete – case %s", case.id)

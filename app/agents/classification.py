@@ -1,29 +1,216 @@
-"""Classification agent – assigns product category and issue type.
+"""Classification agent – CFPB-aware Assess → Plan → Execute → Verify.
 
-Uses tools to autonomously retrieve similar complaints and company taxonomy.
+v2 note: when ``ClassificationAuditPackage.v2_dual_hypothesis_eligible`` is true
+(contradiction, multi_issue, or high conflict_score), a future pipeline may run
+structured-led vs narrative-led micro-classifications and reconcile — not used in v1.
 """
 
 from __future__ import annotations
 
+import json
 import logging
 from pathlib import Path
 
+from langchain_core.messages import HumanMessage, SystemMessage
+
+from app.agents.classification_context import (
+    build_deterministic_signals,
+    should_skip_assess_llm,
+    template_situation_assessment,
+)
+from app.agents.classification_plan_rules import plan_from_assessment
 from app.agents.llm_factory import create_llm
+from app.agents.llm_json import parse_llm_json
 from app.agents.tool_loop import run_agent_with_tools
 from app.agents.tools import lookup_company_taxonomy, search_similar_complaints
+from app.schemas.case import CaseRead
 from app.schemas.classification import ClassificationResult
+from app.schemas.classification_pipeline import (
+    ClassificationAuditPackage,
+    ClassificationPipelineOutput,
+    ClassificationPlan,
+    ClassificationStrategy,
+    Complexity,
+    Consistency,
+    EvidenceWeighting,
+    SituationAssessment,
+)
 
 logger = logging.getLogger(__name__)
 
-_PROMPT_PATH = Path(__file__).resolve().parent.parent / "prompts" / "classification.md"
+_CLASSIFICATION_PROMPT_PATH = Path(__file__).resolve().parent.parent / "prompts" / "classification.md"
+_ASSESS_PROMPT_PATH = Path(__file__).resolve().parent.parent / "prompts" / "classification_assess.md"
+
+_STRATEGY_INSTRUCTIONS = {
+    ClassificationStrategy.MAPPING_ONLY: (
+        "Strategy: **mapping_only** — Map CFPB portal selections to internal taxonomy first; "
+        "treat the narrative as secondary or absent."
+    ),
+    ClassificationStrategy.MAPPING_PLUS_NARRATIVE_CONFIRM: (
+        "Strategy: **mapping_plus_narrative_confirm** — Use portal fields as priors, then "
+        "confirm or adjust using the narrative and tools."
+    ),
+    ClassificationStrategy.NARRATIVE_LED: (
+        "Strategy: **narrative_led** — Prefer the consumer narrative when it conflicts with "
+        "portal menu selections; use tools to resolve ambiguity."
+    ),
+    ClassificationStrategy.RETRIEVAL_DISAMBIGUATION: (
+        "Strategy: **retrieval_disambiguation** — Heavy use of similar-complaint search and "
+        "taxonomy tools to disambiguate conflicting or sparse evidence."
+    ),
+    ClassificationStrategy.LOW_CONFIDENCE_RETURN: (
+        "Strategy: **low_confidence_return** — Prefer broader/other categories and "
+        "low confidence rather than over-fitting sparse evidence."
+    ),
+}
+
+_WEIGHTING_BLURB = {
+    EvidenceWeighting.STRUCTURED: "Evidence weighting: **structured** — prioritize CFPB portal fields.",
+    EvidenceWeighting.NARRATIVE: "Evidence weighting: **narrative** — prioritize free-text narrative.",
+    EvidenceWeighting.BALANCED: "Evidence weighting: **balanced** — reconcile portal fields and narrative.",
+}
 
 
-def _load_prompt() -> str:
-    return _PROMPT_PATH.read_text()
+def _load_classification_prompt() -> str:
+    return _CLASSIFICATION_PROMPT_PATH.read_text()
+
+
+def _load_assess_prompt() -> str:
+    return _ASSESS_PROMPT_PATH.read_text()
+
+
+def _run_assess_llm(signals: dict, case: CaseRead, llm) -> SituationAssessment:
+    system = _load_assess_prompt()
+    case_summary = {
+        "consumer_narrative": case.consumer_narrative,
+        "product": case.product,
+        "sub_product": case.sub_product,
+        "cfpb_product": case.cfpb_product,
+        "cfpb_sub_product": case.cfpb_sub_product,
+        "cfpb_issue": case.cfpb_issue,
+        "cfpb_sub_issue": case.cfpb_sub_issue,
+        "company": case.company,
+        "state": case.state,
+    }
+    trimmed = {k: v for k, v in case_summary.items() if v}
+    human = (
+        "SIGNALS_JSON:\n"
+        f"{json.dumps(signals, indent=2)}\n\n"
+        "CASE_SUMMARY_JSON:\n"
+        f"{json.dumps(trimmed, indent=2)}"
+    )
+    resp = llm.invoke([SystemMessage(content=system), HumanMessage(content=human)])
+    data = parse_llm_json(resp.content)
+    return SituationAssessment.model_validate(data)
+
+
+def _build_execute_user_message(
+    case: CaseRead,
+    assessment: SituationAssessment,
+    plan: ClassificationPlan,
+    instructions: str,
+    company_id: str,
+) -> str:
+    strategy_line = _STRATEGY_INSTRUCTIONS.get(
+        plan.strategy,
+        _STRATEGY_INSTRUCTIONS[ClassificationStrategy.MAPPING_PLUS_NARRATIVE_CONFIRM],
+    )
+    weight_line = _WEIGHTING_BLURB.get(
+        assessment.recommended_weighting,
+        _WEIGHTING_BLURB[EvidenceWeighting.BALANCED],
+    )
+    lines = [
+        "## Case evidence",
+        "",
+        "**CFPB portal fields** (consumer menu selections — may be incomplete or wrong):",
+        f"- cfpb_product: {case.cfpb_product or 'N/A'}",
+        f"- cfpb_sub_product: {case.cfpb_sub_product or 'N/A'}",
+        f"- cfpb_issue: {case.cfpb_issue or 'N/A'}",
+        f"- cfpb_sub_issue: {case.cfpb_sub_issue or 'N/A'}",
+        "",
+        "**Legacy / free-form hints:**",
+        f"- product: {case.product or 'N/A'}",
+        f"- sub_product: {case.sub_product or 'N/A'}",
+        f"- company: {case.company or 'N/A'}",
+        f"- state: {case.state or 'N/A'}",
+        "",
+        "**Consumer complaint narrative** (may be empty or short — do not invent facts):",
+        case.consumer_narrative or "[empty]",
+        "",
+        "## Plan (follow strictly)",
+        strategy_line,
+        weight_line,
+        f"- Situation complexity (assessment): {assessment.complexity.value}",
+        f"- Consistency (structured vs narrative): {assessment.consistency.value}",
+        f"- Conflict score (0–1): {assessment.conflict_score:.2f}",
+        f"- Tool budget (max rounds): {plan.tool_budget}",
+        f"- Retrieval emphasis: {plan.needs_retrieval}",
+        "",
+        f"Company ID for tools: {company_id}",
+    ]
+    if instructions:
+        lines.extend(["", f"Supervisor instructions: {instructions}"])
+    lines.extend(
+        [
+            "",
+            "Use tools within the tool budget to ground classification. When finished, "
+            "respond with **only** the classification JSON per the system schema.",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def _v2_dual_hypothesis_eligible(assessment: SituationAssessment) -> bool:
+    return (
+        assessment.consistency == Consistency.CONTRADICTION
+        or assessment.complexity == Complexity.MULTI_ISSUE
+        or assessment.conflict_score >= 0.65
+    )
+
+
+def _verify_classification(
+    result: ClassificationResult,
+    assessment: SituationAssessment,
+    plan: ClassificationPlan,
+    signals: dict,
+) -> ClassificationResult:
+    codes = list(result.reason_codes)
+    review = result.review_recommended
+
+    if not signals.get("narrative_rich"):
+        codes.append("narrative_absent_or_short")
+
+    if plan.needs_human_review_hint:
+        if "plan_needs_human_review_hint" not in codes:
+            codes.append("plan_needs_human_review_hint")
+        review = True
+
+    if result.confidence < 0.55:
+        if "below_confidence_floor_0_55" not in codes:
+            codes.append("below_confidence_floor_0_55")
+        review = True
+
+    if assessment.consistency == Consistency.CONTRADICTION:
+        if "assessment_contradiction" not in codes:
+            codes.append("assessment_contradiction")
+        review = True
+    elif assessment.conflict_score >= 0.55 and result.confidence >= 0.85:
+        if "high_conflict_high_model_confidence" not in codes:
+            codes.append("high_conflict_high_model_confidence")
+        review = True
+
+    if assessment.complexity in (Complexity.AMBIGUOUS, Complexity.UNDER_SPECIFIED) and result.confidence >= 0.9:
+        if "high_confidence_despite_under_specified" not in codes:
+            codes.append("high_confidence_despite_under_specified")
+        review = True
+
+    return result.model_copy(update={"reason_codes": codes, "review_recommended": review})
 
 
 def run_classification(
-    narrative: str,
+    *,
+    case: CaseRead | None = None,
+    narrative: str | None = None,
     product: str | None = None,
     sub_product: str | None = None,
     company: str | None = None,
@@ -32,43 +219,75 @@ def run_classification(
     instructions: str = "",
     model_name: str | None = None,
     temperature: float = 0.0,
-) -> ClassificationResult:
-    """Classify the complaint and return a structured result.
+) -> ClassificationPipelineOutput:
+    """Classify using Assess → Plan (rules) → Execute (tools) → Verify (code)."""
+    if case is None:
+        if narrative is None:
+            raise ValueError("Provide ``case`` or ``narrative``.")
+        case = CaseRead(
+            consumer_narrative=(narrative or "").strip(),
+            product=product,
+            sub_product=sub_product,
+            company=company,
+            state=state,
+        )
 
-    The agent has access to tools for retrieving similar complaints and
-    company taxonomy candidates. It decides autonomously whether and how
-    to use them.
-    """
-    logger.info("Classification agent running")
+    logger.info("Classification pipeline starting (CFPB-aware)")
 
-    system_prompt = _load_prompt()
-
-    user_message = (
-        f"Narrative: {narrative}\n"
-        f"Product (if provided): {product or 'N/A'}\n"
-        f"Sub-product (if provided): {sub_product or 'N/A'}\n"
-        f"Company: {company or 'N/A'}\n"
-        f"State: {state or 'N/A'}\n"
-        f"Company ID: {company_id}\n"
-    )
-    if instructions:
-        user_message += f"\nSupervisor instructions: {instructions}\n"
-
-    user_message += (
-        "\nYou have tools available to search for similar complaints and look up "
-        "the company's product/issue taxonomy. Use them to ground your classification. "
-        "When done, respond with the classification JSON."
-    )
+    case_dict = case.model_dump()
+    signals = build_deterministic_signals(case_dict)
+    assess_skipped = should_skip_assess_llm(signals)
 
     llm = create_llm(model_name=model_name, temperature=temperature)
-    tools = [search_similar_complaints, lookup_company_taxonomy]
+    if assess_skipped:
+        assessment = SituationAssessment.model_validate(
+            template_situation_assessment(signals)
+        )
+    else:
+        assessment = _run_assess_llm(signals, case, llm)
 
-    result_data = run_agent_with_tools(llm, system_prompt, user_message, tools)
-    result = ClassificationResult(**result_data)
+    plan = plan_from_assessment(assessment)
+
+    system_prompt = _load_classification_prompt()
+    user_message = _build_execute_user_message(
+        case, assessment, plan, instructions, company_id
+    )
+    tools = [search_similar_complaints, lookup_company_taxonomy]
+    max_rounds = max(1, min(plan.tool_budget, 10))
+
+    exec_out = run_agent_with_tools(
+        llm,
+        system_prompt,
+        user_message,
+        tools,
+        max_rounds=max_rounds,
+        return_evidence=True,
+    )
+    result_dict, evidence_used = exec_out  # type: ignore[misc]
+
+    result = ClassificationResult(**result_dict)
+    result = _verify_classification(result, assessment, plan, signals)
+
+    v2_flag = _v2_dual_hypothesis_eligible(assessment)
+
+    audit = ClassificationAuditPackage(
+        situation_assessment=assessment.model_dump(mode="json"),
+        plan=plan.model_dump(mode="json"),
+        deterministic_signals=signals,
+        evidence_used=evidence_used,
+        consistency_assessment=assessment.consistency.value,
+        alternate_candidates=list(result.alternate_candidates),
+        review_recommended=result.review_recommended,
+        reason_codes=list(result.reason_codes),
+        assess_skipped_llm=assess_skipped,
+        plan_skipped_llm=True,
+        v2_dual_hypothesis_eligible=v2_flag,
+    )
 
     logger.info(
-        "Classification complete – category=%s, confidence=%.2f",
+        "Classification complete – category=%s, confidence=%.2f, review=%s",
         result.product_category,
         result.confidence,
+        result.review_recommended,
     )
-    return result
+    return ClassificationPipelineOutput(result=result, audit=audit)
