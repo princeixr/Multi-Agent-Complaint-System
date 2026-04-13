@@ -155,7 +155,10 @@ Optional:
 ```bash
 docker compose up db -d
 ```
-for deployment on server do `docker-compose up --build -d` which starts both db + app in detached mode
+for **deployment on server** you have to starts both db + app in detached mode so do below :
+```bash
+sudo docker-compose up --build -d
+```
 
 
 Wait until the database is healthy (`docker compose ps`). Default connection:
