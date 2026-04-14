@@ -25,6 +25,7 @@ from app.agents.root_cause import run_root_cause_hypothesis
 from app.agents.routing import run_routing
 from app.agents.supervisor import run_supervisor
 from app.integrations.jira_client import create_complaint_ticket
+from app.knowledge.mock_company_pack import deployment_label
 from app.observability.context import ActiveRun, reset_active_run, set_active_run, set_trace_id
 from app.observability.events import log_workflow_event
 from app.observability.instrumentation import wrap_node, wrap_supervisor_node
@@ -80,12 +81,10 @@ def supervisor_node(state: WorkflowState):
 def classify_node(state: WorkflowState) -> WorkflowState:
     """Classification specialist with tool access."""
     case = state["case"]
-    company_id = state.get("company_id", "mock_bank")
     instructions = state.get("supervisor_instructions", "")
 
     pipeline_out = run_classification(
         case=case,
-        company_id=company_id,
         instructions=instructions,
     )
     result = pipeline_out.result
@@ -95,6 +94,7 @@ def classify_node(state: WorkflowState) -> WorkflowState:
     case.status = CaseStatus.CLASSIFIED
     case.operational_mapping = {
         "product_category": result.product_category.value,
+        "sub_product": result.sub_product,
         "issue_type": result.issue_type.value,
         "sub_issue": result.sub_issue,
     }
@@ -108,13 +108,11 @@ def classify_node(state: WorkflowState) -> WorkflowState:
 def risk_node(state: WorkflowState) -> WorkflowState:
     """Risk assessment specialist with tool access."""
     case = state["case"]
-    company_id = state.get("company_id", "mock_bank")
     instructions = state.get("supervisor_instructions", "")
 
     result = run_risk_assessment(
         case=case,
         classification=state["classification"],
-        company_id=company_id,
         instructions=instructions,
     )
 
@@ -131,14 +129,12 @@ def risk_node(state: WorkflowState) -> WorkflowState:
 def root_cause_node(state: WorkflowState) -> WorkflowState:
     """Root cause hypothesis specialist with tool access."""
     case = state["case"]
-    company_id = state.get("company_id", "mock_bank")
     instructions = state.get("supervisor_instructions", "")
 
     result = run_root_cause_hypothesis(
         case=case,
         classification=state["classification"],
         risk=state["risk_assessment"],
-        company_id=company_id,
         instructions=instructions,
     )
 
@@ -153,7 +149,6 @@ def root_cause_node(state: WorkflowState) -> WorkflowState:
 def resolution_node(state: WorkflowState) -> WorkflowState:
     """Resolution specialist with tool access."""
     case = state["case"]
-    company_id = state.get("company_id", "mock_bank")
     instructions = state.get("supervisor_instructions", "")
 
     result = run_resolution(
@@ -161,7 +156,6 @@ def resolution_node(state: WorkflowState) -> WorkflowState:
         classification=state["classification"],
         risk=state["risk_assessment"],
         root_cause_hypothesis=state.get("root_cause_hypothesis"),
-        company_id=company_id,
         instructions=instructions,
     )
 
@@ -177,7 +171,6 @@ def resolution_node(state: WorkflowState) -> WorkflowState:
 def compliance_node(state: WorkflowState) -> WorkflowState:
     """Compliance specialist with tool access."""
     case = state["case"]
-    company_id = state.get("company_id", "mock_bank")
     instructions = state.get("supervisor_instructions", "")
 
     result = run_compliance_check(
@@ -185,7 +178,6 @@ def compliance_node(state: WorkflowState) -> WorkflowState:
         classification=state["classification"],
         risk=state["risk_assessment"],
         resolution=state["resolution"],
-        company_id=company_id,
         instructions=instructions,
     )
 
@@ -229,19 +221,18 @@ def review_node(state: WorkflowState) -> WorkflowState:
 
 def routing_node(state: WorkflowState) -> WorkflowState:
     """Deterministic routing based on company knowledge pack rules."""
-    from app.agents.tools import _company_knowledge_singleton
+    from app.agents.tools import _company_knowledge_service
 
     case = state["case"]
-    company_id = state.get("company_id", "mock_bank")
 
-    # Fetch company-specific routing rules
+    # Fetch routing rules from the deployment knowledge pack
     company_context = None
     try:
-        svc = _company_knowledge_singleton(company_id)
+        svc = _company_knowledge_service()
         ctx = svc.build_company_context("")
         company_context = {"routing_candidates": ctx.routing_candidates}
     except Exception:
-        logger.warning("Could not load company routing rules for %s, using defaults", company_id)
+        logger.warning("Could not load routing rules from knowledge pack; using defaults")
 
     destination = run_routing(
         case=case,
@@ -265,32 +256,77 @@ def routing_node(state: WorkflowState) -> WorkflowState:
         classification = state.get("classification")
         risk = state.get("risk_assessment")
         resolution = state.get("resolution")
+        root_cause = state.get("root_cause_hypothesis")
+        compliance = state.get("compliance", {})
 
+        # Extract classification fields
         product_category = (
             classification.product_category.value
             if classification and hasattr(classification, "product_category")
             else None
         )
+        issue_type = (
+            classification.issue_type.value
+            if classification and hasattr(classification, "issue_type")
+            else None
+        )
+        classification_reasoning = (
+            getattr(classification, "reasoning", None)
+            if classification else None
+        )
+
+        # Extract risk fields
         risk_level = (
             risk.risk_level.value
             if risk and hasattr(risk, "risk_level")
             else None
         )
-        resolution_summary = (
-            getattr(resolution, "recommended_action", None)
-            or getattr(resolution, "summary", None)
-            if resolution
+        risk_score = getattr(risk, "risk_score", None) if risk else None
+        risk_reasoning = getattr(risk, "reasoning", None) if risk else None
+        regulatory_risk = getattr(risk, "regulatory_risk", False) if risk else False
+        financial_impact = getattr(risk, "financial_impact_estimate", None) if risk else None
+
+        # Extract resolution fields
+        resolution_action = (
+            resolution.recommended_action.value
+            if resolution and hasattr(resolution, "recommended_action")
             else None
         )
+        resolution_description = getattr(resolution, "description", None) if resolution else None
+        resolution_reasoning = getattr(resolution, "reasoning", None) if resolution else None
+        estimated_days = getattr(resolution, "estimated_resolution_days", None) if resolution else None
+        monetary_amount = getattr(resolution, "monetary_amount", None) if resolution else None
+
+        # Extract root cause fields
+        root_cause_category = getattr(root_cause, "root_cause_category", None) if root_cause else None
+        root_cause_reasoning = getattr(root_cause, "reasoning", None) if root_cause else None
+        controls_to_check = getattr(root_cause, "controls_to_check", None) if root_cause else None
+
+        # Extract compliance flags
+        compliance_flags = compliance.get("flags", []) if isinstance(compliance, dict) else []
 
         jira_ticket = create_complaint_ticket(
             case_id=case.id,
             team=destination,
             product_category=product_category,
+            issue_type=issue_type,
             risk_level=risk_level,
+            risk_score=risk_score,
+            risk_reasoning=risk_reasoning,
+            regulatory_risk=regulatory_risk,
+            financial_impact=financial_impact,
             channel=case.channel.value if case.channel else None,
             consumer_narrative=case.consumer_narrative,
-            resolution_summary=str(resolution_summary) if resolution_summary else None,
+            resolution_action=resolution_action,
+            resolution_description=resolution_description,
+            resolution_reasoning=resolution_reasoning,
+            estimated_resolution_days=estimated_days,
+            monetary_amount=monetary_amount,
+            root_cause_category=root_cause_category,
+            root_cause_reasoning=root_cause_reasoning,
+            controls_to_check=controls_to_check,
+            compliance_flags=compliance_flags if compliance_flags else None,
+            classification_reasoning=classification_reasoning,
             company=case.company,
             state=case.state,
         )
@@ -372,23 +408,22 @@ def process_complaint(payload: dict) -> WorkflowState:
     setup_tracing()
 
     run_id = uuid.uuid4().hex
-    company_id = payload.get("company_id") or "mock_bank"
-    ar = ActiveRun(run_id=run_id, company_id=company_id)
+    log_label = deployment_label()
+    ar = ActiveRun(run_id=run_id, company_id=log_label)
     ctx_token = set_active_run(ar)
     tracer = get_workflow_tracer()
 
     initial_state: WorkflowState = {
         "raw_payload": payload,
         "retry_count": 0,
-        "company_id": company_id,
     }
 
     invoke_config = {
         "run_name": f"complaint-{run_id}",
-        "tags": [f"company_id:{company_id}", f"run_id:{run_id}"],
+        "tags": [f"deployment:{log_label}", f"run_id:{run_id}"],
         "metadata": {
             "run_id": run_id,
-            "company_id": company_id,
+            "deployment": log_label,
             "workflow_version": workflow_version(),
         },
     }
@@ -400,15 +435,15 @@ def process_complaint(payload: dict) -> WorkflowState:
             if tid:
                 set_trace_id(tid)
             root.set_attribute("complaint.run_id", run_id)
-            root.set_attribute("complaint.company_id", company_id)
+            root.set_attribute("complaint.deployment", log_label)
 
             log_workflow_event(
                 "workflow_started",
                 run_id=run_id,
-                company_id=company_id,
+                company_id=log_label,
                 trace_id=tid or "",
             )
-            insert_workflow_run(run_id, company_id, tid or None)
+            insert_workflow_run(run_id, tid or None)
 
             try:
                 final_state = workflow.invoke(initial_state, config=invoke_config)
