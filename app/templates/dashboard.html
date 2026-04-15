@@ -1,23 +1,23 @@
 {% extends "base.html" %}
-{% block title %}{% if user and user.role == 'admin' %}Intelligence Canvas{% else %}My Complaints{% endif %}{% endblock %}
+{% block title %}{% if user and user.role in ('admin', 'team') %}Intelligence Canvas{% else %}My Complaints{% endif %}{% endblock %}
 
 {% block content %}
 <!-- Page Header -->
 <div class="flex justify-between items-end mb-10">
   <div>
     <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant mb-1">
-      {% if user and user.role == 'admin' %}System-Wide Portfolio{% elif user and user.company %}{{ user.company }}{% else %}Your Portfolio{% endif %}
+      {% if user and user.role in ('admin', 'team') %}System-Wide Portfolio{% elif user and user.company %}{{ user.company }}{% else %}Your Portfolio{% endif %}
     </p>
     <h1 class="text-3xl font-headline font-extrabold tracking-tight text-on-surface">
-      {% if user and user.role == 'admin' %}Intelligence Canvas{% else %}My Complaints{% endif %}
+      {% if user and user.role in ('admin', 'team') %}Intelligence Canvas{% else %}My Complaints{% endif %}
     </h1>
     <p class="text-on-surface-variant mt-1 text-sm">
-      {% if user and user.role == 'admin' %}Operationalizing empathetic resolution at scale.
+      {% if user and user.role in ('admin', 'team') %}Operationalizing empathetic resolution at scale.
       {% else %}Track your complaint submissions and their resolution status.{% endif %}
     </p>
   </div>
 
-  {% if user and user.role == 'admin' %}
+  {% if user and user.role in ('admin', 'team') %}
   <!-- KPI Tiles -->
   <div class="flex items-center gap-4 text-sm font-medium text-on-surface-variant">
     <div class="flex items-center gap-2 bg-surface-container-low px-4 py-2 rounded-lg">
@@ -38,7 +38,7 @@
 </div>
 
 <!-- Filters / Tabs row (admin only) -->
-{% if user and user.role == 'admin' %}
+{% if user and user.role in ('admin', 'team') %}
 <div class="flex items-center justify-between mb-6">
   <div class="flex gap-2">
     <button class="px-4 py-2 bg-primary text-on-primary text-sm font-semibold rounded-lg">All</button>
@@ -60,10 +60,10 @@
 <!-- Complaints Table -->
 <div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm">
   <!-- Table Header -->
-  <div class="{% if user and user.role == 'admin' %}grid grid-cols-12{% else %}grid grid-cols-12{% endif %} gap-4 px-6 py-4
+  <div class="{% if user and user.role in ('admin', 'team') %}grid grid-cols-12{% else %}grid grid-cols-12{% endif %} gap-4 px-6 py-4
               bg-surface-container text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
     <div class="col-span-2">Case ID</div>
-    {% if user and user.role == 'admin' %}
+    {% if user and user.role in ('admin', 'team') %}
     <div class="col-span-3">Subject / Product</div>
     <div class="col-span-1">Status</div>
     <div class="col-span-2">Risk Level</div>
@@ -79,7 +79,7 @@
   {% if cases %}
   {% for case in cases %}
 
-  {% if user and user.role == 'admin' %}
+  {% if user and user.role in ('admin', 'team') %}
   <a href="/complaints/{{ case.id }}"
      class="grid grid-cols-12 gap-4 px-6 py-4 items-center table-row-hover border-t border-outline-variant/10 block hover:no-underline">
     <!-- Case ID -->
@@ -195,10 +195,10 @@
     </div>
     <p class="text-lg font-headline font-bold text-on-surface-variant/60">No complaints yet</p>
     <p class="text-sm text-on-surface-variant/40 mt-1">
-      {% if user and user.role == 'admin' %}Submit a complaint via the API to see it here.
+      {% if user and user.role in ('admin', 'team') %}Submit a complaint via the API to see it here.
       {% else %}Lodge a complaint to get started.{% endif %}
     </p>
-    {% if user and user.role == 'admin' %}
+    {% if user and user.role in ('admin', 'team') %}
     <p class="text-xs text-on-surface-variant/30 mt-3 font-mono">POST /api/v1/complaints</p>
     {% else %}
     <a href="/complaints/new"

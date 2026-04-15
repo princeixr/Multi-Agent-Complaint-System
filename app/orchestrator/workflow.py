@@ -33,6 +33,7 @@ from app.documents.service import (
 )
 from app.knowledge.mock_company_pack import deployment_label
 from app.observability.context import ActiveRun, reset_active_run, set_active_run, set_trace_id
+from app.observability.cost import TokenCostCallback
 from app.observability.events import log_workflow_event
 from app.observability.instrumentation import wrap_node, wrap_supervisor_node
 from app.observability.persistence import (
@@ -227,7 +228,7 @@ def compliance_node(state: WorkflowState) -> WorkflowState:
         case=case,
         classification=state["classification"],
         risk=state["risk_assessment"],
-        resolution=state["resolution"],
+        resolution=state.get("resolution"),
         instructions=instructions,
     )
 
@@ -466,6 +467,7 @@ def process_complaint(payload: dict) -> WorkflowState:
     ar = ActiveRun(run_id=run_id, company_id=log_label)
     ctx_token = set_active_run(ar)
     tracer = get_workflow_tracer()
+    cost_cb = TokenCostCallback()
 
     initial_state: WorkflowState = {
         "raw_payload": payload,
@@ -480,6 +482,7 @@ def process_complaint(payload: dict) -> WorkflowState:
             "deployment": log_label,
             "workflow_version": workflow_version(),
         },
+        "callbacks": [cost_cb],
     }
 
     final_state: WorkflowState | None = None
@@ -518,6 +521,8 @@ def process_complaint(payload: dict) -> WorkflowState:
                     final_severity=None,
                     manual_review_required=False,
                     retry_count_total=int(initial_state.get("retry_count") or 0),
+                    token_total=cost_cb.total_tokens or None,
+                    cost_estimate_usd=cost_cb.cost_usd() or None,
                 )
                 raise
 
@@ -532,6 +537,8 @@ def process_complaint(payload: dict) -> WorkflowState:
             final_severity=sev,
             manual_review_required=manual,
             retry_count_total=retries,
+            token_total=cost_cb.total_tokens or None,
+            cost_estimate_usd=cost_cb.cost_usd() or None,
         )
         log_workflow_event(
             "workflow_completed",

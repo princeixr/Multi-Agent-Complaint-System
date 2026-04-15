@@ -91,6 +91,10 @@ class ComplaintCase(Base):
     document_gate_result_json = Column(Text)
     document_consistency_json = Column(Text)
 
+    # ── LLM cost tracking ──────────────────────────────────────────────
+    token_total = Column(Integer, nullable=True)
+    cost_estimate_usd = Column(Float, nullable=True)
+
     # Relationships
     classification = relationship(
         "ClassificationRecord", back_populates="case", uselist=False

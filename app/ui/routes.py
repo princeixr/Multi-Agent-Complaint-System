@@ -286,15 +286,19 @@ async def admin_queue(request: Request, page: int = 1, limit: int = 15):
         rows = query.offset(offset).limit(limit).all()
         cases = [build_case_summary(row) for row in rows]
 
-        critical_count = (
-            db.query(RiskRecord)
-            .filter(RiskRecord.risk_level == "critical")
-            .count()
-        )
-
         active_pipeline = (
             db.query(ComplaintCase)
             .filter(~ComplaintCase.status.in_(list(_TERMINAL_STATUSES)))
+            .count()
+        )
+
+        critical_count = (
+            db.query(RiskRecord)
+            .join(ComplaintCase, ComplaintCase.id == RiskRecord.case_id)
+            .filter(
+                RiskRecord.risk_level == "critical",
+                ~ComplaintCase.status.in_(list(_TERMINAL_STATUSES)),
+            )
             .count()
         )
 
@@ -410,6 +414,37 @@ async def complaint_detail(request: Request, case_id: str):
         "active_nav": "dashboard",
         "user": user,
     })
+
+
+@router.post("/complaints/{case_id}/status", include_in_schema=False)
+async def update_complaint_status(
+    request: Request,
+    case_id: str,
+    new_status: str = Form(...),
+):
+    """Allow admin and team users to manually set a complaint status to resolved or routed."""
+    user = _get_current_user(request)
+    if user is None:
+        return _redirect_to_login()
+    if user["role"] not in ("admin", "team"):
+        return _redirect_to_dashboard()
+
+    allowed = {"resolved", "routed"}
+    if new_status not in allowed:
+        return RedirectResponse(url=f"/complaints/{case_id}", status_code=302)
+
+    with get_db() as db:
+        db_case = db.query(ComplaintCase).filter(ComplaintCase.id == case_id).first()
+        if db_case is None:
+            return _redirect_to_dashboard()
+
+        # Team users can only update cases assigned to their team
+        if user["role"] == "team" and db_case.team_assignment != user.get("company"):
+            return _redirect_to_dashboard()
+
+        db_case.status = new_status
+
+    return RedirectResponse(url=f"/complaints/{case_id}", status_code=302)
 
 
 @router.get("/trace/latest", include_in_schema=False)
@@ -792,20 +827,6 @@ async def resolution_history(request: Request):
         "pending_count": len(pending_cases_raw),
     })
 
-
-@router.get("/costs", include_in_schema=False)
-async def costs(request: Request):
-    """Operational cost observability — LLM spend, token usage."""
-    user = _get_current_user(request)
-    if user is None:
-        return _redirect_to_login()
-    if user["role"] != "admin":
-        return _redirect_to_dashboard()
-
-    return templates.TemplateResponse(request, "costs.html", context={
-        "active_nav": "costs",
-        "user": user,
-    })
 
 
 @router.get("/team", include_in_schema=False)

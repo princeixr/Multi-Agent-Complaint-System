@@ -444,6 +444,9 @@ python -m app.evals.run_evals
 - **Supervisor loops** — The supervisor has a 15-step max and 3-invocation-per-agent limit. If it hits these, it forces routing and finishes.
 - **ElevenLabs TTS silent or lodge banner** — Ensure both an API key and a voice id are set (see `app/env_elevenlabs.py`). Restart the server after editing `.env`. For Custom LLM, point the agent at `/api/v1/integrations/elevenlabs` and match `ELEVENLABS_CUSTOM_LLM_SECRET` if used.
 
+## Dev Notes
+- PostgreSQL stores : session_id, channel, turn_index (how many turns completed), packet json (structured data packet built during intake), last_agent_message/last_user_message, conversation_history_
+
 ## License
 
 Use and compliance responsibilities for third-party data (e.g. CFPB exports) and for production deployment of AI systems are yours; verify applicable terms and regulations.

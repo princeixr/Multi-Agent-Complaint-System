@@ -333,6 +333,51 @@
     </div>
     {% endif %}
 
+    <!-- Status Management (admin + team) -->
+    {% if user and user.role in ('admin', 'team') %}
+    <div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="material-symbols-outlined text-primary">manage_history</span>
+        <h2 class="font-headline font-bold text-on-surface">Update Status</h2>
+      </div>
+      <div class="mb-4 flex items-center gap-2">
+        <span class="text-xs text-on-surface-variant">Current:</span>
+        <span class="px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-wide
+                     {% if case.status == 'resolved' %}bg-secondary-container text-on-secondary-container
+                     {% elif case.status == 'routed' %}bg-tertiary-container/60 text-on-tertiary-container
+                     {% else %}bg-surface-container-high text-on-surface-variant{% endif %}">
+          {{ case.status | replace('_', ' ') }}
+        </span>
+      </div>
+      <div class="flex flex-col gap-2">
+        <form method="post" action="/complaints/{{ case.id }}/status">
+          <input type="hidden" name="new_status" value="routed">
+          <button type="submit"
+                  {% if case.status == 'routed' %}disabled{% endif %}
+                  class="w-full px-4 py-2.5 rounded-lg text-sm font-semibold transition-all
+                         {% if case.status == 'routed' %}bg-surface-container-high text-on-surface-variant/40 cursor-not-allowed
+                         {% else %}bg-tertiary-container text-on-tertiary-container hover:opacity-80{% endif %}
+                         flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-sm">alt_route</span>
+            Mark as Routed
+          </button>
+        </form>
+        <form method="post" action="/complaints/{{ case.id }}/status">
+          <input type="hidden" name="new_status" value="resolved">
+          <button type="submit"
+                  {% if case.status == 'resolved' %}disabled{% endif %}
+                  class="w-full px-4 py-2.5 rounded-lg text-sm font-semibold transition-all
+                         {% if case.status == 'resolved' %}bg-surface-container-high text-on-surface-variant/40 cursor-not-allowed
+                         {% else %}aurora-gradient text-white hover:opacity-90 shadow-md{% endif %}
+                         flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-sm">task_alt</span>
+            Mark as Resolved
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
   </div>
 </div>
 

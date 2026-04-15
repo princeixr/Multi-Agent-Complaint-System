@@ -36,11 +36,11 @@
     <div class="flex items-center gap-4 text-sm font-medium text-on-surface-variant">
       <span class="flex items-center gap-1.5">
         <span class="w-2 h-2 rounded-full bg-secondary"></span>
-        {{ active_pipeline }} active analyses
+        {{ active_pipeline }} Active Complaints
       </span>
       <span class="flex items-center gap-1.5">
-        <span class="w-2 h-2 rounded-full bg-primary"></span>
-        {{ critical_count }} escalations
+        <span class="w-2 h-2 rounded-full bg-error"></span>
+        {{ critical_count }} Active Escalations
       </span>
     </div>
   </div>
@@ -62,8 +62,8 @@
             <th class="px-6 py-4 font-label text-xs uppercase tracking-wider text-on-surface-variant font-bold">Complaint ID</th>
             <th class="px-6 py-4 font-label text-xs uppercase tracking-wider text-on-surface-variant font-bold">Subject</th>
             <th class="px-6 py-4 font-label text-xs uppercase tracking-wider text-on-surface-variant font-bold">Current stage</th>
+            <th class="px-6 py-4 font-label text-xs uppercase tracking-wider text-on-surface-variant font-bold">Risk Level</th>
             <th class="px-6 py-4 font-label text-xs uppercase tracking-wider text-on-surface-variant font-bold">AI confidence</th>
-            <th class="px-6 py-4 font-label text-xs uppercase tracking-wider text-on-surface-variant font-bold">Est. resolution</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-surface-container-low">
@@ -103,10 +103,22 @@
               </div>
             </td>
             <td class="px-6 py-5">
+              {% if case.risk_level %}
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase
+                {% if case.risk_level == 'critical' %}bg-error-container text-on-error-container
+                {% elif case.risk_level == 'high' %}bg-error-container/50 text-error
+                {% elif case.risk_level == 'medium' %}bg-secondary-container text-on-secondary-container
+                {% else %}bg-surface-container-high text-on-surface-variant{% endif %}">
+                {{ case.risk_level }}
+              </span>
+              {% else %}
+              <span class="text-on-surface-variant/40 text-sm">—</span>
+              {% endif %}
+            </td>
+            <td class="px-6 py-5">
               {% if case.confidence is not none %}
               <div class="w-full max-w-[120px] space-y-1.5">
                 <div class="flex justify-between text-[10px] font-bold text-on-surface-variant">
-                  <span>{% if case.risk_level %}{{ case.risk_level | upper }}{% else %}—{% endif %}</span>
                   <span>{{ (case.confidence * 100) | int }}%</span>
                 </div>
                 <div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
@@ -116,20 +128,6 @@
               </div>
               {% else %}
               <span class="text-on-surface-variant/50 text-sm">—</span>
-              {% endif %}
-            </td>
-            <td class="px-6 py-5">
-              {% if case.estimated_resolution_days is not none %}
-                {% set d = case.estimated_resolution_days %}
-                {% if d < 0.02 %}
-                <span class="text-sm text-on-surface-variant font-medium">{{ (d * 24 * 60) | round | int }} mins</span>
-                {% elif d < 1 %}
-                <span class="text-sm text-on-surface-variant font-medium">{{ (d * 24) | round | int }} hrs</span>
-                {% else %}
-                <span class="text-sm text-on-surface-variant font-medium">{{ d | round(1) }} days</span>
-                {% endif %}
-              {% else %}
-              <span class="text-sm text-on-surface-variant font-medium">—</span>
               {% endif %}
             </td>
           </tr>
@@ -183,7 +181,7 @@
                 </span>
                 {% endif %}
               </td>
-              <td class="px-6 py-4 text-sm text-on-surface font-medium">—</td>
+              <td class="px-6 py-4 text-sm text-on-surface font-medium">{{ case.total_time_str or '—' }}</td>
               <td class="px-6 py-4 text-sm text-on-surface font-semibold">
                 {% if case.monetary_amount is not none %}${{ "%.2f" | format(case.monetary_amount) }}{% else %}—{% endif %}
               </td>
@@ -234,28 +232,4 @@
   {% endif %}
 </div>
 
-<!-- System health (desktop) -->
-<div class="fixed bottom-8 right-8 w-80 bg-surface-container-lowest shadow-2xl rounded-sm p-5 border border-outline-variant/20 hidden lg:block z-30">
-  <div class="flex items-center justify-between mb-4">
-    <h4 class="font-headline font-bold text-sm text-primary uppercase tracking-widest">System health</h4>
-    <span class="w-2 h-2 bg-secondary rounded-full animate-pulse"></span>
-  </div>
-  <div class="space-y-4">
-    <div class="flex justify-between items-center">
-      <span class="text-xs font-medium text-on-surface-variant">Queue pressure</span>
-      <span class="text-xs font-bold text-secondary">Optimal</span>
-    </div>
-    <div class="flex justify-between items-center">
-      <span class="text-xs font-medium text-on-surface-variant">Critical cases</span>
-      <span class="text-xs font-bold text-on-surface">{{ critical_count }}</span>
-    </div>
-    {% set health_w = 24 + active_pipeline * 3 %}
-    <div class="h-1 w-full bg-surface-container rounded-full overflow-hidden">
-      <div class="h-full bg-primary rounded-full" style="width: {% if active_pipeline %}{{ health_w if health_w < 90 else 90 }}{% else %}14{% endif %}%"></div>
-    </div>
-    <p class="text-[10px] text-on-surface-variant/80 leading-relaxed">
-      {{ active_pipeline }} open cases in the pipeline. Open <a href="/trace/latest" class="text-primary font-semibold hover:underline">Trace</a> for execution detail.
-    </p>
-  </div>
-</div>
 {% endblock %}

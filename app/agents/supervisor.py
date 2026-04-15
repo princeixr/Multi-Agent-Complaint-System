@@ -204,7 +204,7 @@ def run_supervisor(state: dict[str, Any]) -> Command:
         )
 
     # Build prompt
-    system_prompt = _PROMPT_PATH.read_text()
+    system_prompt = _PROMPT_PATH.read_text(encoding="utf-8")
     state_summary = _build_state_summary(state)
 
     prompt = ChatPromptTemplate.from_messages(

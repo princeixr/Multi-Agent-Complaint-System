@@ -22,7 +22,7 @@ class CaseStatus(str, Enum):
     COMPLIANCE_CHECKED = "compliance_checked"
     REVIEWED = "reviewed"
     ROUTED = "routed"
-    CLOSED = "closed"
+    RESOLVED = "resolved"
 
 
 class Channel(str, Enum):

@@ -8,7 +8,7 @@ from typing import Any
 
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.db.models import WorkflowRun, WorkflowStep
+from app.db.models import ComplaintCase, WorkflowRun, WorkflowStep
 from app.db.session import SessionLocal
 from app.observability.context import get_active_run
 from app.knowledge.mock_company_pack import deployment_label
@@ -125,6 +125,8 @@ def finalize_workflow_run(
     final_severity: str | None,
     manual_review_required: bool,
     retry_count_total: int,
+    token_total: int | None = None,
+    cost_estimate_usd: float | None = None,
 ) -> None:
     try:
         session = SessionLocal()
@@ -138,11 +140,41 @@ def finalize_workflow_run(
             row.final_severity = final_severity
             row.manual_review_required = manual_review_required
             row.retry_count_total = retry_count_total
+            if token_total is not None:
+                row.token_total = token_total
+            if cost_estimate_usd is not None:
+                row.cost_estimate_total = cost_estimate_usd
+            # Read case_id before commit so it's available after session state changes
+            linked_case_id = row.case_id
             session.commit()
+
+            # Propagate cost to the linked complaint case
+            if linked_case_id and (token_total is not None or cost_estimate_usd is not None):
+                _update_case_cost(session, linked_case_id, token_total, cost_estimate_usd)
         finally:
             session.close()
     except SQLAlchemyError as e:
         logger.warning("workflow_runs finalize skipped: %s", e)
+
+
+def _update_case_cost(
+    session,
+    case_id: str,
+    token_total: int | None,
+    cost_estimate_usd: float | None,
+) -> None:
+    """Write token/cost totals back to the complaint_cases row."""
+    try:
+        case = session.get(ComplaintCase, case_id)
+        if not case:
+            return
+        if token_total is not None:
+            case.token_total = token_total
+        if cost_estimate_usd is not None:
+            case.cost_estimate_usd = cost_estimate_usd
+        session.commit()
+    except SQLAlchemyError as e:
+        logger.warning("complaint_cases cost update skipped (case=%s): %s", case_id, e)
 
 
 def derive_run_outcome(final_state: dict[str, Any]) -> tuple[str, str | None, str | None, bool, int]:

@@ -91,11 +91,11 @@ _WEIGHTING_BLURB = {
 
 
 def _load_classification_prompt() -> str:
-    return _CLASSIFICATION_PROMPT_PATH.read_text()
+    return _CLASSIFICATION_PROMPT_PATH.read_text(encoding="utf-8")
 
 
 def _load_assess_prompt() -> str:
-    return _ASSESS_PROMPT_PATH.read_text()
+    return _ASSESS_PROMPT_PATH.read_text(encoding="utf-8")
 
 
 def _classification_query_text(case: CaseRead) -> str:

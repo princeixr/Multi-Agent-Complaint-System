@@ -77,6 +77,8 @@ def init_db() -> None:
             ("intake_session_transcript_json", "TEXT"),
             ("document_gate_result_json", "TEXT"),
             ("document_consistency_json", "TEXT"),
+            ("token_total", "INTEGER"),
+            ("cost_estimate_usd", "DOUBLE PRECISION"),
         ]
 
         classification_columns: list[tuple[str, str]] = [

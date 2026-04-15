@@ -86,7 +86,7 @@ class _temp_disable_langsmith_tracing:
 
 
 def _load_prompt() -> str:
-    return _PROMPT_PATH.read_text()
+    return _PROMPT_PATH.read_text(encoding="utf-8")
 
 
 def _build_company_intake_context() -> dict[str, Any]:
