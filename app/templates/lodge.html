@@ -246,43 +246,24 @@
       if (currentAudioUrl) { try { URL.revokeObjectURL(currentAudioUrl); } catch (e) {} currentAudioUrl = null; }
     };
 
-    // #region agent log
-    function dbgVoice(hypothesisId, loc, message, data) {
-      if (String(window.location.protocol || '') === 'https:') return;
-      try {
-        fetch('http://127.0.0.1:7588/ingest/cc293fdf-7feb-4546-bd12-9a0e7b4e174c', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '220b77' },
-          body: JSON.stringify({ sessionId: '220b77', hypothesisId, location: loc, message, data: data || {}, timestamp: Date.now() })
-        }).catch(() => {});
-      } catch (e) {}
-    }
-    // #endregion
-
     const playAgentTts = async (text) => {
-      dbgVoice('H3', 'lodge:playAgentTts', 'entry', { intakeTtsEnabled: INTAKE_TTS_ENABLED, textLen: text ? String(text).length : 0 });
-      if (!INTAKE_TTS_ENABLED || !text || !String(text).trim()) { dbgVoice('H4', 'lodge:playAgentTts', 'early_return', { reason: 'disabled_or_empty' }); return; }
+      if (!INTAKE_TTS_ENABLED || !text || !String(text).trim()) return;
       stopPlayback();
       try {
         const resp = await fetch('/api/v1/intake/tts', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: String(text) }) });
-        dbgVoice('H2', 'lodge:playAgentTts', 'fetch_done', { ok: resp.ok, status: resp.status, ct: resp.headers.get('Content-Type') || '' });
         if (!resp.ok) { const err = await resp.json().catch(() => ({})); throw new Error(err.detail || 'TTS request failed'); }
         const blob = await resp.blob();
-        dbgVoice('H5', 'lodge:playAgentTts', 'blob', { blobBytes: blob.size });
         const url = URL.createObjectURL(blob);
         currentAudioUrl = url;
         const audio = new Audio(url);
         currentAudio = audio;
-        let playErr = null;
         await new Promise((resolve) => {
           const done = () => resolve(undefined);
           audio.addEventListener('ended', done, { once: true });
-          audio.addEventListener('error', function () { playErr = 'audio_element_error'; done(); }, { once: true });
-          audio.play().catch(function (err) { playErr = err && err.message ? err.message : 'play_rejected'; done(); });
+          audio.addEventListener('error', done, { once: true });
+          audio.play().catch(done);
         });
-        dbgVoice('H5', 'lodge:playAgentTts', 'after_play', { playErr });
       } catch (e) {
-        dbgVoice('H2', 'lodge:playAgentTts', 'catch', { err: (e && e.message) ? String(e.message).slice(0, 120) : 'unknown' });
         console.warn('TTS playback failed', e);
       }
     };

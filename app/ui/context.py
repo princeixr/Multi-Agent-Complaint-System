@@ -12,7 +12,6 @@ from app.db.models import (
     ComplaintCase,
     ClassificationRecord,
     RiskRecord,
-    ResolutionRecord,
     WorkflowRun,
 )
 
@@ -36,6 +35,8 @@ def build_case_summary(db_case: ComplaintCase) -> dict:
     narrative = db_case.consumer_narrative or ""
     subject = narrative[:200] + "..." if len(narrative) > 200 else narrative
 
+    res = db_case.resolution
+
     return {
         "id": db_case.id,
         "subject": subject,
@@ -49,6 +50,43 @@ def build_case_summary(db_case: ComplaintCase) -> dict:
         "team_assignment": db_case.team_assignment,
         "created_at": db_case.created_at,
         "severity_class": db_case.severity_class,
+        "estimated_resolution_days": res.estimated_resolution_days if res else None,
+        "monetary_amount": res.monetary_amount if res else None,
+    }
+
+
+_TERMINAL_STATUSES = frozenset({"resolved", "closed", "dismissed"})
+
+
+def build_admin_overview_data(db: Session) -> dict:
+    """KPIs and recent rows for the admin operational intelligence overview."""
+    total = db.query(ComplaintCase).count()
+    resolved_count = (
+        db.query(ComplaintCase)
+        .filter(ComplaintCase.status.in_(list(_TERMINAL_STATUSES)))
+        .count()
+    )
+    active_count = max(0, total - resolved_count)
+
+    critical_count = db.query(RiskRecord).filter(RiskRecord.risk_level == "critical").count()
+
+    recent = (
+        db.query(ComplaintCase)
+        .order_by(ComplaintCase.created_at.desc())
+        .limit(8)
+        .all()
+    )
+    recent_queue = [build_case_summary(row) for row in recent]
+
+    resolution_rate = round(100.0 * resolved_count / total, 1) if total else 0.0
+
+    return {
+        "total": total,
+        "active_count": active_count,
+        "resolved_count": resolved_count,
+        "critical_count": critical_count,
+        "resolution_rate": resolution_rate,
+        "recent_queue": recent_queue,
     }
 
 

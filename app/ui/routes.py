@@ -26,9 +26,10 @@ from app.ui.context import (
     build_case_detail,
     build_analytics_data,
     build_settings_data,
+    build_admin_overview_data,
+    _TERMINAL_STATUSES,
 )
-from app.debug_voice_log import dbg_voice
-from app.env_elevenlabs import elevenlabs_api_key, elevenlabs_voice_id, intake_tts_configured
+from app.env_elevenlabs import intake_tts_configured
 
 logger = logging.getLogger(__name__)
 
@@ -167,23 +168,30 @@ async def home_or_dashboard(request: Request, page: int = 1, limit: int = 15):
     offset = (page - 1) * limit
 
     with get_db() as db:
+        if user["role"] == "admin":
+            overview = build_admin_overview_data(db)
+            return templates.TemplateResponse(request, "admin_overview.html", context={
+                **overview,
+                "active_nav": "dashboard",
+                "user": user,
+            })
+
         query = db.query(ComplaintCase).order_by(ComplaintCase.created_at.desc())
         if user["role"] == "team":
             query = query.filter(ComplaintCase.team_assignment == user.get("company"))
-        elif user["role"] != "admin":
+        else:
             query = query.filter(ComplaintCase.user_id == user.get("user_id"))
 
         total = query.count()
         rows = query.offset(offset).limit(limit).all()
         cases = [build_case_summary(row) for row in rows]
 
-        # KPI counts
         critical_query = db.query(RiskRecord).filter(RiskRecord.risk_level == "critical")
         if user["role"] == "team":
             critical_query = critical_query.join(
                 ComplaintCase, ComplaintCase.id == RiskRecord.case_id
             ).filter(ComplaintCase.team_assignment == user.get("company"))
-        elif user["role"] != "admin":
+        else:
             critical_query = critical_query.join(
                 ComplaintCase, ComplaintCase.id == RiskRecord.case_id
             ).filter(ComplaintCase.user_id == user.get("user_id"))
@@ -203,6 +211,60 @@ async def home_or_dashboard(request: Request, page: int = 1, limit: int = 15):
     })
 
 
+@router.get("/queue", include_in_schema=False)
+async def admin_queue(request: Request, page: int = 1, limit: int = 15):
+    """Admin complaint queue — full table + resolution history (stitch: complaint_management_queue)."""
+    user = _get_current_user(request)
+    if user is None:
+        return _redirect_to_login()
+    if user["role"] != "admin":
+        return _redirect_to_dashboard()
+
+    offset = (page - 1) * limit
+
+    with get_db() as db:
+        query = db.query(ComplaintCase).order_by(ComplaintCase.created_at.desc())
+        total = query.count()
+        rows = query.offset(offset).limit(limit).all()
+        cases = [build_case_summary(row) for row in rows]
+
+        critical_count = (
+            db.query(RiskRecord)
+            .filter(RiskRecord.risk_level == "critical")
+            .count()
+        )
+
+        active_pipeline = (
+            db.query(ComplaintCase)
+            .filter(~ComplaintCase.status.in_(list(_TERMINAL_STATUSES)))
+            .count()
+        )
+
+        hist_rows = (
+            db.query(ComplaintCase)
+            .filter(ComplaintCase.status.in_(list(_TERMINAL_STATUSES)))
+            .order_by(ComplaintCase.created_at.desc())
+            .limit(12)
+            .all()
+        )
+        resolved_history = [build_case_summary(row) for row in hist_rows]
+
+    total_pages = max(1, (total + limit - 1) // limit)
+
+    return templates.TemplateResponse(request, "admin_queue.html", context={
+        "cases": cases,
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "total_pages": total_pages,
+        "critical_count": critical_count,
+        "active_pipeline": active_pipeline,
+        "resolved_history": resolved_history,
+        "active_nav": "queue",
+        "user": user,
+    })
+
+
 @router.get("/brand", include_in_schema=False)
 async def brand_page(request: Request):
     return templates.TemplateResponse(request, "brand.html", context={
@@ -218,32 +280,10 @@ async def lodge_complaint(request: Request):
     if user is None:
         return _redirect_to_login()
 
-    # region agent log
-    _tts = intake_tts_configured()
-    _k = elevenlabs_api_key()
-    _v = elevenlabs_voice_id()
-    dbg_voice(
-        "H1",
-        "ui/routes:lodge_complaint",
-        "lodge_tts_flags",
-        {
-            "intake_tts_configured": _tts,
-            "api_key_len": len(_k) if _k else 0,
-            "voice_id_len": len(_v) if _v else 0,
-            "tts_missing_reason": (
-                "missing_api_key"
-                if not _k
-                else "missing_voice_id"
-                if not _v
-                else "configured"
-            ),
-        },
-    )
-    # endregion
     return templates.TemplateResponse(request, "lodge.html", context={
         "active_nav": "lodge",
         "user": user,
-        "intake_tts_enabled": _tts,
+        "intake_tts_enabled": intake_tts_configured(),
     })
 
 

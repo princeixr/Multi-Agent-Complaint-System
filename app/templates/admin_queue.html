@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+{% block title %}Complaint Queue{% endblock %}
+
+{% block head %}
+<style>
+  .queue-subnav-active { border-bottom: 2px solid rgb(var(--primary)); color: rgb(var(--primary)); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-[1600px] mx-auto space-y-10 -mt-2">
+  <!-- Local top bar (stitch: Complaint Intel) -->
+  <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-outline-variant/20 pb-4">
+    <div class="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-8">
+      <span class="font-headline font-extrabold text-lg text-primary">Complaint Intel</span>
+      <div class="relative w-full sm:w-64">
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/60 text-sm">search</span>
+        <input type="search" readonly
+               class="w-full bg-surface-container-high border-none rounded-sm text-sm py-2 pl-10 pr-4 text-on-surface placeholder:text-on-surface-variant/50"
+               placeholder="Search queue… (use header search)" />
+      </div>
+    </div>
+    <nav class="hidden md:flex gap-6 items-center h-10">
+      <a href="/queue" class="text-sm font-semibold text-primary queue-subnav-active h-10 flex items-center">Queue</a>
+      <a href="/analytics" class="text-sm text-on-surface-variant hover:text-primary transition-colors h-10 flex items-center">Analytics</a>
+      <a href="/analytics" class="text-sm text-on-surface-variant hover:text-primary transition-colors h-10 flex items-center">Reports</a>
+    </nav>
+  </div>
+
+  <!-- Page header -->
+  <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
+    <div>
+      <h1 class="text-3xl font-headline font-bold text-on-surface tracking-tight">Intelligence Canvas</h1>
+      <p class="text-on-surface-variant mt-1 text-sm font-body">Operationalizing empathetic resolution at scale.</p>
+    </div>
+    <div class="flex items-center gap-4 text-sm font-medium text-on-surface-variant">
+      <span class="flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-secondary"></span>
+        {{ active_pipeline }} active analyses
+      </span>
+      <span class="flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-primary"></span>
+        {{ critical_count }} escalations
+      </span>
+    </div>
+  </div>
+
+  <!-- Active queue -->
+  <section class="space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <h2 class="text-xl font-headline font-semibold text-primary">Active Intelligence Queue</h2>
+      <div class="flex gap-2">
+        <button type="button" class="px-4 py-2 bg-surface-container-low text-on-surface text-sm font-medium rounded-sm hover:bg-surface-container-high transition-colors">Filters</button>
+        <button type="button" class="px-4 py-2 bg-surface-container-low text-on-surface text-sm font-medium rounded-sm hover:bg-surface-container-high transition-colors">Sort by confidence</button>
+      </div>
+    </div>
+
+    <div class="bg-surface-container-lowest overflow-hidden rounded-sm ring-1 ring-outline-variant/10">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-surface-container-low border-b border-surface-container-high">
+            <th class="px-6 py-4 font-label text-xs uppercase tracking-wider text-on-surface-variant font-bold">Complaint ID</th>
+            <th class="px-6 py-4 font-label text-xs uppercase tracking-wider text-on-surface-variant font-bold">Subject</th>
+            <th class="px-6 py-4 font-label text-xs uppercase tracking-wider text-on-surface-variant font-bold">Current stage</th>
+            <th class="px-6 py-4 font-label text-xs uppercase tracking-wider text-on-surface-variant font-bold">AI confidence</th>
+            <th class="px-6 py-4 font-label text-xs uppercase tracking-wider text-on-surface-variant font-bold">Est. resolution</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-surface-container-low">
+          {% for case in cases %}
+          {% set st = case.status %}
+          {% if st in ['intake_complete', 'received'] %}
+            {% set _label = 'Intake' %}{% set _icon = 'forum' %}{% set _ring = 'bg-secondary-container' %}{% set _icon_c = 'text-on-secondary-container' %}
+          {% elif st == 'classified' %}
+            {% set _label = 'Classification' %}{% set _icon = 'segment' %}{% set _ring = 'bg-primary-container' %}{% set _icon_c = 'text-on-primary-container' %}
+          {% elif st == 'risk_assessed' %}
+            {% set _label = 'Risk analysis' %}{% set _icon = 'psychology' %}{% set _ring = 'bg-secondary-container' %}{% set _icon_c = 'text-on-secondary-container' %}
+          {% elif st == 'routed' %}
+            {% set _label = 'Routing' %}{% set _icon = 'alt_route' %}{% set _ring = 'bg-surface-container-high' %}{% set _icon_c = 'text-on-surface' %}
+          {% elif st == 'compliance_checked' %}
+            {% set _label = 'Compliance' %}{% set _icon = 'policy' %}{% set _ring = 'bg-error-container' %}{% set _icon_c = 'text-on-error-container' %}
+          {% elif st == 'resolution_proposed' %}
+            {% set _label = 'Resolution' %}{% set _icon = 'task_alt' %}{% set _ring = 'bg-secondary-container' %}{% set _icon_c = 'text-on-secondary-container' %}
+          {% else %}
+            {% set _label = st | replace('_', ' ') | title %}{% set _icon = 'hub' %}{% set _ring = 'bg-surface-container-high' %}{% set _icon_c = 'text-on-surface-variant' %}
+          {% endif %}
+          <tr class="hover:bg-surface-container/30 transition-colors">
+            <td class="px-6 py-5">
+              <a href="/complaints/{{ case.id }}" class="font-mono text-sm font-bold text-primary hover:underline">#{{ case.id[:12] }}</a>
+            </td>
+            <td class="px-6 py-5">
+              <p class="text-sm font-semibold text-on-surface leading-snug">{{ case.subject }}</p>
+              {% if case.product %}
+              <p class="text-xs text-on-surface-variant mt-0.5">{{ case.product }}</p>
+              {% endif %}
+            </td>
+            <td class="px-6 py-5">
+              <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-full {{ _ring }} flex items-center justify-center shrink-0">
+                  <span class="material-symbols-outlined text-base {{ _icon_c }}">{{ _icon }}</span>
+                </div>
+                <span class="text-sm font-medium text-on-surface">{{ _label }}</span>
+              </div>
+            </td>
+            <td class="px-6 py-5">
+              {% if case.confidence is not none %}
+              <div class="w-full max-w-[120px] space-y-1.5">
+                <div class="flex justify-between text-[10px] font-bold text-on-surface-variant">
+                  <span>{% if case.risk_level %}{{ case.risk_level | upper }}{% else %}—{% endif %}</span>
+                  <span>{{ (case.confidence * 100) | int }}%</span>
+                </div>
+                <div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+                  <div class="h-full rounded-full {% if case.confidence >= 0.8 %}bg-secondary{% elif case.confidence >= 0.5 %}bg-primary-container{% else %}bg-error{% endif %}"
+                       style="width: {{ (case.confidence * 100) | int }}%"></div>
+                </div>
+              </div>
+              {% else %}
+              <span class="text-on-surface-variant/50 text-sm">—</span>
+              {% endif %}
+            </td>
+            <td class="px-6 py-5">
+              {% if case.estimated_resolution_days is not none %}
+                {% set d = case.estimated_resolution_days %}
+                {% if d < 0.02 %}
+                <span class="text-sm text-on-surface-variant font-medium">{{ (d * 24 * 60) | round | int }} mins</span>
+                {% elif d < 1 %}
+                <span class="text-sm text-on-surface-variant font-medium">{{ (d * 24) | round | int }} hrs</span>
+                {% else %}
+                <span class="text-sm text-on-surface-variant font-medium">{{ d | round(1) }} days</span>
+                {% endif %}
+              {% else %}
+              <span class="text-sm text-on-surface-variant font-medium">—</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5" class="px-6 py-16 text-center text-on-surface-variant">No complaints in the queue yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Resolution history -->
+  <section class="space-y-6">
+    <div class="flex items-center justify-between">
+      <h2 class="text-xl font-headline font-semibold text-on-surface-variant">Resolution &amp; history</h2>
+      <div class="flex items-center gap-4">
+        <span class="text-xs font-bold text-on-surface-variant/60 uppercase">Recent closures</span>
+        <button type="button" class="p-2 hover:bg-surface-container rounded-full transition-all" title="Filters">
+          <span class="material-symbols-outlined text-xl">tune</span>
+        </button>
+      </div>
+    </div>
+    <div class="bg-surface-container-low rounded-sm p-1">
+      <div class="bg-surface-container-lowest rounded-sm ring-1 ring-outline-variant/5 overflow-hidden">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="border-b border-surface-container">
+              <th class="px-6 py-4 font-label text-xs uppercase tracking-tight text-on-surface-variant/70 font-bold">Complaint ID</th>
+              <th class="px-6 py-4 font-label text-xs uppercase tracking-tight text-on-surface-variant/70 font-bold">Final outcome</th>
+              <th class="px-6 py-4 font-label text-xs uppercase tracking-tight text-on-surface-variant/70 font-bold">Total time</th>
+              <th class="px-6 py-4 font-label text-xs uppercase tracking-tight text-on-surface-variant/70 font-bold">Final cost</th>
+              <th class="px-6 py-4 font-label text-xs uppercase tracking-tight text-on-surface-variant/70 font-bold">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-surface-container">
+            {% for case in resolved_history %}
+            <tr class="hover:bg-surface-container-low/50">
+              <td class="px-6 py-4 text-sm font-mono text-on-surface-variant">#{{ case.id[:12] }}</td>
+              <td class="px-6 py-4">
+                {% if case.status == 'dismissed' %}
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface-variant text-[11px] font-bold">
+                  <span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">block</span>
+                  Dismissed
+                </span>
+                {% else %}
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-container text-[11px] font-bold">
+                  <span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                  Resolved
+                </span>
+                {% endif %}
+              </td>
+              <td class="px-6 py-4 text-sm text-on-surface font-medium">—</td>
+              <td class="px-6 py-4 text-sm text-on-surface font-semibold">
+                {% if case.monetary_amount is not none %}${{ "%.2f" | format(case.monetary_amount) }}{% else %}—{% endif %}
+              </td>
+              <td class="px-6 py-4">
+                <a href="/complaints/{{ case.id }}" class="text-primary text-sm font-bold hover:underline inline-flex items-center gap-1">
+                  View analysis
+                  <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                </a>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="5" class="px-6 py-10 text-center text-on-surface-variant text-sm">No resolved cases yet.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  {% if total_pages > 1 %}
+  <div class="flex items-center justify-between pt-2">
+    <p class="text-xs text-on-surface-variant">
+      Showing {{ ((page - 1) * limit) + 1 }}–{{ [page * limit, total] | min }} of {{ total }} complaints
+    </p>
+    <div class="flex gap-1">
+      {% if page > 1 %}
+      <a href="/queue?page={{ page - 1 }}"
+         class="px-3 py-1.5 rounded-lg text-xs bg-surface-container-low hover:bg-surface-container-high text-on-surface-variant transition-colors">Prev</a>
+      {% endif %}
+      {% for p in range(1, total_pages + 1) %}
+        {% if p == page %}
+        <span class="px-3 py-1.5 rounded-lg text-xs aurora-gradient text-on-primary font-bold">{{ p }}</span>
+        {% elif p <= 3 or p >= total_pages - 1 or (p >= page - 1 and p <= page + 1) %}
+        <a href="/queue?page={{ p }}"
+           class="px-3 py-1.5 rounded-lg text-xs bg-surface-container-low hover:bg-surface-container-high text-on-surface-variant transition-colors">{{ p }}</a>
+        {% elif p == 4 or p == total_pages - 2 %}
+        <span class="px-2 py-1.5 text-xs text-on-surface-variant/50">…</span>
+        {% endif %}
+      {% endfor %}
+      {% if page < total_pages %}
+      <a href="/queue?page={{ page + 1 }}"
+         class="px-3 py-1.5 rounded-lg text-xs bg-surface-container-low hover:bg-surface-container-high text-on-surface-variant transition-colors">Next</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- System health (desktop) -->
+<div class="fixed bottom-8 right-8 w-80 bg-surface-container-lowest shadow-2xl rounded-sm p-5 border border-outline-variant/20 hidden lg:block z-30">
+  <div class="flex items-center justify-between mb-4">
+    <h4 class="font-headline font-bold text-sm text-primary uppercase tracking-widest">System health</h4>
+    <span class="w-2 h-2 bg-secondary rounded-full animate-pulse"></span>
+  </div>
+  <div class="space-y-4">
+    <div class="flex justify-between items-center">
+      <span class="text-xs font-medium text-on-surface-variant">Queue pressure</span>
+      <span class="text-xs font-bold text-secondary">Optimal</span>
+    </div>
+    <div class="flex justify-between items-center">
+      <span class="text-xs font-medium text-on-surface-variant">Critical cases</span>
+      <span class="text-xs font-bold text-on-surface">{{ critical_count }}</span>
+    </div>
+    {% set health_w = 24 + active_pipeline * 3 %}
+    <div class="h-1 w-full bg-surface-container rounded-full overflow-hidden">
+      <div class="h-full bg-primary rounded-full" style="width: {% if active_pipeline %}{{ health_w if health_w < 90 else 90 }}{% else %}14{% endif %}%"></div>
+    </div>
+    <p class="text-[10px] text-on-surface-variant/80 leading-relaxed">
+      {{ active_pipeline }} open cases in the pipeline. Open <a href="/trace/latest" class="text-primary font-semibold hover:underline">Trace</a> for execution detail.
+    </p>
+  </div>
+</div>
+{% endblock %}

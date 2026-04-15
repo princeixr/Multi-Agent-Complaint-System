@@ -26,7 +26,6 @@ from app.agents.intake_engine import (
 )
 from app.api.elevenlabs_intake import router as elevenlabs_intake_router
 from app.api.elevenlabs_intake import synthesize_speech_bytes
-from app.debug_voice_log import dbg_voice
 
 logger = logging.getLogger(__name__)
 
@@ -359,30 +358,8 @@ async def start_intake(body: StartIntakeBody | None = Body(None)) -> dict:
 )
 async def intake_tts(body: IntakeTtsBody) -> Response:
     """ElevenLabs TTS for the lodge UI; uses server-side API key only."""
-    # region agent log
-    dbg_voice("H2", "api/routes:intake_tts", "request", {"text_len": len(body.text)})
-    # endregion
-    try:
-        audio, content_type = synthesize_speech_bytes(body.text, body.voice_id)
-        # region agent log
-        dbg_voice(
-            "H2",
-            "api/routes:intake_tts",
-            "success",
-            {"audio_bytes": len(audio), "content_type": content_type},
-        )
-        # endregion
-        return Response(content=audio, media_type=content_type)
-    except HTTPException as e:
-        # region agent log
-        dbg_voice(
-            "H2",
-            "api/routes:intake_tts",
-            "http_exception",
-            {"status": e.status_code, "detail": str(e.detail)[:240]},
-        )
-        # endregion
-        raise
+    audio, content_type = synthesize_speech_bytes(body.text, body.voice_id)
+    return Response(content=audio, media_type=content_type)
 
 
 @router.post(
