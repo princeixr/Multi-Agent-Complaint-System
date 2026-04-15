@@ -79,6 +79,23 @@ def build_case_summary(db_case: ComplaintCase) -> dict:
     )
     supporting_documents = _extract_supporting_documents(transcript)
 
+    created = db_case.created_at
+    updated = db_case.updated_at
+    if created and updated and updated > created:
+        delta = updated - created
+        total_seconds = int(delta.total_seconds())
+        if total_seconds < 3600:
+            total_time_str = f"{total_seconds // 60}m"
+        elif total_seconds < 86400:
+            h, m = divmod(total_seconds // 60, 60)
+            total_time_str = f"{h}h {m}m" if m else f"{h}h"
+        else:
+            days = total_seconds // 86400
+            h = (total_seconds % 86400) // 3600
+            total_time_str = f"{days}d {h}h" if h else f"{days}d"
+    else:
+        total_time_str = None
+
     return {
         "id": db_case.id,
         "subject": subject,
@@ -92,6 +109,7 @@ def build_case_summary(db_case: ComplaintCase) -> dict:
         "team_assignment": db_case.team_assignment,
         "created_at": db_case.created_at,
         "severity_class": db_case.severity_class,
+        "total_time_str": total_time_str,
         "estimated_resolution_days": res.estimated_resolution_days if res else None,
         "monetary_amount": res.monetary_amount if res else None,
         "intake_session_transcript": transcript if isinstance(transcript, dict) else None,

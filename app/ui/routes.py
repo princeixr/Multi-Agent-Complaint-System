@@ -286,15 +286,19 @@ async def admin_queue(request: Request, page: int = 1, limit: int = 15):
         rows = query.offset(offset).limit(limit).all()
         cases = [build_case_summary(row) for row in rows]
 
-        critical_count = (
-            db.query(RiskRecord)
-            .filter(RiskRecord.risk_level == "critical")
-            .count()
-        )
-
         active_pipeline = (
             db.query(ComplaintCase)
             .filter(~ComplaintCase.status.in_(list(_TERMINAL_STATUSES)))
+            .count()
+        )
+
+        critical_count = (
+            db.query(RiskRecord)
+            .join(ComplaintCase, ComplaintCase.id == RiskRecord.case_id)
+            .filter(
+                RiskRecord.risk_level == "critical",
+                ~ComplaintCase.status.in_(list(_TERMINAL_STATUSES)),
+            )
             .count()
         )
 
@@ -823,20 +827,6 @@ async def resolution_history(request: Request):
         "pending_count": len(pending_cases_raw),
     })
 
-
-@router.get("/costs", include_in_schema=False)
-async def costs(request: Request):
-    """Operational cost observability — LLM spend, token usage."""
-    user = _get_current_user(request)
-    if user is None:
-        return _redirect_to_login()
-    if user["role"] != "admin":
-        return _redirect_to_dashboard()
-
-    return templates.TemplateResponse(request, "costs.html", context={
-        "active_nav": "costs",
-        "user": user,
-    })
 
 
 @router.get("/team", include_in_schema=False)
