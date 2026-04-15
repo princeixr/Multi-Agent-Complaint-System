@@ -11,7 +11,7 @@ MOCK_COMPANY_ID = "mock_bank"
 def deployment_label() -> str:
     """Stable label for observability and DB audit rows (optional ``DEPLOYMENT_ID`` env)."""
     return os.getenv("DEPLOYMENT_ID", MOCK_COMPANY_ID)
-
+# 1. Company Profile
 COMPANY_PROFILE = {
     "display_name": "Mock Bank",
     "customer_identity": "digital bank",
@@ -41,7 +41,7 @@ COMPANY_PROFILE = {
         "merchant name, or a case/reference number."
     ),
 }
-
+# 2. classification taxonomy
 PRODUCT_CATEGORIES = [
     {
         "product_category": "credit_card",
@@ -153,9 +153,6 @@ ISSUE_TYPES = [
     },
 ]
 
-# -------------------------------------------------------------------
-# RECOMMENDED NORMALIZATION CHANGES
-# -------------------------------------------------------------------
 # These are not mandatory for your code to run, but they align your
 # internal taxonomy more closely with the current CFPB structure.
 RECOMMENDED_PRODUCT_CATEGORY_NORMALIZATION = {
@@ -838,7 +835,7 @@ OPERATIONAL_TAXONOMY = {
     "issue_to_sub_issue_taxonomy": ISSUE_TO_SUB_ISSUE_TAXONOMY,
 }
 
-
+# 3. risk taxonomy
 SEVERITY_RUBRIC = [
     {
         "level": "low",
@@ -866,7 +863,7 @@ SEVERITY_RUBRIC = [
     },
 ]
 
-
+# 4. compliance taxonomy
 POLICY_SNIPPETS = [
     {
         "policy_id": "disclosures_and_notice",
@@ -890,7 +887,7 @@ POLICY_SNIPPETS = [
     },
 ]
 
-
+# 5. Routing Taxonomy
 ROUTING_MATRIX = {
     # Core ownership mapping.
     # This is the "company ownership graph" simplified into rules.
@@ -911,7 +908,7 @@ ROUTING_MATRIX = {
     "management_escalation_team": "management_escalation_team",
 }
 
-
+# 6. Root cause taxonomy
 ROOT_CAUSE_CONTROLS = [
     {
         "root_cause_category": "fraud_false_positive_hold",

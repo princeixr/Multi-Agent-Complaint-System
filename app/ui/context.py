@@ -101,6 +101,8 @@ def build_case_summary(db_case: ComplaintCase) -> dict:
         "subject": subject,
         "status": db_case.status or "unknown",
         "product": cls.product_category if cls else None,
+        "issue_type": cls.issue_type if cls else None,
+        "sub_issue": cls.sub_issue if cls else None,
         "sub_product": db_case.sub_product,
         "risk_level": risk.risk_level if risk else None,
         "risk_score": risk.risk_score if risk else None,
@@ -291,27 +293,42 @@ def build_analytics_data(db: Session) -> dict:
 def build_settings_data() -> dict:
     """Load knowledge pack content for the settings view."""
     try:
-        from app.knowledge import CompanyKnowledgeService
-        from app.knowledge.mock_company_pack import deployment_label
-
-        svc = CompanyKnowledgeService()
-        ctx = svc.build_company_context("")
+        from app.knowledge.mock_company_pack import (
+            COMPANY_PROFILE,
+            PRODUCT_CATEGORIES,
+            ISSUE_TYPES,
+            PRODUCT_TO_SUB_PRODUCT_TAXONOMY,
+            ISSUE_TO_SUB_ISSUE_TAXONOMY,
+            SEVERITY_RUBRIC,
+            POLICY_SNIPPETS,
+            ROUTING_MATRIX,
+            ROOT_CAUSE_CONTROLS,
+            deployment_label,
+        )
 
         return {
             "deployment": deployment_label(),
-            "taxonomy": ctx.taxonomy_candidates,
-            "severity_rubric": ctx.severity_candidates,
-            "routing_rules": ctx.routing_candidates,
-            "root_cause_controls": ctx.root_cause_controls,
-            "policy_snippets": ctx.policy_candidates,
+            "company_profile": COMPANY_PROFILE,
+            "product_categories": PRODUCT_CATEGORIES,
+            "issue_types": ISSUE_TYPES,
+            "product_to_sub_product": PRODUCT_TO_SUB_PRODUCT_TAXONOMY,
+            "issue_to_sub_issue": ISSUE_TO_SUB_ISSUE_TAXONOMY,
+            "severity_rubric": SEVERITY_RUBRIC,
+            "policy_snippets": POLICY_SNIPPETS,
+            "routing_rules": ROUTING_MATRIX,
+            "root_cause_controls": ROOT_CAUSE_CONTROLS,
         }
     except Exception as e:
         logger.warning("Could not load company knowledge: %s", e)
         return {
             "deployment": "unknown",
-            "taxonomy": {},
+            "company_profile": {},
+            "product_categories": [],
+            "issue_types": [],
+            "product_to_sub_product": {},
+            "issue_to_sub_issue": {},
             "severity_rubric": [],
+            "policy_snippets": [],
             "routing_rules": {},
             "root_cause_controls": [],
-            "policy_snippets": [],
         }
