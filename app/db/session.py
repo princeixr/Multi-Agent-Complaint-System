@@ -75,6 +75,8 @@ def init_db() -> None:
             ("classification_audit_json", "TEXT"),
             ("user_id", "VARCHAR(64)"),
             ("intake_session_transcript_json", "TEXT"),
+            ("document_gate_result_json", "TEXT"),
+            ("document_consistency_json", "TEXT"),
         ]
 
         classification_columns: list[tuple[str, str]] = [
@@ -82,10 +84,49 @@ def init_db() -> None:
             ("reason_codes_json", "TEXT"),
             ("keywords_json", "TEXT"),
         ]
+        case_document_columns: list[tuple[str, str]] = [
+            ("case_id", "VARCHAR(32)"),
+            ("intake_session_id", "VARCHAR(32)"),
+            ("user_id", "VARCHAR(64)"),
+            ("original_filename", "VARCHAR(255)"),
+            ("mime_type", "VARCHAR(120)"),
+            ("size_bytes", "INTEGER DEFAULT 0"),
+            ("storage_uri", "TEXT"),
+            ("checksum", "VARCHAR(128)"),
+            ("upload_status", "VARCHAR(32) DEFAULT 'uploaded'"),
+            ("parser_status", "VARCHAR(32) DEFAULT 'pending'"),
+            ("extraction_status", "VARCHAR(32) DEFAULT 'pending'"),
+            ("document_type", "VARCHAR(64) DEFAULT 'unknown'"),
+            ("processing_error", "TEXT"),
+            ("created_at", "TIMESTAMP"),
+            ("updated_at", "TIMESTAMP"),
+        ]
+        document_artifact_columns: list[tuple[str, str]] = [
+            ("document_id", "VARCHAR(32)"),
+            ("raw_text", "TEXT"),
+            ("normalized_text", "TEXT"),
+            ("extracted_json", "TEXT"),
+            ("parser_version", "VARCHAR(64)"),
+            ("extraction_version", "VARCHAR(64)"),
+            ("confidence", "FLOAT"),
+            ("created_at", "TIMESTAMP"),
+            ("updated_at", "TIMESTAMP"),
+        ]
+        document_embedding_columns: list[tuple[str, str]] = [
+            ("document_id", "VARCHAR(32)"),
+            ("case_id", "VARCHAR(32)"),
+            ("chunk_index", "INTEGER DEFAULT 0"),
+            ("content", "TEXT"),
+            ("source_page", "INTEGER"),
+            ("created_at", "TIMESTAMP"),
+        ]
 
         for table_name, columns in (
             ("complaint_cases", complaint_case_columns),
             ("classifications", classification_columns),
+            ("case_documents", case_document_columns),
+            ("document_artifacts", document_artifact_columns),
+            ("document_embeddings", document_embedding_columns),
         ):
             existing = conn.execute(
                 text(

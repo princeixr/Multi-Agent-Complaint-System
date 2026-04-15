@@ -28,7 +28,12 @@ from app.agents.llm_factory import create_llm
 from app.agents.llm_json import parse_llm_json
 from app.agents.tool_loop import run_agent_with_tools
 from app.knowledge import CompanyKnowledgeService
-from app.agents.tools import lookup_company_taxonomy, search_similar_complaints
+from app.agents.tools import (
+    get_case_document_facts,
+    lookup_company_taxonomy,
+    search_case_documents,
+    search_similar_complaints,
+)
 from app.schemas.case import CaseRead
 from app.schemas.classification import ClassificationResult
 from app.schemas.classification_pipeline import (
@@ -171,6 +176,12 @@ def _build_execute_user_message(
         "**Consumer complaint narrative** (may be empty or short — do not invent facts):",
         case.consumer_narrative or "[empty]",
         "",
+        "## Document evidence",
+        json.dumps(case.case_document_summary or {}, indent=2),
+        "",
+        "## Deterministic document consistency check",
+        json.dumps(case.document_consistency or {}, indent=2),
+        "",
         "## Plan (follow strictly)",
         strategy_line,
         weight_line,
@@ -198,9 +209,10 @@ def _build_execute_user_message(
 
 
 def _select_execution_tools(plan: ClassificationPlan) -> list:
-    if not plan.needs_retrieval or plan.tool_budget <= 0:
-        return []
-    return [search_similar_complaints, lookup_company_taxonomy]
+    tools = []
+    if plan.needs_retrieval and plan.tool_budget > 0:
+        tools.extend([search_similar_complaints, lookup_company_taxonomy])
+    return tools
 
 
 def _run_execute_no_tools(llm, system_prompt: str, user_message: str) -> dict:
@@ -297,18 +309,21 @@ def run_classification(
 
     plan = plan_from_assessment(assessment)
     taxonomy_candidates = _taxonomy_candidates_for_case(case)
+    has_documents = bool((case.case_document_summary or {}).get("total_documents"))
 
     execute_skipped = False
     if should_skip_execute_llm(signals, assessment, plan) and (
         taxonomy_candidates.get("product_categories")
         and taxonomy_candidates.get("issue_types")
-    ):
+    ) and not has_documents:
         result = build_template_classification_result(case, signals, taxonomy_candidates)
         evidence_used: dict[str, bool] = {}
         execute_skipped = True
     else:
         system_prompt = _load_classification_prompt()
         tools = _select_execution_tools(plan)
+        if has_documents and getattr(case, "id", None):
+            tools = [*tools, get_case_document_facts, search_case_documents]
         user_message = _build_execute_user_message(
             case,
             assessment,
@@ -318,7 +333,8 @@ def run_classification(
             [tool.name for tool in tools],
         )
         if tools:
-            max_rounds = max(1, min(plan.tool_budget, 10))
+            min_budget = 2 if has_documents else 1
+            max_rounds = max(min_budget, min(plan.tool_budget or min_budget, 10))
             exec_out = run_agent_with_tools(
                 llm,
                 system_prompt,
@@ -335,6 +351,18 @@ def run_classification(
 
     result = enrich_operational_sub_labels(result, case)
     result = _verify_classification(result, assessment, plan, signals)
+    consistency = case.document_consistency or {}
+    if consistency.get("status") == "contradiction":
+        codes = list(result.reason_codes)
+        if "document_contradiction_detected" not in codes:
+            codes.append("document_contradiction_detected")
+        result = result.model_copy(
+            update={
+                "reason_codes": codes,
+                "review_recommended": True,
+                "confidence": min(float(result.confidence), 0.65),
+            }
+        )
 
     v2_flag = _v2_dual_hypothesis_eligible(assessment)
 

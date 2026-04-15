@@ -8,15 +8,25 @@ from typing import Literal
 
 from datetime import datetime
 
-from fastapi import APIRouter, BackgroundTasks, Body, HTTPException, Request, Response, status
+from fastapi import APIRouter, BackgroundTasks, Body, File, HTTPException, Request, Response, UploadFile, status
 from pydantic import BaseModel, Field
 
 from app.db.session import get_db
 from app.db.models import (
+    CaseDocument,
     ComplaintCase,
     ClassificationRecord,
     RiskRecord,
     ResolutionRecord,
+)
+from app.documents.service import (
+    build_case_document_summary,
+    create_session_document,
+    delete_session_document,
+    link_session_documents_to_case,
+    list_case_documents,
+    list_session_documents,
+    process_document,
 )
 from app.orchestrator.workflow import process_complaint
 from app.schemas.case import CaseCreate, CaseRead
@@ -44,6 +54,7 @@ def _attach_intake_transcript_to_case(case_id: str, session_id: str) -> None:
         "session_id": session_id,
         "conversation_history": st.conversation_history,
         "final_packet": json.loads(st.packet.model_dump_json()),
+        "documents": [doc.model_dump(mode="json") for doc in list_case_documents(case_id)],
     }
     raw = json.dumps(snap, ensure_ascii=False)
     with get_db() as db:
@@ -159,6 +170,19 @@ def _case_read_from_db(db_case: ComplaintCase) -> CaseRead:
         cfpb_issue = external_schema.get("cfpb_issue")
         cfpb_sub_issue = external_schema.get("cfpb_sub_issue")
 
+    case_documents = [doc.model_dump() for doc in list_case_documents(db_case.id)]
+    case_document_summary = build_case_document_summary(db_case.id).model_dump()
+    document_gate_result = (
+        json.loads(db_case.document_gate_result_json)
+        if getattr(db_case, "document_gate_result_json", None)
+        else None
+    )
+    document_consistency = (
+        json.loads(db_case.document_consistency_json)
+        if getattr(db_case, "document_consistency_json", None)
+        else None
+    )
+
     return CaseRead(
         id=db_case.id,
         status=db_case.status,  # CaseStatus conversion happens via pydantic
@@ -191,6 +215,10 @@ def _case_read_from_db(db_case: ComplaintCase) -> CaseRead:
         team_assignment=db_case.team_assignment,
         sla_class=db_case.sla_class,
         root_cause_hypothesis=root_cause_hypothesis,
+        case_documents=case_documents,
+        case_document_summary=case_document_summary,
+        document_gate_result=document_gate_result,
+        document_consistency=document_consistency,
     )
 
 
@@ -220,6 +248,8 @@ def _persist_case_and_outputs(case: CaseRead) -> None:
             compliance_flags_json=_json_or_none(case.compliance_flags),
             review_notes=case.review_notes,
             classification_audit_json=_json_or_none(case.classification_audit),
+            document_gate_result_json=_json_or_none(case.document_gate_result),
+            document_consistency_json=_json_or_none(case.document_consistency),
         )
         db.add(db_case)
 
@@ -310,6 +340,8 @@ def _upsert_case_and_outputs(case: CaseRead) -> None:
         db_case.compliance_flags_json = _json_or_none(case.compliance_flags)
         db_case.review_notes = case.review_notes
         db_case.classification_audit_json = _json_or_none(case.classification_audit)
+        db_case.document_gate_result_json = _json_or_none(case.document_gate_result)
+        db_case.document_consistency_json = _json_or_none(case.document_consistency)
 
         classification_row = (
             db.query(ClassificationRecord)
@@ -462,6 +494,14 @@ async def get_complaint(case_id: str) -> CaseRead:
 
 
 @router.get(
+    "/complaints/{case_id}/documents",
+    summary="List documents attached to a complaint case",
+)
+async def complaint_documents(case_id: str) -> list[dict]:
+    return [doc.model_dump() for doc in list_case_documents(case_id)]
+
+
+@router.get(
     "/complaints",
     response_model=list[CaseRead],
     summary="List recent complaints",
@@ -550,6 +590,50 @@ async def intake_message(session_id: str, message: str) -> dict:
     }
 
 
+@router.get(
+    "/intake/session/{session_id}/documents",
+    summary="List uploaded documents for an intake session",
+)
+async def intake_session_documents(request: Request, session_id: str) -> list[dict]:
+    user_id = request.cookies.get("user_id")
+    return [doc.model_dump() for doc in list_session_documents(session_id, user_id=user_id)]
+
+
+@router.post(
+    "/intake/session/{session_id}/documents",
+    summary="Upload one or more documents for an intake session",
+)
+async def upload_intake_documents(
+    request: Request,
+    session_id: str,
+    background_tasks: BackgroundTasks,
+    files: list[UploadFile] = File(...),
+) -> list[dict]:
+    if get_intake_session(session_id) is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Unknown intake session_id={session_id}",
+        )
+    user_id = request.cookies.get("user_id")
+    created = []
+    for file in files:
+        doc = create_session_document(session_id=session_id, user_id=user_id, file=file)
+        created.append(doc)
+        background_tasks.add_task(process_document, doc.id)
+    return [doc.model_dump() for doc in created]
+
+
+@router.delete(
+    "/intake/session/{session_id}/documents/{document_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Remove an uploaded document from an intake session",
+)
+async def remove_intake_document(request: Request, session_id: str, document_id: str) -> Response:
+    user_id = request.cookies.get("user_id")
+    delete_session_document(session_id=session_id, document_id=document_id, user_id=user_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 @router.post(
     "/intake/session/{session_id}/finalize",
     summary="Finalize an intake session and open a complaint case",
@@ -572,6 +656,10 @@ async def finalize_intake(
         case_id = CaseRead().id
         user_id = request.cookies.get("user_id")
         case = _create_initial_case(case_id, case_create, user_id)
+        linked_docs = link_session_documents_to_case(session_id=session_id, case_id=case.id, user_id=user_id)
+        if linked_docs:
+            case.review_notes = f"{len(linked_docs)} uploaded document(s) attached. Backend processing in progress."
+            _upsert_case_and_outputs(case)
         _attach_intake_transcript_to_case(case.id, session_id)
         background_tasks.add_task(
             _process_case_background,

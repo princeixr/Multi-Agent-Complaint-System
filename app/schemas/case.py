@@ -169,6 +169,10 @@ class CaseRead(BaseModel):
     team_assignment: Optional[str] = None
     sla_class: Optional[str] = None
     root_cause_hypothesis: Optional[dict] = None
+    case_documents: list[dict[str, Any]] = Field(default_factory=list)
+    case_document_summary: Optional[dict[str, Any]] = None
+    document_gate_result: Optional[dict[str, Any]] = None
+    document_consistency: Optional[dict[str, Any]] = None
 
     # Jira integration (populated after routing)
     jira_issue_key: Optional[str] = None   # e.g. "KAN-7"

@@ -11,7 +11,13 @@ from pathlib import Path
 from app.agents.llm_factory import create_llm
 from app.agents.narrative_context import narrative_for_agent_prompt
 from app.agents.tool_loop import run_agent_with_tools
-from app.agents.tools import lookup_routing_rules, lookup_severity_rubric, search_similar_resolutions
+from app.agents.tools import (
+    get_case_document_facts,
+    lookup_routing_rules,
+    lookup_severity_rubric,
+    search_case_documents,
+    search_similar_resolutions,
+)
 from app.schemas.case import CaseRead
 from app.schemas.classification import ClassificationResult
 from app.schemas.resolution import ResolutionRecommendation
@@ -60,6 +66,8 @@ def run_resolution(
         f"Classification: {classification.model_dump_json()}\n"
         f"Risk Assessment: {risk.model_dump_json()}\n"
     )
+    if case is not None and getattr(case, "id", None):
+        user_message += f"Case ID: {case.id}\n"
     if root_cause_hypothesis is not None:
         user_message += (
             f"Root-cause hypothesis (grounding context): {root_cause_hypothesis}\n"
@@ -69,12 +77,13 @@ def run_resolution(
 
     user_message += (
         "\nYou have tools available to search for similar resolutions and look up "
-        "severity rubrics, policies, and routing rules. Use them to ground your "
-        "resolution recommendation. When done, respond with the resolution JSON."
+        "severity rubrics, policies, routing rules, and uploaded-document evidence. "
+        "Use document facts/chunks whenever documents are attached to the case. "
+        "When done, respond with the resolution JSON."
     )
 
     llm = create_llm(model_name=model_name, temperature=temperature)
-    tools = [search_similar_resolutions, lookup_severity_rubric, lookup_routing_rules]
+    tools = [search_similar_resolutions, lookup_severity_rubric, lookup_routing_rules, get_case_document_facts, search_case_documents]
 
     result_data = run_agent_with_tools(llm, system_prompt, user_message, tools)
 

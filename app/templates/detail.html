@@ -256,6 +256,36 @@
     </div>
     {% endif %}
 
+    {% if case.document_gate_result or case.document_consistency %}
+    <div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="material-symbols-outlined text-primary">description</span>
+        <h2 class="font-headline font-bold text-on-surface">Document Grounding</h2>
+      </div>
+      {% if case.document_gate_result %}
+      <div class="text-sm text-on-surface mb-3">
+        Gate status: <span class="font-semibold">{{ case.document_gate_result.status or 'unknown' }}</span>
+      </div>
+      {% endif %}
+      {% if case.document_consistency and case.document_consistency.status %}
+      <div class="text-sm text-on-surface mb-3">
+        Consistency: <span class="font-semibold">{{ case.document_consistency.status }}</span>
+      </div>
+      {% endif %}
+      {% if case.document_consistency and case.document_consistency.conflicts %}
+      <div class="space-y-3">
+        {% for conflict in case.document_consistency.conflicts %}
+        <div class="rounded-lg bg-error/8 border border-error/20 p-3">
+          <div class="text-xs uppercase font-bold text-error mb-1">{{ conflict.field | replace('_', ' ') }}</div>
+          <div class="text-xs text-on-surface-variant">Narrative: {{ conflict.narrative | join(', ') }}</div>
+          <div class="text-xs text-on-surface-variant">Documents: {{ conflict.documents | join(', ') }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
     <!-- Compliance Flags -->
     {% if case.compliance_flags %}
     <div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm">

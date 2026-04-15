@@ -11,7 +11,12 @@ import logging
 from app.agents.llm_factory import create_llm
 from app.agents.narrative_context import narrative_for_agent_prompt
 from app.agents.tool_loop import run_agent_with_tools
-from app.agents.tools import lookup_root_cause_controls, search_similar_complaints
+from app.agents.tools import (
+    get_case_document_facts,
+    lookup_root_cause_controls,
+    search_case_documents,
+    search_similar_complaints,
+)
 from app.schemas.case import CaseRead
 from app.schemas.classification import ClassificationResult
 from app.schemas.risk import RiskAssessment
@@ -66,16 +71,19 @@ def run_root_cause_hypothesis(
         f"Operational classification: {classification.model_dump_json()}\n"
         f"Risk assessment: {risk.model_dump_json()}\n"
     )
+    if case is not None and getattr(case, "id", None):
+        user_message += f"Case ID: {case.id}\n"
     if instructions:
         user_message += f"\nSupervisor instructions: {instructions}\n"
 
     user_message += (
-        "\nUse your tools to look up root cause controls and search for similar "
-        "complaints. When done, respond with the root cause hypothesis JSON."
+        "\nUse your tools to look up root cause controls, extracted case-document facts, "
+        "and relevant uploaded-document chunks before finalizing your hypothesis. "
+        "When done, respond with the root cause hypothesis JSON."
     )
 
     llm = create_llm(model_name=model_name, temperature=temperature)
-    tools = [lookup_root_cause_controls, search_similar_complaints]
+    tools = [lookup_root_cause_controls, search_similar_complaints, get_case_document_facts, search_case_documents]
 
     result_data = run_agent_with_tools(llm, _SYSTEM_PROMPT, user_message, tools)
     result = RootCauseHypothesis(**result_data)

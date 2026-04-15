@@ -88,6 +88,8 @@ class ComplaintCase(Base):
     classification_audit_json = Column(Text)
     # Snapshot of intake chat + packet when filed via lodge (for user session history)
     intake_session_transcript_json = Column(Text)
+    document_gate_result_json = Column(Text)
+    document_consistency_json = Column(Text)
 
     # Relationships
     classification = relationship(
@@ -98,6 +100,9 @@ class ComplaintCase(Base):
     )
     resolution = relationship(
         "ResolutionRecord", back_populates="case", uselist=False
+    )
+    documents = relationship(
+        "CaseDocument", back_populates="case"
     )
 
 
@@ -116,6 +121,7 @@ class IntakeSessionRecord(Base):
     handoff_triggered = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    documents = relationship("CaseDocument", back_populates="intake_session")
 
 
 class ClassificationRecord(Base):
@@ -166,6 +172,74 @@ class ResolutionRecord(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     case = relationship("ComplaintCase", back_populates="resolution")
+
+
+class CaseDocument(Base):
+    __tablename__ = "case_documents"
+
+    id = Column(String(32), primary_key=True, default=lambda: uuid.uuid4().hex)
+    case_id = Column(String(32), ForeignKey("complaint_cases.id"), nullable=True, index=True)
+    intake_session_id = Column(String(32), ForeignKey("intake_sessions.session_id"), nullable=True, index=True)
+    user_id = Column(String(64), nullable=True, index=True)
+    original_filename = Column(String(255), nullable=False)
+    mime_type = Column(String(120), nullable=False)
+    size_bytes = Column(Integer, nullable=False, default=0)
+    storage_uri = Column(Text, nullable=False)
+    checksum = Column(String(128), nullable=True, index=True)
+    upload_status = Column(String(32), nullable=False, default="uploaded")
+    parser_status = Column(String(32), nullable=False, default="pending")
+    extraction_status = Column(String(32), nullable=False, default="pending")
+    document_type = Column(String(64), nullable=False, default="unknown")
+    processing_error = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    case = relationship("ComplaintCase", back_populates="documents")
+    intake_session = relationship("IntakeSessionRecord", back_populates="documents")
+    artifact = relationship("DocumentArtifact", back_populates="document", uselist=False)
+    embeddings = relationship("DocumentEmbedding", back_populates="document")
+
+
+class DocumentArtifact(Base):
+    __tablename__ = "document_artifacts"
+
+    id = Column(String(32), primary_key=True, default=lambda: uuid.uuid4().hex)
+    document_id = Column(String(32), ForeignKey("case_documents.id"), nullable=False, unique=True, index=True)
+    raw_text = Column(Text, nullable=True)
+    normalized_text = Column(Text, nullable=True)
+    extracted_json = Column(Text, nullable=True)
+    parser_version = Column(String(64), nullable=True)
+    extraction_version = Column(String(64), nullable=True)
+    confidence = Column(Float, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    document = relationship("CaseDocument", back_populates="artifact")
+
+
+class DocumentEmbedding(Base):
+    __tablename__ = "document_embeddings"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    document_id = Column(String(32), ForeignKey("case_documents.id"), nullable=False, index=True)
+    case_id = Column(String(32), nullable=True, index=True)
+    chunk_index = Column(Integer, nullable=False, default=0)
+    content = Column(Text, nullable=False)
+    embedding = Column(Vector(EMBEDDING_DIM), nullable=False)
+    source_page = Column(Integer, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    document = relationship("CaseDocument", back_populates="embeddings")
+
+    __table_args__ = (
+        Index(
+            "ix_document_embeddings_hnsw",
+            embedding,
+            postgresql_using="hnsw",
+            postgresql_with={"m": 16, "ef_construction": 64},
+            postgresql_ops={"embedding": "vector_cosine_ops"},
+        ),
+    )
 
 
 # ═════════════════════════════════════════════════════════════════════════════

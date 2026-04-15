@@ -176,8 +176,11 @@
           {% for doc in selected_case.supporting_documents %}
           <div class="bg-surface-container-low rounded-xl p-4">
             <div class="text-sm font-semibold text-on-surface">{{ doc.name or doc.filename or doc.title or ('Document ' ~ loop.index) }}</div>
-            {% if doc.type or doc.mime_type %}
-            <div class="text-xs text-on-surface-variant mt-1">{{ doc.type or doc.mime_type }}</div>
+            {% if doc.document_type or doc.type or doc.mime_type %}
+            <div class="text-xs text-on-surface-variant mt-1">{{ doc.document_type or doc.type or doc.mime_type }}</div>
+            {% endif %}
+            {% if doc.extraction_status %}
+            <div class="text-xs text-on-surface-variant mt-1">Status: {{ doc.extraction_status | replace('_', ' ') }}</div>
             {% endif %}
           </div>
           {% endfor %}

@@ -8,6 +8,7 @@ from collections import Counter
 
 from sqlalchemy.orm import Session
 
+from app.documents.service import build_case_document_summary
 from app.db.models import (
     ComplaintCase,
     ClassificationRecord,
@@ -61,6 +62,26 @@ def _extract_supporting_documents(transcript: dict | None) -> list[dict]:
     return documents
 
 
+def _document_rows_from_case(db_case: ComplaintCase) -> list[dict]:
+    docs = []
+    for row in getattr(db_case, "documents", []) or []:
+        artifact = getattr(row, "artifact", None)
+        extracted = _safe_json_load(getattr(artifact, "extracted_json", None)) if artifact else {}
+        docs.append({
+            "id": row.id,
+            "name": row.original_filename,
+            "mime_type": row.mime_type,
+            "size_bytes": row.size_bytes,
+            "upload_status": row.upload_status,
+            "parser_status": row.parser_status,
+            "extraction_status": row.extraction_status,
+            "document_type": row.document_type,
+            "processing_error": row.processing_error,
+            "facts": extracted if isinstance(extracted, dict) else {},
+        })
+    return docs
+
+
 def build_case_summary(db_case: ComplaintCase) -> dict:
     """Build a lightweight summary dict for the dashboard table."""
     cls = db_case.classification
@@ -77,7 +98,8 @@ def build_case_summary(db_case: ComplaintCase) -> dict:
         if isinstance(transcript, dict) and isinstance(transcript.get("conversation_history"), list)
         else []
     )
-    supporting_documents = _extract_supporting_documents(transcript)
+    supporting_documents = _document_rows_from_case(db_case) or _extract_supporting_documents(transcript)
+    document_summary = build_case_document_summary(db_case.id) if db_case.id else None
 
     return {
         "id": db_case.id,
@@ -99,10 +121,11 @@ def build_case_summary(db_case: ComplaintCase) -> dict:
         "intake_payload": final_packet if isinstance(final_packet, dict) else None,
         "supporting_documents": supporting_documents,
         "has_supporting_docs": (
-            bool(final_packet.get("has_supporting_docs"))
+            bool(supporting_documents) or bool(final_packet.get("has_supporting_docs"))
             if isinstance(final_packet, dict)
-            else False
+            else bool(supporting_documents)
         ),
+        "document_summary": document_summary.model_dump() if document_summary else {},
     }
 
 
@@ -200,9 +223,13 @@ def build_case_detail(db_case: ComplaintCase) -> dict:
         "routed_to": db_case.routed_to,
         "team_assignment": db_case.team_assignment,
         "severity_class": db_case.severity_class,
+        "document_gate_result": _safe_json_load(getattr(db_case, "document_gate_result_json", None)),
+        "document_consistency": _safe_json_load(getattr(db_case, "document_consistency_json", None)),
         "intake_session_transcript": _safe_json_load(
             getattr(db_case, "intake_session_transcript_json", None)
         ),
+        "case_documents": _document_rows_from_case(db_case),
+        "case_document_summary": build_case_document_summary(db_case.id).model_dump() if db_case.id else {},
     }
 
 

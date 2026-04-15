@@ -102,6 +102,9 @@ prepare plain context objects, and render Jinja templates.
 - **Docker** (optional but recommended) for PostgreSQL with pgvector
 - **LLM API key** — either `OPENAI_API_KEY` or `DEEPSEEK_API_KEY` depending on provider
 - For **local embeddings** (default): network access on first run to download the Hugging Face model, or set `EMBEDDING_PROVIDER=openai`
+- For **local document OCR**:
+  - `tesseract`
+  - `poppler` / `poppler-utils` for scanned PDF page rendering
 
 ## Quick start
 
@@ -130,6 +133,40 @@ pip install -r requirements.txt
 
 > If using **uv**, use `uv run` instead of `python` for all of below commands (e.g. `uv run app/retrieval/ingest`).
 
+### 2a. Install local OCR dependencies
+
+For document-heavy complaint workflows, the app supports a **local-first OCR pipeline**:
+
+- **Digital PDFs**: direct text extraction
+- **Scanned PDFs**: PDF page rendering + OCR
+- **PNG/JPG/JPEG**: image OCR
+
+**macOS**
+
+```bash
+brew install tesseract poppler
+```
+
+**Ubuntu / Debian**
+
+```bash
+sudo apt-get update
+sudo apt-get install -y tesseract-ocr poppler-utils
+```
+
+**Amazon Linux / RHEL family**
+
+```bash
+sudo yum install -y tesseract poppler-utils
+```
+
+Verify:
+
+```bash
+tesseract --version
+pdftoppm -v
+```
+
 ### 3. Configure environment
 
 ```bash
@@ -148,6 +185,7 @@ Optional:
 - `OPENAI_CHAT_MODEL` / `DEEPSEEK_CHAT_MODEL` — override the default model
 - `EMBEDDING_PROVIDER=huggingface` (default) or `openai`
 - `HF_DEVICE=cpu` / `cuda` / `mps` — for local embedding model
+- `UPLOAD_ROOT` — local filesystem directory for uploaded complaint documents (default: `app_data/uploads`)
 - **ElevenLabs** — see `app/env_elevenlabs.py` and `app/api/elevenlabs_intake.py`; set API key + voice id for TTS and Custom LLM helpers (`ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID`, etc.; details in section 6)
 - `JIRA_BASE_URL`, `JIRA_USERNAME`, `JIRA_API_TOKEN`, `JIRA_PROJECT_KEY` — enable Jira ticket creation via Jira MCP
 - `JIRA_ISSUE_TYPE`, `JIRA_ISSUE_PRIORITY` — optional Jira defaults
@@ -245,6 +283,64 @@ Open the app root (e.g. [http://localhost:8000](http://localhost:8000) or your H
 | **Analytics** | `/analytics` | Complaint volume charts, risk distribution, team workload |
 | **Settings** | `/settings` | Company taxonomy, severity rubrics, routing rules (read-only) |
 
+## Document Processing Pipeline
+
+The app now supports **uploaded supporting documents** as first-class complaint artifacts.
+
+### How it works
+
+1. The user uploads files during intake.
+2. Files are stored immediately on disk under `UPLOAD_ROOT`.
+3. Metadata is persisted in Postgres (`case_documents`, `document_artifacts`, `document_embeddings`).
+4. OCR / extraction / embedding runs in the **background**.
+5. Complaint submission remains fast and does **not** block on document processing.
+6. Once ready, uploaded document evidence becomes available to:
+   - complaint history / `Past Complaint`
+   - the risk agent
+   - the root-cause agent
+   - the resolution agent
+
+### Processing states
+
+Documents move through these states:
+
+- `uploaded`
+- `processing`
+- `processed`
+- `failed`
+
+The user flow is intentionally **non-blocking**:
+
+- upload succeeds immediately after persistence
+- complaint registration succeeds immediately
+- OCR and extraction continue in parallel
+- agents use document evidence when available, and fall back to narrative-only context if not yet processed
+
+### Current support matrix
+
+| File type | Current behavior |
+|----------|------------------|
+| Digital PDF | Direct text extraction via `pypdf` |
+| Scanned PDF | OCR via `pdftoppm` + `tesseract` |
+| PNG / JPG / JPEG | OCR via `tesseract` |
+
+### AWS EC2 deployment notes
+
+If you deploy this on **AWS EC2** and want local-first OCR, install both:
+
+```bash
+sudo yum install -y tesseract poppler-utils
+```
+
+or on Ubuntu-based AMIs:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y tesseract-ocr poppler-utils
+```
+
+This keeps the OCR pipeline fully local on the instance. Later, the document subsystem can be swapped to S3 storage and/or a managed OCR provider without changing the complaint workflow.
+
 ### 8. Submit a complaint (API)
 
 ```bash
@@ -268,8 +364,9 @@ curl -s -X POST "http://localhost:8000/api/v1/complaints" \
 - `POST /api/v1/complaints` — submit and process a complaint
 - `GET /api/v1/complaints` — list recent cases
 - `GET /api/v1/complaints/{case_id}` — fetch one case
+- `GET /api/v1/complaints/{case_id}/documents` — list documents attached to a complaint
 - `GET /api/v1/health` — health check
-- **Intake:** `POST /api/v1/intake/session`, `POST /api/v1/intake/session/{id}/message`, `POST /api/v1/intake/session/{id}/finalize`, `POST /api/v1/intake/tts` (ElevenLabs TTS for the lodge UI when configured)
+- **Intake:** `POST /api/v1/intake/session`, `POST /api/v1/intake/session/{id}/message`, `POST /api/v1/intake/session/{id}/finalize`, `POST /api/v1/intake/session/{id}/documents`, `GET /api/v1/intake/session/{id}/documents`, `DELETE /api/v1/intake/session/{id}/documents/{document_id}`, `POST /api/v1/intake/tts` (ElevenLabs TTS for the lodge UI when configured)
 - **ElevenLabs:** `POST /api/v1/integrations/elevenlabs/v1/chat/completions` (Custom LLM SSE), `POST /api/v1/integrations/elevenlabs/tts`, `GET /api/v1/integrations/elevenlabs/health`
 - `GET /docs` — interactive API docs (Swagger)
 
@@ -299,6 +396,7 @@ curl -s -X POST "http://localhost:8000/api/v1/complaints" \
 | **Knowledge & Retrieval** | |
 | `app/knowledge/` | Company knowledge layer (taxonomy, policy, routing, severity, controls) |
 | `app/retrieval/` | Embeddings, pgvector indexes, CSV ingest with PII redaction |
+| `app/documents/` | Uploaded document storage, OCR, extraction, and embedding pipeline |
 | **Web UI** | |
 | `app/ui/routes.py` | HTML view routes (dashboard, detail, trace, analytics, settings) |
 | `app/ui/context.py` | DB query helpers for templates |
@@ -340,6 +438,9 @@ python -m app.evals.run_evals
 - **LLM API errors** — Confirm your API key (`OPENAI_API_KEY` or `DEEPSEEK_API_KEY`) and billing/quotas.
 - **Embedding dimension mismatch** — Drop and recreate the database after changing `EMBEDDING_PROVIDER` so dimensions stay consistent.
 - **Slow first request** — With Hugging Face embeddings, the model loads on the first pipeline run that needs retrieval.
+- **Image OCR fails** — Ensure `tesseract` is installed and available in `PATH`.
+- **Scanned PDF OCR fails** — Ensure `pdftoppm` is installed (`poppler` / `poppler-utils`) on the host.
+- **Uploaded docs appear but stay pending/failed** — Check server logs for document processing errors; uploads persist immediately but OCR/extraction runs in the background.
 - **Supervisor loops** — The supervisor has a 15-step max and 3-invocation-per-agent limit. If it hits these, it forces routing and finishes.
 - **ElevenLabs TTS silent or lodge banner** — Ensure both an API key and a voice id are set (see `app/env_elevenlabs.py`). Restart the server after editing `.env`. For Custom LLM, point the agent at `/api/v1/integrations/elevenlabs` and match `ELEVENLABS_CUSTOM_LLM_SECRET` if used.
 
