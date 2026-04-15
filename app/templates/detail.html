@@ -73,7 +73,7 @@
         <div class="flex-1">
           <h2 class="font-headline font-bold text-lg text-on-surface">Consumer Narrative</h2>
         </div>
-        <span class="px-2.5 py-1 rounded-full text-[9px] font-bold uppercase bg-tertiary-container/60 text-on-tertiary-container tracking-wide">PII Redacted</span>
+        <span class="px-2.5 py-1 rounded-full text-[9px] font-bold uppercase bg-tertiary-container text-white/85 tracking-wide">PII Redacted</span>
       </div>
       <p class="text-sm text-on-surface/80 leading-relaxed whitespace-pre-wrap">{{ case.consumer_narrative }}</p>
     </div>
@@ -341,10 +341,10 @@
         <h2 class="font-headline font-bold text-on-surface">Update Status</h2>
       </div>
       <div class="mb-4 flex items-center gap-2">
-        <span class="text-xs text-on-surface-variant">Current:</span>
-        <span class="px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-wide
+        <span class="text-sm text-on-surface-variant">Current:</span>
+        <span class="px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide
                      {% if case.status == 'resolved' %}bg-secondary-container text-on-secondary-container
-                     {% elif case.status == 'routed' %}bg-tertiary-container/60 text-on-tertiary-container
+                     {% elif case.status == 'routed' %}bg-tertiary-container text-white/85
                      {% else %}bg-surface-container-high text-on-surface-variant{% endif %}">
           {{ case.status | replace('_', ' ') }}
         </span>

@@ -291,16 +291,16 @@ async def admin_queue(request: Request, page: int = 1, limit: int = 15):
     offset = (page - 1) * limit
 
     with get_db() as db:
-        query = db.query(ComplaintCase).order_by(ComplaintCase.created_at.desc())
-        total = query.count()
-        rows = query.offset(offset).limit(limit).all()
-        cases = [build_case_summary(row) for row in rows]
-
-        active_pipeline = (
+        active_query = (
             db.query(ComplaintCase)
             .filter(~ComplaintCase.status.in_(list(_TERMINAL_STATUSES)))
-            .count()
+            .order_by(ComplaintCase.created_at.desc())
         )
+        total = active_query.count()
+        rows = active_query.offset(offset).limit(limit).all()
+        cases = [build_case_summary(row) for row in rows]
+
+        active_pipeline = total
 
         critical_count = (
             db.query(RiskRecord)
@@ -315,7 +315,7 @@ async def admin_queue(request: Request, page: int = 1, limit: int = 15):
         hist_rows = (
             db.query(ComplaintCase)
             .filter(ComplaintCase.status.in_(list(_TERMINAL_STATUSES)))
-            .order_by(ComplaintCase.created_at.desc())
+            .order_by(ComplaintCase.updated_at.desc())
             .limit(12)
             .all()
         )
