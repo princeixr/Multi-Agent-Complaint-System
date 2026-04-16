@@ -74,6 +74,8 @@ def init_db() -> None:
             ("compliance_flags_json", "TEXT"),
             ("review_notes", "TEXT"),
             ("routed_to", "VARCHAR(120)"),
+            ("jira_issue_key", "VARCHAR(32)"),
+            ("jira_issue_url", "TEXT"),
             ("classification_audit_json", "TEXT"),
             ("user_id", "VARCHAR(64)"),
             ("intake_session_transcript_json", "TEXT"),

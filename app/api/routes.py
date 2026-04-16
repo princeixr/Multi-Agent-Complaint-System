@@ -222,6 +222,8 @@ def _case_read_from_db(db_case: ComplaintCase) -> CaseRead:
         case_document_summary=case_document_summary,
         document_gate_result=document_gate_result,
         document_consistency=document_consistency,
+        jira_issue_key=getattr(db_case, "jira_issue_key", None),
+        jira_issue_url=getattr(db_case, "jira_issue_url", None),
     )
 
 
@@ -250,6 +252,8 @@ def _persist_case_and_outputs(case: CaseRead) -> None:
             root_cause_hypothesis_json=_json_or_none(case.root_cause_hypothesis),
             compliance_flags_json=_json_or_none(case.compliance_flags),
             review_notes=case.review_notes,
+            jira_issue_key=case.jira_issue_key,
+            jira_issue_url=case.jira_issue_url,
             classification_audit_json=_json_or_none(case.classification_audit),
             document_gate_result_json=_json_or_none(case.document_gate_result),
             document_consistency_json=_json_or_none(case.document_consistency),
@@ -347,6 +351,8 @@ def _upsert_case_and_outputs(case: CaseRead) -> None:
         db_case.root_cause_hypothesis_json = _json_or_none(case.root_cause_hypothesis)
         db_case.compliance_flags_json = _json_or_none(case.compliance_flags)
         db_case.review_notes = case.review_notes
+        db_case.jira_issue_key = case.jira_issue_key
+        db_case.jira_issue_url = case.jira_issue_url
         db_case.classification_audit_json = _json_or_none(case.classification_audit)
         db_case.document_gate_result_json = _json_or_none(case.document_gate_result)
         db_case.document_consistency_json = _json_or_none(case.document_consistency)

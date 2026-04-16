@@ -86,6 +86,8 @@ class ComplaintCase(Base):
     compliance_flags_json = Column(Text)
     review_notes = Column(Text)
     routed_to = Column(String(120))
+    jira_issue_key = Column(String(32))
+    jira_issue_url = Column(Text)
     classification_audit_json = Column(Text)
     # Snapshot of intake chat + packet when filed via lodge (for user session history)
     intake_session_transcript_json = Column(Text)

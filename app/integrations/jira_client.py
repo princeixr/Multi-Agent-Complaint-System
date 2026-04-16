@@ -1,33 +1,46 @@
 """Jira REST API client for the TriageAI complaint pipeline.
 
-Creates a Jira Task in the configured project whenever the routing agent
-assigns a complaint to a team.  Authentication uses HTTP Basic Auth with an
+Creates a Jira issue in the configured project whenever the routing agent
+assigns a complaint to a team. Authentication uses HTTP Basic Auth with an
 Atlassian API token (email + token).
-
-Required environment variables
---------------------------------
-JIRA_BASE_URL        https://triageai.atlassian.net
-JIRA_USER_EMAIL      sairahul2721@gmail.com
-JIRA_API_TOKEN       <generated from id.atlassian.com>
-JIRA_PROJECT_KEY     KAN                          (default: KAN)
 """
 
 from __future__ import annotations
 
 import logging
 import os
+from dataclasses import dataclass
 from typing import Any
 
 import httpx
 
 logger = logging.getLogger(__name__)
 
-# ── Config ────────────────────────────────────────────────────────────────────
+@dataclass(frozen=True)
+class JiraConfig:
+    base_url: str
+    user_email: str
+    api_token: str
+    project_key: str
+    issue_type: str
+    assignee_id: str | None
+    team_field_id: str | None
 
-_BASE_URL = os.getenv("JIRA_BASE_URL", "https://triageai.atlassian.net")
-_USER_EMAIL = os.getenv("JIRA_USER_EMAIL", "sairahul2721@gmail.com")
-_API_TOKEN = os.getenv("JIRA_API_TOKEN", "")
-_PROJECT_KEY = os.getenv("JIRA_PROJECT_KEY", "KAN")
+
+def _get_config() -> JiraConfig:
+    """Read Jira configuration lazily so .env changes apply without code changes."""
+    base_url = os.getenv("JIRA_BASE_URL", "https://triageai.atlassian.net").rstrip("/")
+    return JiraConfig(
+        base_url=base_url,
+        user_email=os.getenv("JIRA_USER_EMAIL", "").strip(),
+        api_token=os.getenv("JIRA_API_TOKEN", "").strip(),
+        project_key=os.getenv("JIRA_PROJECT_KEY", "KAN").strip(),
+        issue_type=os.getenv("JIRA_ISSUE_TYPE", "Task").strip() or "Task",
+        assignee_id=os.getenv("JIRA_ASSIGNEE_ID", "").strip() or None,
+        # Optional because some Jira projects either don't expose the Team field
+        # on create or use a different field id.
+        team_field_id=os.getenv("JIRA_TEAM_FIELD_ID", "").strip() or None,
+    )
 
 
 # Map internal risk_level strings → Jira priority names
@@ -67,9 +80,6 @@ _TEAM_ID_MAP: dict[str, str] = {
     "executive_complaints_team": "0b9ef1e3-ff45-4ab5-affc-73d811667f9b",
     "management_escalation_team": "227158cb-99a5-4e52-bdda-329baea20900",
 }
-
-_JIRA_REST = f"{_BASE_URL}/rest/api/3"
-
 
 # ── ADF (Atlassian Document Format) helpers ──────────────────────────────────
 
@@ -127,8 +137,77 @@ def _truncate(text: str, max_len: int = 800) -> str:
     return text[:max_len].rstrip() + "…"
 
 
-def _auth() -> httpx.BasicAuth:
-    return httpx.BasicAuth(username=_USER_EMAIL, password=_API_TOKEN)
+def _auth(config: JiraConfig) -> httpx.BasicAuth:
+    return httpx.BasicAuth(username=config.user_email, password=config.api_token)
+
+
+def _jira_rest(config: JiraConfig) -> str:
+    return f"{config.base_url}/rest/api/3"
+
+
+def _post_issue(
+    *,
+    client: httpx.Client,
+    config: JiraConfig,
+    payload: dict[str, Any],
+) -> httpx.Response:
+    return client.post(
+        f"{_jira_rest(config)}/issue",
+        auth=_auth(config),
+        headers={"Content-Type": "application/json", "Accept": "application/json"},
+        json=payload,
+    )
+
+
+def _discover_team_field_id(client: httpx.Client, config: JiraConfig) -> str | None:
+    """Best-effort lookup for the Jira Team custom field id."""
+    resp = client.get(
+        f"{_jira_rest(config)}/field",
+        auth=_auth(config),
+        headers={"Accept": "application/json"},
+    )
+    if resp.status_code != 200:
+        logger.warning("Could not discover Jira fields: %s", resp.text[:300])
+        return None
+
+    try:
+        fields = resp.json()
+    except ValueError:
+        logger.warning("Jira field discovery returned non-JSON payload")
+        return None
+
+    preferred_custom_markers = (
+        "com.atlassian.teams",
+        "rm-teams-custom-field-team",
+        "team",
+    )
+
+    for field in fields:
+        key = str(field.get("key", ""))
+        schema = field.get("schema") or {}
+        custom = str(schema.get("custom", "")).lower()
+        name = str(field.get("name", "")).strip().lower()
+        if key.startswith("customfield_") and any(marker in custom for marker in preferred_custom_markers):
+            return key
+        if key.startswith("customfield_") and name == "team":
+            return key
+
+    return None
+
+
+def _update_issue_fields(
+    *,
+    client: httpx.Client,
+    config: JiraConfig,
+    issue_key: str,
+    fields: dict[str, Any],
+) -> httpx.Response:
+    return client.put(
+        f"{_jira_rest(config)}/issue/{issue_key}",
+        auth=_auth(config),
+        headers={"Content-Type": "application/json", "Accept": "application/json"},
+        json={"fields": fields},
+    )
 
 
 # ── Public API ────────────────────────────────────────────────────────────────
@@ -167,12 +246,16 @@ def create_complaint_ticket(
     RuntimeError
         If ``JIRA_API_TOKEN`` is not set or the API call fails.
     """
-    if not _API_TOKEN:
+    config = _get_config()
+
+    if not config.api_token:
         raise RuntimeError(
             "JIRA_API_TOKEN is not set. "
             "Generate one at https://id.atlassian.com/manage-profile/security/api-tokens "
             "and add it to your .env file."
         )
+    if not config.user_email:
+        raise RuntimeError("JIRA_USER_EMAIL is not set.")
 
     short_id = case_id[:8].upper()
     product_label = (product_category or "unknown").replace("_", " ").title()
@@ -339,36 +422,55 @@ def create_complaint_ticket(
         atlassian_team_id = fallback
 
     fields: dict[str, Any] = {
-        "project": {"key": _PROJECT_KEY},
+        "project": {"key": config.project_key},
         "summary": summary,
         "description": description,
-        "issuetype": {"name": "Task"},
-
+        "issuetype": {"name": config.issue_type},
         "priority": {"name": priority_name},
         "labels": labels,
     }
 
-    # customfield_10001 is the Atlassian Team field in this Jira project
-    fields["customfield_10001"] = atlassian_team_id
-    logger.info("Assigning ticket to Atlassian team %s (routing team: %s)", atlassian_team_id, team)
-
-    payload: dict[str, Any] = {"fields": fields}
-
     logger.info(
         "Creating Jira ticket in project %s for case %s (team=%s, priority=%s)",
-        _PROJECT_KEY,
+        config.project_key,
         case_id,
         team,
         priority_name,
     )
 
     with httpx.Client(timeout=15) as client:
-        resp = client.post(
-            f"{_JIRA_REST}/issue",
-            auth=_auth(),
-            headers={"Content-Type": "application/json", "Accept": "application/json"},
-            json=payload,
-        )
+        team_field_id = config.team_field_id or _discover_team_field_id(client, config)
+        optional_fields: dict[str, Any] = {}
+        if config.assignee_id:
+            optional_fields["assignee"] = {"id": config.assignee_id}
+        if team_field_id:
+            optional_fields[team_field_id] = atlassian_team_id
+            logger.info(
+                "Assigning ticket to Atlassian team %s via %s (routing team: %s)",
+                atlassian_team_id,
+                team_field_id,
+                team,
+            )
+        else:
+            logger.warning(
+                "Could not resolve Jira Team field id; ticket will be created without an explicit team field"
+            )
+
+        payload: dict[str, Any] = {"fields": {**fields, **optional_fields}}
+        resp = _post_issue(client=client, config=config, payload=payload)
+        created_without_optional_fields = False
+
+        # Jira projects often reject optional fields like Team or Assignee when
+        # the field id is wrong or the field is absent from the create screen.
+        # Retry once with only the core issue fields instead of failing hard.
+        if resp.status_code == 400:
+            logger.warning("Jira create failed with optional fields: %s", resp.text[:400])
+            resp = _post_issue(
+                client=client,
+                config=config,
+                payload={"fields": fields},
+            )
+            created_without_optional_fields = resp.status_code in (200, 201)
 
     if resp.status_code not in (200, 201):
         raise RuntimeError(
@@ -377,7 +479,24 @@ def create_complaint_ticket(
 
     data = resp.json()
     issue_key = data["key"]
-    issue_url = f"{_BASE_URL}/browse/{issue_key}"
+    issue_url = f"{config.base_url}/browse/{issue_key}"
+
+    if created_without_optional_fields and optional_fields:
+        with httpx.Client(timeout=15) as client:
+            update_resp = _update_issue_fields(
+                client=client,
+                config=config,
+                issue_key=issue_key,
+                fields=optional_fields,
+            )
+        if update_resp.status_code not in (200, 204):
+            logger.warning(
+                "Jira issue %s created but optional fields could not be applied afterward: %s",
+                issue_key,
+                update_resp.text[:400],
+            )
+        else:
+            logger.info("Applied team/assignee fields to Jira issue %s after create", issue_key)
 
     logger.info("Jira ticket created: %s → %s", issue_key, issue_url)
     return {"key": issue_key, "url": issue_url}

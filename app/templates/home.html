@@ -4,7 +4,10 @@
 {% block head %}
 <style>
   .marketing-page {
-    background: #fbf9f5;
+    background:
+      radial-gradient(circle at top left, rgba(129, 243, 229, 0.14), transparent 22%),
+      radial-gradient(circle at 85% 18%, rgba(0, 6, 102, 0.08), transparent 18%),
+      linear-gradient(180deg, #fdfbf8 0%, #f5f3ef 52%, #fbf9f5 100%);
     color: #10111a;
   }
   .brand-topnav {
@@ -12,12 +15,79 @@
     top: 0;
     z-index: 50;
     width: 100%;
+    background: rgba(251, 249, 245, 0.84);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    box-shadow: 0px 1px 0px rgba(0, 6, 102, 0.06), 0px 8px 32px rgba(0, 6, 102, 0.06);
+  }
+  .marketing-shell {
+    width: min(1280px, calc(100vw - 32px));
+    margin: 0 auto;
+  }
+  .editorial-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.65rem 1rem;
+    border-radius: 999px;
+    background: rgba(129, 243, 229, 0.22);
+    color: #006f66;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-size: 0.72rem;
+  }
+  .hero-orbit {
+    position: relative;
+    overflow: hidden;
+    border-radius: 2.5rem;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(234, 232, 228, 0.95));
+    box-shadow: 0px 8px 40px rgba(27, 28, 26, 0.06);
+  }
+  .hero-orbit::before {
+    content: "";
+    position: absolute;
+    inset: -20%;
+    background:
+      radial-gradient(circle at 40% 42%, rgba(129, 243, 229, 0.45), transparent 20%),
+      radial-gradient(circle at 72% 48%, rgba(26, 35, 126, 0.22), transparent 22%);
+    filter: blur(28px);
+  }
+  .floating-metric {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    box-shadow: 0px 8px 40px rgba(27, 28, 26, 0.08);
+  }
+  .section-card {
+    background: rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    box-shadow: 0px 4px 20px rgba(27, 28, 26, 0.04), 0px 8px 40px rgba(27, 28, 26, 0.06);
+  }
+  .tonal-card {
     background: #ffffff;
-    box-shadow: 0px 1px 0px rgba(0, 6, 102, 0.08), 0px 4px 24px rgba(0, 6, 102, 0.06);
+    box-shadow: 0px 4px 20px rgba(27, 28, 26, 0.04);
+  }
+  .aurora-cta {
+    background: linear-gradient(135deg, #000666 0%, #1a237e 100%);
+    color: #ffffff;
+  }
+  .ghost-cta {
+    background: rgba(255, 255, 255, 0.68);
+    color: #000666;
+  }
+  .metric-rule {
+    height: 1px;
+    background: linear-gradient(90deg, rgba(198, 197, 212, 0), rgba(198, 197, 212, 1), rgba(198, 197, 212, 0));
+  }
+  @media (max-width: 768px) {
+    .marketing-shell {
+      width: min(100vw - 24px, 1280px);
+    }
   }
 </style>
 <script>
-  /* Force light mode on the landing page regardless of saved preference */
   document.documentElement.classList.remove('dark');
   localStorage.setItem('theme', 'light');
 </script>
@@ -29,320 +99,313 @@
   body { background: #fbf9f5 !important; color: #10111a !important; }
   main { margin-left: 0 !important; padding-top: 0 !important; }
   main > div { padding: 0 !important; }
-  .marketing-hero {
-    background:
-      radial-gradient(circle at 20% 24%, rgba(129, 243, 229, 0.12), transparent 18%),
-      radial-gradient(circle at 72% 40%, rgba(0, 106, 98, 0.10), transparent 20%),
-      linear-gradient(180deg, #fdfbf8 0%, #f6f3ee 100%);
-  }
 </style>
 
-<!-- ════════════ STICKY TOPNAV ════════════ -->
 <div class="marketing-page">
-<nav class="brand-topnav">
-  <div class="flex justify-between items-center px-12 py-4 max-w-full mx-auto">
-    <a href="/" class="text-2xl font-bold tracking-tighter font-headline" style="color:#000666;">TriageAI</a>
-    <div class="hidden md:flex items-center gap-8 font-headline font-semibold tracking-tight">
-      <a href="/"
-         class="transition-all duration-300"
-         style="color:{% if active_nav == 'platform' %}#000666{% else %}#636573{% endif %};{% if active_nav == 'platform' %} border-bottom:2px solid #000666; padding-bottom:4px;{% endif %}">Platform</a>
-      <a href="/pain-points"
-         class="transition-all duration-300"
-         style="color:{% if active_nav == 'pain_points' %}#000666{% else %}#636573{% endif %};{% if active_nav == 'pain_points' %} border-bottom:2px solid #000666; padding-bottom:4px;{% endif %}">Pain Points</a>
-      <a href="/agentic-solution"
-         class="transition-all duration-300"
-         style="color:{% if active_nav == 'agentic_solution' %}#000666{% else %}#636573{% endif %};{% if active_nav == 'agentic_solution' %} border-bottom:2px solid #000666; padding-bottom:4px;{% endif %}">Agentic Solution</a>
-    </div>
-    <div class="flex items-center gap-4">
-      <a href="/login" class="font-headline font-semibold px-6 py-2 rounded-full transition-all" style="color:#000666;">Login</a>
-      <a href="/login" class="px-8 py-3 rounded-full font-headline font-bold transition-transform" style="background:linear-gradient(135deg,#000666,#1a237e);color:#ffffff;">Get Started</a>
-    </div>
-  </div>
-</nav>
-
-<!-- ════════════ HERO SECTION ════════════ -->
-<section class="marketing-hero relative min-h-[870px] flex items-center overflow-hidden px-12">
-  <div class="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-
-    <!-- Left: Copy -->
-    <div class="lg:col-span-7 z-10">
-      <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/20 border border-secondary/30 mb-8">
-        <span class="material-symbols-outlined text-secondary-fixed-dim" style="font-variation-settings:'FILL' 1;">auto_awesome</span>
-        <span class="text-sm font-label font-bold tracking-widest uppercase" style="color:#3bcfc6;">The Ethereal Vault Precision</span>
+  <nav class="brand-topnav">
+    <div class="marketing-shell flex items-center justify-between px-4 py-4 md:px-8">
+      <a href="/" class="font-headline text-2xl font-extrabold tracking-tighter" style="color:#000666;">TriageAI</a>
+      <div class="hidden md:flex items-center gap-8 font-headline text-sm font-semibold tracking-tight">
+        <a href="#platform" style="color:#000666;">Platform</a>
+        <a href="#crisis" style="color:#636573;">The Crisis</a>
+        <a href="#solution" style="color:#636573;">The Solution</a>
       </div>
-      <h1 class="font-headline text-6xl md:text-7xl font-extrabold tracking-tighter leading-[1.1] mb-6" style="color:#000666;">
-        The Future of <span style="color:#42d7cf;">Complaint</span> <span style="color:#0f1424;">Orchestration</span>
-      </h1>
-      <p class="text-xl max-w-2xl leading-relaxed mb-10 font-body" style="color:#5c66f3;">
-        Transform manual friction into autonomous clarity. TriageAI leverages a Multi-Agent architecture to orchestrate complex regulatory resolutions with cryptographic precision.
-      </p>
-      <div class="flex flex-wrap gap-4">
-        <a href="/agentic-solution" class="bg-white text-primary px-10 py-5 rounded-full font-headline font-bold text-lg hover:shadow-xl transition-all">
-          Explore the Architecture
-        </a>
-        <a href="/pain-points" class="px-10 py-5 rounded-full font-headline font-bold text-lg transition-all border-2 hover:bg-[#eef6f4]" style="border-color:#c5d9d3;color:#006a62;background:rgba(255,255,255,0.68);">
-          See the Pain Points
-        </a>
+      <div class="flex items-center gap-3">
+        <a href="/login" class="px-4 py-2 font-headline font-semibold" style="color:#000666;">Login</a>
+        <a href="/login" class="aurora-cta rounded-full px-6 py-3 font-headline text-sm font-bold transition-all">Get Started</a>
       </div>
     </div>
+  </nav>
 
-    <!-- Right: AI Neural Network Image -->
-    <div class="lg:col-span-5 relative">
-      <div class="aspect-square relative flex items-center justify-center">
-        <div class="absolute inset-0 bg-gradient-to-tr from-secondary/40 to-tertiary/20 rounded-full blur-[100px] opacity-50"></div>
-        <img alt="AI Neural Network"
-             class="relative z-20 w-full h-auto rounded-xl mix-blend-screen transform rotate-3"
-             src="https://lh3.googleusercontent.com/aida-public/AB6AXuDdu8giKnJJX-sXsiqKqb7d-mwXSbIg2kwKB2xSIrcxculxltR5wxEesoWUtbNRnLb3BozXzxa8H_N4wNFj9p4h-HzEgAK25OaPqc0Oyw0mKxBpyiJrsUY-IJmIKGWxor_1QhCYOeZjnoOjMdybrVFmftRAVKTz2W9ZhpDLEaqd4fmwTdRYn3-kPBpI-ia1Tm2l3KwhFGed8EoBXb_j5_ZszQVIspTwHGdKtOl4BPiMxFlsWn01ZUvdB5tCaAgJLST72tLe_RcIhizn"/>
+  <section id="platform" class="px-4 pb-24 pt-14 md:px-8 md:pb-32 md:pt-20">
+    <div class="marketing-shell grid items-center gap-14 lg:grid-cols-[1.15fr_0.85fr]">
+      <div>
+        <span class="editorial-kicker">
+          <span class="material-symbols-outlined" style="font-size:1rem; font-variation-settings:'FILL' 1;">auto_awesome</span>
+          The Empathetic Architect
+        </span>
+        <h1 class="mt-8 max-w-4xl font-headline text-5xl font-extrabold tracking-[-0.04em] md:text-7xl" style="color:#000666; line-height:1.02;">
+          From complaint chaos to coordinated resolution.
+        </h1>
+        <p class="mt-8 max-w-2xl text-lg leading-8 md:text-xl" style="color:#454652;">
+          Financial complaints are often delayed, misrouted, and handled in silos.
+TriageAI uses an agentic architecture to classify complaints, assess risk, route the right teams, and support faster, more compliant resolutions.
+        </p>
+        <div class="mt-10 flex flex-wrap gap-4">
+          <a href="#crisis" class="aurora-cta rounded-full px-8 py-4 font-headline font-bold shadow-lg shadow-primary/10">Read the Crisis</a>
+          <a href="#solution" class="ghost-cta rounded-full px-8 py-4 font-headline font-bold border border-white/40">Explore the Solution</a>
+        </div>
+        <div class="mt-12 grid gap-5 sm:grid-cols-3">
+          <div class="rounded-[1.75rem] bg-white/85 p-6">
+            <div class="font-headline text-4xl font-extrabold" style="color:#000666;">6.6M</div>
+            <p class="mt-2 text-sm uppercase tracking-[0.18em]" style="color:#006f66;">Projected Complaints</p>
+          </div>
+          <div class="rounded-[1.75rem] bg-white/85 p-6">
+            <div class="font-headline text-4xl font-extrabold" style="color:#000666;">$373M+</div>
+            <p class="mt-2 text-sm uppercase tracking-[0.18em]" style="color:#006f66;">Penalty Exposure</p>
+          </div>
+          <div class="rounded-[1.75rem] bg-white/85 p-6">
+            <div class="font-headline text-4xl font-extrabold" style="color:#000666;">99.9%</div>
+            <p class="mt-2 text-sm uppercase tracking-[0.18em]" style="color:#006f66;">Audit Readiness Goal</p>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
-</section>
 
-<!-- ════════════ MULTI-AGENT BENTO GRID ════════════ -->
-<section class="py-24 px-12" style="background:#f5f3ef;">
-  <div class="max-w-7xl mx-auto">
-    <div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
-      <div class="max-w-2xl">
-        <h2 class="font-headline text-4xl font-bold tracking-tight mb-4" style="color:#000666;">The Multi-Agent Edge</h2>
-        <p class="text-lg" style="color:#434653;">Our Supervisor-Worker model ensures every complaint is handled by a specialized intelligence, overseen by a central orchestration layer.</p>
-      </div>
-      <div class="font-label font-bold flex items-center gap-2 cursor-default select-none" style="color:#000666;">
-        VIEW SYSTEM MAP <span class="material-symbols-outlined">arrow_forward</span>
-      </div>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-
-      <!-- Supervisor Card -->
-      <div class="md:col-span-2 p-10 rounded-xl flex flex-col justify-between shadow-lg relative overflow-hidden" style="background:linear-gradient(135deg,#000666,#1a237e); color:white;">
+      <div class="hero-orbit p-6 md:p-8">
         <div class="relative z-10">
-          <span class="material-symbols-outlined text-4xl mb-6 block" style="color:#81f3e5;">verified_user</span>
-          <h3 class="font-headline text-3xl font-bold mb-4" style="color:#ffffff;">The Supervisor</h3>
-          <p style="color:rgba(255,255,255,0.75);">The brain of the operation. Dynamically allocates complaints to specialized agents based on intent, urgency, and regulatory scope.</p>
-        </div>
-        <div class="mt-8 pt-8 border-t border-white/10 relative z-10">
-          <div class="flex items-center gap-3">
-            <div class="h-2 w-2 rounded-full bg-green-400 animate-pulse"></div>
-            <span class="text-sm font-label uppercase tracking-widest" style="color:rgba(255,255,255,0.7);">Active Orchestration</span>
+          <img
+            alt="AI complaint orchestration interface"
+            class="w-full rounded-[2rem] object-cover shadow-2xl"
+            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDdu8giKnJJX-sXsiqKqb7d-mwXSbIg2kwKB2xSIrcxculxltR5wxEesoWUtbNRnLb3BozXzxa8H_N4wNFj9p4h-HzEgAK25OaPqc0Oyw0mKxBpyiJrsUY-IJmIKGWxor_1QhCYOeZjnoOjMdybrVFmftRAVKTz2W9ZhpDLEaqd4fmwTdRYn3-kPBpI-ia1Tm2l3KwhFGed8EoBXb_j5_ZszQVIspTwHGdKtOl4BPiMxFlsWn01ZUvdB5tCaAgJLST72tLe_RcIhizn"
+          />
+          <div class="floating-metric absolute -bottom-3 left-4 max-w-[240px] rounded-[1.75rem] p-5 md:-bottom-6 md:-left-6">
+            <p class="text-[0.7rem] font-bold uppercase tracking-[0.2em]" style="color:#ba1a1a;">Risk Signal</p>
+            <p class="mt-2 font-headline text-3xl font-extrabold" style="color:#000666;">Parallel Review</p>
+            <p class="mt-2 text-sm leading-6" style="color:#454652;">Supervisor routes intake, risk, and compliance together instead of forcing a linear queue.</p>
           </div>
         </div>
       </div>
-
-      <!-- Intake Agent -->
-      <div class="p-8 rounded-xl hover:shadow-md transition-all" style="background:#f5f3ef;">
-        <span class="material-symbols-outlined text-3xl mb-6 block" style="color:#000666;">input</span>
-        <h4 class="font-headline text-xl font-bold mb-2" style="color:#000666;">Intake Agent</h4>
-        <p class="text-sm" style="color:#434653;">Ingests multi-modal data from email, voice, and chat with 99.9% semantic accuracy.</p>
-      </div>
-
-      <!-- Risk Agent -->
-      <div class="p-8 rounded-xl hover:shadow-md transition-all" style="background:#f5f3ef;">
-        <span class="material-symbols-outlined text-3xl mb-6 block" style="color:#ba1a1a;">warning</span>
-        <h4 class="font-headline text-xl font-bold mb-2" style="color:#000666;">Risk Agent</h4>
-        <p class="text-sm" style="color:#434653;">Real-time threat detection and escalation for high-liability consumer complaints.</p>
-      </div>
-
-      <!-- Compliance Agent -->
-      <div class="p-8 rounded-xl flex flex-col justify-between" style="background:#004d47; color:white; border: 1px solid #006a62;">
-        <div>
-          <span class="material-symbols-outlined text-3xl mb-6 block" style="color:#a5eff0;">gavel</span>
-          <h4 class="font-headline text-xl font-bold mb-2" style="color:#ffffff;">Compliance Agent</h4>
-          <p class="text-sm" style="color:#82cbcc;">Cross-references every action against CFPB, GDPR, and localized regulatory frameworks.</p>
-        </div>
-      </div>
-
-      <!-- Classification Agent -->
-      <div class="md:col-span-2 p-10 rounded-xl flex items-center gap-8" style="background:#eae8e4;">
-        <div class="hidden sm:block w-1/3 shrink-0">
-          <img alt="Data Classification"
-               class="rounded-lg object-cover h-32 w-full"
-               src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7z70khmKPS4WYh0kPO3C2TG0lPumWp9uYNsCmbsORmA3TX1UCglcOfBd-A7tD1d6SGGzyrE5IaYgKL6Xsae-bMI6K3f4LpEsO-Yyeu8-Ita-cPeMBmb5yottRX_4_dFN5KRk52HGo4MGjep2L-MVgY6RndCTaEhrmDSItNEquymyeHYUbIbTsqjEt5pJTs9sxUXkf4wRO7Sa09-8kut-NgE_5xaLBlb_lSd3xa4wzJhOekve_zDOtJil5l72rrWuZztLdP_aT2TjZ"/>
-        </div>
-        <div>
-          <h4 class="font-headline text-2xl font-bold mb-2" style="color:#000666;">Classification Agent</h4>
-          <p style="color:#434653;">Automated tagging and routing that eliminates manual sorting fatigue, ensuring 0% routing error rates.</p>
-        </div>
-      </div>
-
-      <!-- The Vault -->
-      <div class="p-8 rounded-xl" style="background:linear-gradient(135deg,#000666,#006a62);">
-        <span class="material-symbols-outlined text-3xl mb-6 block" style="color:#ffffff;">lock</span>
-        <h4 class="font-headline text-xl font-bold mb-2" style="color:#ffffff;">The Vault</h4>
-        <p class="text-sm" style="color:rgba(255,255,255,0.85);">Cryptographic hashing of every agent interaction for immutable audit logging.</p>
-      </div>
-
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- ════════════ EXECUTION TRACE SECTION ════════════ -->
-<section class="py-24 px-12 tonal-shift relative overflow-hidden" style="background: linear-gradient(180deg, #fbf9f5 0%, #f5f3ef 100%);">
-  <div class="max-w-7xl mx-auto">
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+  <section id="crisis" class="px-4 py-24 md:px-8 md:py-32" style="background:#f5f3ef;">
+    <div class="marketing-shell">
+      <div class="max-w-3xl">
+        <span class="editorial-kicker">INDUSTRY RISK REPORT</span>
+        <h2 class="mt-8 font-headline text-4xl font-extrabold tracking-tight md:text-6xl" style="color:#000666;">
+          Complaint operations become a growth risk long before leaders realize it.
+        </h2>
+        <p class="mt-6 max-w-2xl text-lg leading-8" style="color:#454652;">
+          As complaint volume rises, manual review, fragmented ownership, and slow escalation create hidden operational and regulatory exposure. TriageAI surfaces that breakdown early and replaces it with structured, explainable coordination.
+        </p>
+      </div>
 
-      <!-- Left: Trace panel -->
-      <div class="order-2 lg:order-1">
-        <div class="glass-panel p-8 rounded-xl shadow-[0px_8px_40px_rgba(0,6,102,0.06)]">
-          <div class="flex items-center justify-between mb-8">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white">
-                <span class="material-symbols-outlined text-sm">query_stats</span>
-              </div>
-              <span class="font-headline font-bold text-primary">Live Execution Trace</span>
-            </div>
-            <span class="px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container text-xs font-bold uppercase tracking-wider">Trace ID: 099-XA</span>
-          </div>
-          <div class="space-y-6">
-            <!-- Step 1 -->
-            <div class="flex gap-4">
-              <div class="flex flex-col items-center">
-                <div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center border-4 border-surface shrink-0"></div>
-                <div class="w-px h-full bg-outline-variant/30 mt-1"></div>
-              </div>
-              <div class="pb-6">
-                <h5 class="font-headline font-bold text-primary text-sm mb-1">INTAKE_AGENT_01</h5>
-                <p class="text-xs text-on-surface-variant mb-2 italic">"Analyzing sentiment: High Frustration (89%)"</p>
-                <div class="bg-surface-container-high px-4 py-2 rounded-lg text-[10px] font-mono text-primary/70">
-                  EVENT_TRIGGER: Customer_Email_Ingest
-                </div>
-              </div>
-            </div>
-            <!-- Step 2 -->
-            <div class="flex gap-4">
-              <div class="flex flex-col items-center">
-                <div class="w-6 h-6 rounded-full bg-secondary flex items-center justify-center border-4 border-surface shrink-0"></div>
-                <div class="w-px h-full bg-outline-variant/30 mt-1"></div>
-              </div>
-              <div class="pb-6">
-                <h5 class="font-headline font-bold text-secondary text-sm mb-1">SUPERVISOR_CORE</h5>
-                <p class="text-xs text-on-surface-variant mb-2">Routing to Compliance and Risk for parallel review.</p>
-                <div class="bg-secondary-container/20 px-4 py-2 rounded-lg text-[10px] font-mono text-secondary">
-                  DECISION: PARALLEL_EXECUTION_MODE
-                </div>
-              </div>
-            </div>
-            <!-- Step 3 -->
-            <div class="flex gap-4">
-              <div class="flex flex-col items-center">
-                <div class="w-6 h-6 rounded-full bg-tertiary flex items-center justify-center border-4 border-surface shrink-0"></div>
+      <div class="mt-16 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+        <article class="tonal-card rounded-[2rem] p-8">
+          <span class="material-symbols-outlined text-4xl" style="color:#000666;">forum</span>
+          <div class="mt-8 font-headline text-5xl font-extrabold tracking-tighter" style="color:#000666;">6.6M</div>
+          <p class="mt-3 font-semibold" style="color:#454652;">Total complaints projected for 2025</p>
+          <div class="metric-rule mt-8"></div>
+          <p class="mt-4 text-xs font-bold uppercase tracking-[0.18em]" style="color:#006f66;">+14% forecast adjustment</p>
+        </article>
+        <article class="tonal-card rounded-[2rem] p-8">
+          <span class="material-symbols-outlined text-4xl" style="color:#ba1a1a;">account_balance_wallet</span>
+          <div class="mt-8 font-headline text-5xl font-extrabold tracking-tighter" style="color:#000666;">$373M+</div>
+          <p class="mt-3 font-semibold" style="color:#454652;">Penalties paid by fintechs across 2024 and 2025</p>
+          <div class="metric-rule mt-8"></div>
+          <p class="mt-4 text-xs font-bold uppercase tracking-[0.18em]" style="color:#ba1a1a;">Historical peak record</p>
+        </article>
+        <article class="tonal-card rounded-[2rem] p-8">
+          <span class="material-symbols-outlined text-4xl" style="color:#000666;">trending_up</span>
+          <div class="mt-8 font-headline text-5xl font-extrabold tracking-tighter" style="color:#000666;">92%</div>
+          <p class="mt-3 font-semibold" style="color:#454652;">Year-over-year dispute filing surge</p>
+          <div class="metric-rule mt-8"></div>
+          <p class="mt-4 text-xs font-bold uppercase tracking-[0.18em]" style="color:#006f66;">Market saturation effect</p>
+        </article>
+        <article class="tonal-card rounded-[2rem] p-8">
+          <span class="material-symbols-outlined text-4xl" style="color:#000666;">timer</span>
+          <div class="mt-8 font-headline text-5xl font-extrabold tracking-tighter" style="color:#000666;">8 Months</div>
+          <p class="mt-3 font-semibold" style="color:#454652;">Average resolution time in manual operations</p>
+          <div class="metric-rule mt-8"></div>
+          <p class="mt-4 text-xs font-bold uppercase tracking-[0.18em]" style="color:#ba1a1a;">Regulatory red zone</p>
+        </article>
+      </div>
+
+      <div class="mt-16 grid items-center gap-12 lg:grid-cols-[0.9fr_1.1fr]">
+        <div class="relative">
+          <div class="absolute -left-10 -top-10 h-44 w-44 rounded-full bg-secondary/10 blur-3xl"></div>
+          <img
+            alt="Financial operations risk environment"
+            class="relative z-10 w-full rounded-[2.25rem] shadow-2xl"
+            src="https://lh3.googleusercontent.com/aida-public/AB6AXuBwHAJ9gd9WwdbeQRhz7YA1P3j04WBiG8r2vDPpJFdy8l78KlKYVyRdrdRz82i1KJTjevIb_GwITZC3P37uuicqTcZfHZ8OjsSJ_xhyO6fgHueqSpXEV-2MUu3Bg_Tkb797ucgTwIVnUkW0PytreOi3VB4dSndVafK7_ku6rkw6qK9EKlwVIC9QXtWuE-axZOe6DO2YuU_MoMs2_Apfsf68aMyuC222ouZTD4Ofj2GpwH7kr8MWJDk4YveId3f6PKZnK_TdCIPxHHEE"
+          />
+        </div>
+        <div class="space-y-8">
+          <div class="section-card rounded-[2rem] p-8">
+            <div class="flex items-start gap-4">
+              <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full" style="background:#81f3e5;">
+                <span class="material-symbols-outlined" style="color:#006a62;">group_off</span>
               </div>
               <div>
-                <h5 class="font-headline font-bold text-tertiary text-sm mb-1">COMPLIANCE_AGENT_V3</h5>
-                <p class="text-xs text-on-surface-variant mb-2">Policy check complete. Standard response template approved.</p>
-                <div class="bg-tertiary-fixed-dim/20 px-4 py-2 rounded-lg text-[10px] font-mono text-tertiary">
-                  RESULT: COMPLIANCE_VALIDATED
+                <h3 class="font-headline text-2xl font-extrabold tracking-tight" style="color:#000666;">Linear teams, exponential growth</h3>
+                <p class="mt-3 text-base leading-7" style="color:#454652;">As volume climbs, manual teams are forced to choose between speed and accuracy. That tradeoff becomes backlog, churn, and regulator-visible delay.</p>
+              </div>
+            </div>
+          </div>
+          <div class="section-card rounded-[2rem] p-8">
+            <div class="flex items-start gap-4">
+              <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full" style="background:#81f3e5;">
+                <span class="material-symbols-outlined" style="color:#006a62;">gavel</span>
+              </div>
+              <div>
+                <h3 class="font-headline text-2xl font-extrabold tracking-tight" style="color:#000666;">Regulatory fragility</h3>
+                <p class="mt-3 text-base leading-7" style="color:#454652;">Complaint latency is not just a service problem. It creates a clear audit trail of operational weakness, especially when queues stretch into multi-month exposure windows.</p>
+              </div>
+            </div>
+          </div>
+          <div class="section-card rounded-[2rem] p-8">
+            <div class="flex items-start gap-4">
+              <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full" style="background:#81f3e5;">
+                <span class="material-symbols-outlined" style="color:#006a62;">broken_image</span>
+              </div>
+              <div>
+                <h3 class="font-headline text-2xl font-extrabold tracking-tight" style="color:#000666;">Knowledge silos</h3>
+                <p class="mt-3 text-base leading-7" style="color:#454652;">High-risk resolutions often depend on tribal knowledge. When that expertise lives in a few analysts, scale and continuity both fail under pressure.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="solution" class="px-4 py-24 md:px-8 md:py-32">
+    <div class="marketing-shell">
+      <div class="grid gap-12 lg:grid-cols-[0.95fr_1.05fr] lg:items-end">
+        <div>
+          <span class="editorial-kicker">Architecting Integrity</span>
+          <h2 class="mt-8 font-headline text-4xl font-extrabold tracking-tight md:text-6xl" style="color:#000666;">
+            The system that turns complaint handling into coordinated action.
+          </h2>
+          <p class="mt-6 max-w-2xl text-lg leading-8" style="color:#454652;">
+            TriageAI replaces fragmented complaint operations with a supervisor-led intelligence layer that classifies cases, detects risk, routes the right teams, and preserves decision context from intake to resolution.
+          </p>
+        </div>
+        <div class="section-card rounded-[2.25rem] p-8 md:p-10">
+          <p class="text-sm font-bold uppercase tracking-[0.2em]" style="color:#006f66;">Business Outcomes</p>
+          <div class="mt-8 grid gap-5 sm:grid-cols-2">
+            <div class="rounded-[1.5rem] bg-white p-6">
+              <h3 class="font-headline text-xl font-extrabold" style="color:#000666;">No Complaint Left Behind</h3>
+              <p class="mt-3 text-sm leading-6" style="color:#454652;">Every case is captured, structured, and tracked through resolution.</p>
+            </div>
+            <div class="rounded-[1.5rem] bg-white p-6">
+              <h3 class="font-headline text-xl font-extrabold" style="color:#000666;">Audit Ready by Design</h3>
+              <p class="mt-3 text-sm leading-6" style="color:#454652;">Decision trails remain visible in real time, not reconstructed after escalation.</p>
+            </div>
+            <div class="rounded-[1.5rem] bg-white p-6">
+              <h3 class="font-headline text-xl font-extrabold" style="color:#000666;">Systemic Issues Surface Early</h3>
+              <p class="mt-3 text-sm leading-6" style="color:#454652;">Recurring patterns are detected before they spread across customers and teams.</p>
+            </div>
+            <div class="rounded-[1.5rem] bg-white p-6">
+              <h3 class="font-headline text-xl font-extrabold" style="color:#000666;">Intelligent Routing</h3>
+              <p class="mt-3 text-sm leading-6" style="color:#454652;">Each complaint follows the right operational or compliance path without queue drift.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-16 rounded-[2.5rem] px-6 py-12 md:px-10" style="background:#f5f3ef;">
+        <div class="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h3 class="font-headline text-3xl font-extrabold tracking-tight md:text-4xl" style="color:#000666;">Autonomous Intelligence Architecture</h3>
+            <p class="mt-3 max-w-2xl text-base leading-7" style="color:#454652;">A central supervisor orchestrates specialist agents for classification, routing, risk, auditability, root-cause analysis, and resolution.</p>
+          </div>
+        </div>
+
+        <div class="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+          <div class="grid gap-6 md:grid-cols-2">
+            <article class="tonal-card rounded-[2rem] p-8 md:col-span-2">
+              <div class="flex items-center gap-4">
+                <div class="flex h-16 w-16 items-center justify-center rounded-full aurora-cta">
+                  <span class="material-symbols-outlined text-3xl">hub</span>
                 </div>
+                <div>
+                  <p class="text-xs font-bold uppercase tracking-[0.18em]" style="color:#006f66;">Central Orchestration</p>
+                  <h4 class="font-headline text-3xl font-extrabold tracking-tight" style="color:#000666;">Supervisor</h4>
+                </div>
+              </div>
+              <p class="mt-6 max-w-2xl text-base leading-7" style="color:#454652;">The supervisor assigns specialist agents dynamically, chooses parallel or serial execution, and acts as the final quality gate before the system produces a response or escalation.</p>
+            </article>
+            <article class="tonal-card rounded-[2rem] p-7">
+              <span class="material-symbols-outlined text-3xl" style="color:#000666;">category</span>
+              <h5 class="mt-5 font-headline text-2xl font-extrabold tracking-tight" style="color:#000666;">Classification</h5>
+              <p class="mt-3 text-sm leading-6" style="color:#454652;">Structures incoming complaints into the right taxonomy and urgency lane.</p>
+            </article>
+            <article class="tonal-card rounded-[2rem] p-7">
+              <span class="material-symbols-outlined text-3xl" style="color:#006a62;">security</span>
+              <h5 class="mt-5 font-headline text-2xl font-extrabold tracking-tight" style="color:#000666;">Risk</h5>
+              <p class="mt-3 text-sm leading-6" style="color:#454652;">Flags liability, vulnerability, and escalation signals before they disappear in the queue.</p>
+            </article>
+            <article class="tonal-card rounded-[2rem] p-7">
+              <span class="material-symbols-outlined text-3xl" style="color:#343d96;">psychology</span>
+              <h5 class="mt-5 font-headline text-2xl font-extrabold tracking-tight" style="color:#000666;">Root Cause</h5>
+              <p class="mt-3 text-sm leading-6" style="color:#454652;">Looks past the single case to identify patterns that create repeat complaints.</p>
+            </article>
+            <article class="tonal-card rounded-[2rem] p-7">
+              <span class="material-symbols-outlined text-3xl" style="color:#000666;">verified</span>
+              <h5 class="mt-5 font-headline text-2xl font-extrabold tracking-tight" style="color:#000666;">Resolution</h5>
+              <p class="mt-3 text-sm leading-6" style="color:#454652;">Builds the next action, response, or handoff with policy-aware context.</p>
+            </article>
+          </div>
+
+          <div class="section-card rounded-[2.25rem] p-8 md:p-10">
+            <p class="text-sm font-bold uppercase tracking-[0.2em]" style="color:#006f66;">Execution Value</p>
+            <div class="mt-8 space-y-6">
+              <div class="rounded-[1.5rem] bg-white p-6">
+                <h5 class="font-headline text-2xl font-extrabold tracking-tight" style="color:#000666;">36%</h5>
+                <p class="mt-2 text-sm font-bold uppercase tracking-[0.16em]" style="color:#006f66;">Resolution Speed</p>
+                <p class="mt-3 text-sm leading-6" style="color:#454652;">Faster complaint movement compared with manual or rule-only operations.</p>
+              </div>
+              <div class="rounded-[1.5rem] aurora-cta p-6">
+                <h5 class="font-headline text-2xl font-extrabold tracking-tight text-white">99.9%</h5>
+                <p class="mt-2 text-sm font-bold uppercase tracking-[0.16em]" style="color:#81f3e5;">Compliance Readiness</p>
+                <p class="mt-3 text-sm leading-6" style="color:rgba(255,255,255,0.82);">Designed for consistent regulatory handling with stronger documentation and traceability.</p>
+              </div>
+              <div class="rounded-[1.5rem] bg-white p-6">
+                <h5 class="font-headline text-2xl font-extrabold tracking-tight" style="color:#000666;">80%</h5>
+                <p class="mt-2 text-sm font-bold uppercase tracking-[0.16em]" style="color:#006f66;">Overhead Reduction</p>
+                <p class="mt-3 text-sm leading-6" style="color:#454652;">Less manual sorting, less queue management, and less wasted reviewer effort.</p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Right: Copy -->
-      <div class="order-1 lg:order-2">
-        <h2 class="font-headline text-5xl font-extrabold tracking-tight mb-6" style="color:#000666;">Unrivaled <br/>Audit Visibility</h2>
-        <p class="text-xl leading-relaxed mb-8" style="color:#434653;">
-          Traditional systems are black boxes. TriageAI provides a high-fidelity execution trace that documents every micro-decision made by our AI agents.
+      <div class="mt-16 overflow-hidden rounded-[2.5rem] aurora-cta px-8 py-14 text-center md:px-16 md:py-20">
+        <h3 class="font-headline text-4xl font-extrabold tracking-tight text-white md:text-5xl">Defuse the crisis with agentic intelligence.</h3>
+        <p class="mx-auto mt-6 max-w-3xl text-lg leading-8" style="color:rgba(255,255,255,0.82);">
+          The homepage now tells the whole story in one pass: the complaint crisis, the financial exposure behind it, and the supervisor-led architecture built to respond.
         </p>
-        <div class="space-y-6">
-          <div class="flex items-start gap-4">
-            <span class="material-symbols-outlined shrink-0" style="color:#000666; font-variation-settings:'FILL' 1;">verified</span>
-            <div>
-              <h6 class="font-headline font-bold" style="color:#000666;">Cryptographic Proof</h6>
-              <p class="text-sm" style="color:#434653;">Every trace is hashed and anchored to 'The Vault', providing an immutable record for regulators.</p>
-            </div>
-          </div>
-          <div class="flex items-start gap-4">
-            <span class="material-symbols-outlined shrink-0" style="color:#000666; font-variation-settings:'FILL' 1;">account_tree</span>
-            <div>
-              <h6 class="font-headline font-bold" style="color:#000666;">Asymmetric Logic</h6>
-              <p class="text-sm" style="color:#434653;">Agents work in parallel or series based on the complexity of the complaint, never following a rigid script.</p>
-            </div>
-          </div>
+        <div class="mt-10 flex flex-wrap justify-center gap-4">
+          <a href="/login" class="rounded-full bg-white px-8 py-4 font-headline font-bold" style="color:#000666;">Request Access</a>
+          <a href="#platform" class="rounded-full border border-white/30 px-8 py-4 font-headline font-bold text-white">Back to Top</a>
         </div>
       </div>
+    </div>
+  </section>
 
-    </div>
-  </div>
-</section>
-
-<!-- ════════════ STATS SECTION ════════════ -->
-<section class="py-24 px-12" style="background:#ffffff;">
-  <div class="max-w-7xl mx-auto">
-    <div class="text-center mb-16">
-      <h2 class="font-headline text-4xl font-bold mb-4 tracking-tight" style="color:#000666;">The Impact of Precision</h2>
-      <p class="max-w-xl mx-auto" style="color:#434653;">Quantifiable operational efficiency driven by multi-agent intelligence.</p>
-    </div>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
-      <div class="text-center p-8 rounded-xl">
-        <div class="font-headline text-6xl font-extrabold text-primary mb-2">36%</div>
-        <div class="text-sm font-label font-bold uppercase tracking-widest text-secondary mb-4">Resolution Speed</div>
-        <p class="text-on-surface-variant text-sm leading-relaxed">Faster resolution times compared to traditional rule-based or manual workflows.</p>
+  <footer class="px-4 py-14 md:px-8" style="background:#f5f3ef;">
+    <div class="marketing-shell flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
+      <div>
+        <div class="font-headline text-2xl font-extrabold tracking-tighter" style="color:#000666;">TriageAI</div>
+        <p class="mt-3 max-w-md text-sm leading-6" style="color:#636573;">Automating complaint resolution with multi-agent intelligence, audit visibility, and a landing page that now carries both the risk story and the solution story.</p>
       </div>
-      <div class="text-center p-8 rounded-xl scale-105 shadow-2xl relative" style="background:linear-gradient(135deg,#000666,#1a237e); color:white;">
-        <div class="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-[10px] font-bold uppercase text-white whitespace-nowrap" style="background:#006a62;">Gold Standard</div>
-        <div class="font-headline text-6xl font-extrabold text-white mb-2">99.9%</div>
-        <div class="text-sm font-label font-bold uppercase tracking-widest text-secondary-fixed-dim mb-4">Compliance Readiness</div>
-        <p class="text-on-primary-container text-sm leading-relaxed">Regulatory accuracy across diverse international and local frameworks.</p>
-      </div>
-      <div class="text-center p-8 rounded-xl">
-        <div class="font-headline text-6xl font-extrabold text-primary mb-2">80%</div>
-        <div class="text-sm font-label font-bold uppercase tracking-widest text-secondary mb-4">Overhead Reduction</div>
-        <p class="text-on-surface-variant text-sm leading-relaxed">Reduced manual involvement in categorization, routing, and initial drafting.</p>
+      <div class="flex flex-wrap gap-6 text-sm font-semibold">
+        <a href="#platform" style="color:#000666;">Platform</a>
+        <a href="#crisis" style="color:#000666;">The Crisis</a>
+        <a href="#solution" style="color:#000666;">The Solution</a>
+        <a href="/login" style="color:#000666;">Login</a>
       </div>
     </div>
-  </div>
-</section>
-
-<!-- ════════════ FOOTER ════════════ -->
-<footer class="w-full border-t border-outline-variant/15" style="background:#f5f3ef;">
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-8 px-12 py-16 max-w-7xl mx-auto">
-    <div class="space-y-6">
-      <div class="font-headline font-bold text-2xl" style="color:#000666;">TriageAI</div>
-      <p class="text-sm max-w-xs leading-relaxed" style="color:#636573;">
-        Automating the resolution process with multi-agent intelligence and cryptographic certainty.
-      </p>
-      <div class="text-sm" style="color:#636573;">© 2024 TriageAI. Multi-Agent Intelligence Platform.</div>
-    </div>
-    <div class="grid grid-cols-2 sm:grid-cols-3 gap-8">
-      <div class="flex flex-col gap-4">
-        <span class="font-bold text-sm font-label uppercase tracking-widest" style="color:#000666;">Platform</span>
-        <a class="text-sm hover:underline" style="color:#636573;" href="#">Security Audit</a>
-        <a class="text-sm hover:underline" style="color:#636573;" href="#">System Status</a>
-        <a class="text-sm hover:underline" style="color:#636573;" href="#">API Documentation</a>
-      </div>
-      <div class="flex flex-col gap-4">
-        <span class="font-bold text-sm font-label uppercase tracking-widest" style="color:#000666;">Company</span>
-        <a class="text-sm hover:underline" style="color:#636573;" href="#">About Us</a>
-        <a class="text-sm hover:underline" style="color:#636573;" href="/login">Login</a>
-      </div>
-      <div class="flex flex-col gap-4">
-        <span class="font-bold text-sm font-label uppercase tracking-widest" style="color:#000666;">Legal</span>
-        <a class="text-sm hover:underline" style="color:#636573;" href="#">Privacy Policy</a>
-        <a class="text-sm hover:underline" style="color:#636573;" href="#">Terms of Service</a>
-      </div>
-    </div>
-  </div>
-</footer>
+  </footer>
 </div>
-
 {% else %}
-<!-- ════════════ AUTHENTICATED: Quick-access home ════════════ -->
 <div class="mb-8">
-  <p class="text-[10px] uppercase tracking-[0.15em] text-on-surface-variant mb-1">Welcome back</p>
+  <p class="mb-1 text-[10px] uppercase tracking-[0.15em] text-on-surface-variant">Welcome back</p>
   <h1 class="text-4xl font-headline font-extrabold tracking-tight">Good to see you, {{ user.username | title }}.</h1>
-  <p class="text-sm text-on-surface-variant mt-2">
+  <p class="mt-2 text-sm text-on-surface-variant">
     {% if user.role == 'user' %}
-    Your <a href="/profile" class="text-primary hover:underline font-semibold">profile</a> is ready — or open the
-    <a href="/" class="text-primary hover:underline font-semibold">dashboard</a> for complaints.
+    Your <a href="/profile" class="font-semibold text-primary hover:underline">profile</a> is ready, or open the
+    <a href="/" class="font-semibold text-primary hover:underline">dashboard</a> for complaints.
     {% else %}
-    Head to the <a href="/" class="text-primary hover:underline font-semibold">dashboard</a> to view your complaint queue.
+    Head to the <a href="/" class="font-semibold text-primary hover:underline">dashboard</a> to view your complaint queue.
     {% endif %}
   </p>
 </div>
-<div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 mt-10">
+
+<div class="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
   {% if user.role == 'user' %}
-  <a href="/profile" class="rounded-xl bg-surface-container-low p-6 shadow hover:shadow-lg hover:-translate-y-1 transition-all">
+  <a href="/profile" class="rounded-xl bg-surface-container-low p-6 shadow transition-all hover:-translate-y-1 hover:shadow-lg">
     <div class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
       <span class="material-symbols-outlined text-2xl">person</span>
     </div>
@@ -350,14 +413,14 @@
     <p class="mt-2 text-sm text-on-surface-variant">Account settings and preferences.</p>
   </a>
   {% endif %}
-  <a href="/" class="rounded-xl bg-surface-container-low p-6 shadow hover:shadow-lg hover:-translate-y-1 transition-all">
+  <a href="/" class="rounded-xl bg-surface-container-low p-6 shadow transition-all hover:-translate-y-1 hover:shadow-lg">
     <div class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
       <span class="material-symbols-outlined text-2xl">dashboard</span>
     </div>
     <h2 class="text-base font-semibold text-on-surface">Dashboard</h2>
     <p class="mt-2 text-sm text-on-surface-variant">View all complaints and their current status.</p>
   </a>
-  <a href="/complaints/new" class="rounded-xl bg-surface-container-low p-6 shadow hover:shadow-lg hover:-translate-y-1 transition-all">
+  <a href="/complaints/new" class="rounded-xl bg-surface-container-low p-6 shadow transition-all hover:-translate-y-1 hover:shadow-lg">
     <div class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
       <span class="material-symbols-outlined text-2xl">edit_square</span>
     </div>
@@ -365,14 +428,14 @@
     <p class="mt-2 text-sm text-on-surface-variant">Submit a new complaint via the intake chat.</p>
   </a>
   {% if user.role == 'admin' %}
-  <a href="/analytics" class="rounded-xl bg-surface-container-low p-6 shadow hover:shadow-lg hover:-translate-y-1 transition-all">
+  <a href="/analytics" class="rounded-xl bg-surface-container-low p-6 shadow transition-all hover:-translate-y-1 hover:shadow-lg">
     <div class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-secondary/10 text-secondary">
       <span class="material-symbols-outlined text-2xl">analytics</span>
     </div>
     <h2 class="text-base font-semibold text-on-surface">Analytics</h2>
     <p class="mt-2 text-sm text-on-surface-variant">Trends, risk distribution, and team workload.</p>
   </a>
-  <a href="/settings" class="rounded-xl bg-surface-container-low p-6 shadow hover:shadow-lg hover:-translate-y-1 transition-all">
+  <a href="/settings" class="rounded-xl bg-surface-container-low p-6 shadow transition-all hover:-translate-y-1 hover:shadow-lg">
     <div class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-tertiary/10 text-tertiary">
       <span class="material-symbols-outlined text-2xl">settings</span>
     </div>
@@ -382,5 +445,4 @@
   {% endif %}
 </div>
 {% endif %}
-
 {% endblock %}
