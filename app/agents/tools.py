@@ -13,6 +13,8 @@ from typing import Optional
 
 from langchain_core.tools import tool
 
+from app.documents.service import build_case_document_summary, search_case_documents as _search_case_documents
+
 logger = logging.getLogger(__name__)
 
 # ── Lazy singletons (moved from workflow.py) ────────────────────────────────
@@ -196,3 +198,38 @@ def lookup_root_cause_controls(narrative: str) -> str:
     svc = _company_knowledge_service()
     ctx = svc.build_company_context(narrative)
     return json.dumps(ctx.root_cause_controls, indent=2, default=str)
+
+
+@tool
+def search_case_documents(
+    case_id: str,
+    query: str,
+    k: int = 3,
+) -> str:
+    """Search processed uploaded documents attached to a specific case.
+
+    Use this when the complaint has supporting documents and you need
+    document-grounded evidence rather than narrative-only reasoning.
+    """
+    docs = _search_case_documents(case_id=case_id, query=query, k=k)
+    if not docs:
+        return "No processed case documents matched the query."
+    results = []
+    for i, doc in enumerate(docs, 1):
+        results.append(
+            f"--- Case document chunk {i} ---\n"
+            f"Document ID: {doc.metadata.get('document_id')}\n"
+            f"Chunk: {doc.metadata.get('chunk_index')}\n"
+            f"Similarity: {1 - doc.metadata.get('distance', 0):.2f}\n"
+            f"Content: {doc.page_content}\n"
+        )
+    return "\n".join(results)
+
+
+@tool
+def get_case_document_facts(case_id: str) -> str:
+    """Return extracted document facts for a complaint case."""
+    summary = build_case_document_summary(case_id)
+    if summary.total_documents == 0:
+        return "No uploaded case documents are attached to this complaint."
+    return json.dumps(summary.model_dump(), indent=2, default=str)

@@ -26,6 +26,8 @@ class WorkflowState(TypedDict, total=False):
 
     # ── Intake ───────────────────────────────────────────────────────────
     case: CaseRead
+    document_gate_result: dict
+    document_consistency: dict
 
     # ── Classification ───────────────────────────────────────────────────
     classification: ClassificationResult

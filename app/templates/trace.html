@@ -6,16 +6,16 @@
 /* ── Cards ── */
 .trace-card {
   background: #ffffff;
-  border: 1px solid rgba(27,55,94,0.1);
-  box-shadow: 0 2px 12px rgba(27,55,94,0.06);
+  border: 1px solid rgba(0,6,102,0.08);
+  box-shadow: 0 2px 12px rgba(0,6,102,0.05);
   transition: box-shadow 0.2s, border-color 0.2s, transform 0.15s;
   cursor: pointer;
 }
-.dark .trace-card { background: #1c2a3a; border-color: rgba(173,199,255,0.1); box-shadow: 0 2px 12px rgba(0,0,0,0.3); }
-.trace-card:hover { box-shadow: 0 8px 32px rgba(27,55,94,0.16); border-color: rgba(27,55,94,0.28); transform: translateY(-2px); }
-.dark .trace-card:hover { box-shadow: 0 8px 32px rgba(0,0,0,0.5); border-color: rgba(173,199,255,0.28); }
-.trace-card.supervisor-card { border-left: 3px solid #1b375e; }
-.dark .trace-card.supervisor-card { border-left-color: #adc7f7; }
+.dark .trace-card { background: #181828; border-color: rgba(189,194,255,0.1); box-shadow: 0 2px 12px rgba(0,0,0,0.3); }
+.trace-card:hover { box-shadow: 0 8px 32px rgba(0,6,102,0.14); border-color: rgba(0,6,102,0.24); transform: translateY(-2px); }
+.dark .trace-card:hover { box-shadow: 0 8px 32px rgba(0,0,0,0.5); border-color: rgba(189,194,255,0.28); }
+.trace-card.supervisor-card { border-left: 3px solid #000666; }
+.dark .trace-card.supervisor-card { border-left-color: #bdc2ff; }
 .trace-card.failure-card { border-left: 3px solid #ba1a1a; }
 .dark .trace-card.failure-card { border-left-color: #ffb4ab; }
 
@@ -37,46 +37,46 @@
 }
 
 /* ── Text classes ── */
-.trace-node-name { color: #191c1e; font-weight: 700; }
-.trace-node-name.supervisor { color: #1b375e; }
-.dark .trace-node-name { color: #dae2f3; }
-.dark .trace-node-name.supervisor { color: #adc7f7; }
-.trace-success { color: #003e3f; }
-.dark .trace-success { color: #4ede99; }
+.trace-node-name { color: #1b1c1a; font-weight: 700; }
+.trace-node-name.supervisor { color: #000666; }
+.dark .trace-node-name { color: #e4e2ff; }
+.dark .trace-node-name.supervisor { color: #bdc2ff; }
+.trace-success { color: #006a62; }
+.dark .trace-success { color: #84f5e8; }
 .trace-failure-text { color: #ba1a1a; }
 .dark .trace-failure-text { color: #ffb4ab; }
-.trace-other { color: #6b46c1; }
-.dark .trace-other { color: #d0bcff; }
-.trace-muted { color: #737784; }
+.trace-other { color: #000666; }
+.dark .trace-other { color: #bdc2ff; }
+.trace-muted { color: #767683; }
 .dark .trace-muted { color: #8d9db5; }
-.trace-muted-dim { color: rgba(115,119,132,0.6); }
+.trace-muted-dim { color: rgba(118,118,131,0.6); }
 .dark .trace-muted-dim { color: rgba(141,157,181,0.6); }
-.trace-accent { color: #1b375e; }
-.dark .trace-accent { color: #adc7f7; }
+.trace-accent { color: #000666; }
+.dark .trace-accent { color: #bdc2ff; }
 
 /* ── Panels / cells ── */
-.trace-panel { background: #f2f4f6; }
-.dark .trace-panel { background: #141e2b; }
-.trace-panel-heading { color: #191c1e; }
-.dark .trace-panel-heading { color: #dae2f3; }
-.trace-bar-track { background: #e0e3e5; }
-.dark .trace-bar-track { background: #2a3a4d; }
-.trace-cell { background: #ffffff; border: 1px solid #e0e3e5; }
-.dark .trace-cell { background: #1c2a3a; border-color: rgba(173,199,255,0.1); }
-.trace-cell-label { color: #737784; }
+.trace-panel { background: #f5f3ef; }
+.dark .trace-panel { background: #14142a; }
+.trace-panel-heading { color: #1b1c1a; }
+.dark .trace-panel-heading { color: #e4e2ff; }
+.trace-bar-track { background: #eae8e4; }
+.dark .trace-bar-track { background: #24243a; }
+.trace-cell { background: #ffffff; border: 1px solid #eae8e4; }
+.dark .trace-cell { background: #181828; border-color: rgba(189,194,255,0.1); }
+.trace-cell-label { color: #767683; }
 .dark .trace-cell-label { color: #8d9db5; }
-.trace-cell-value { color: #191c1e; }
-.dark .trace-cell-value { color: #dae2f3; }
+.trace-cell-value { color: #1b1c1a; }
+.dark .trace-cell-value { color: #e4e2ff; }
 
 /* ── Connector ── */
-.trace-connector { background: linear-gradient(to right, rgba(27,55,94,0.35), rgba(195,198,213,0.15)); flex-shrink:0; }
-.dark .trace-connector { background: linear-gradient(to right, rgba(173,199,255,0.35), rgba(173,199,255,0.05)); }
+.trace-connector { background: linear-gradient(to right, rgba(0,6,102,0.3), rgba(198,197,212,0.12)); flex-shrink:0; }
+.dark .trace-connector { background: linear-gradient(to right, rgba(189,194,255,0.3), rgba(189,194,255,0.04)); }
 
 /* ── Seq badge ── */
-.seq-badge { background:#f2f4f6; color:#737784; font-size:10px; font-weight:700; font-family:monospace; padding:2px 7px; border-radius:20px; flex-shrink:0; }
-.dark .seq-badge { background:#2a3a4d; color:#8d9db5; }
-.seq-badge.supervisor { background:rgba(27,55,94,0.1); color:#1b375e; }
-.dark .seq-badge.supervisor { background:rgba(173,199,255,0.1); color:#adc7f7; }
+.seq-badge { background:#f5f3ef; color:#767683; font-size:10px; font-weight:700; font-family:monospace; padding:2px 7px; border-radius:20px; flex-shrink:0; }
+.dark .seq-badge { background:#24243a; color:#8d9db5; }
+.seq-badge.supervisor { background:rgba(0,6,102,0.08); color:#000666; }
+.dark .seq-badge.supervisor { background:rgba(189,194,255,0.1); color:#bdc2ff; }
 
 /* ── Tooltip scrollbar (webkit) ── */
 #trace-tooltip::-webkit-scrollbar { width: 5px; }
@@ -99,8 +99,8 @@
 <div class="mb-8">
   <div class="flex items-center justify-between mb-4">
     <div>
-      <p class="text-[10px] uppercase tracking-[0.15em] text-on-surface-variant mb-1">Admin · Observability</p>
-      <h1 class="text-3xl font-headline font-extrabold tracking-tight">Execution Trace</h1>
+      <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant mb-1">Admin · Forensic Intelligence</p>
+      <h1 class="text-3xl font-headline font-extrabold tracking-tight text-primary">Execution Trace</h1>
     </div>
   </div>
   <form action="/trace/search" method="get" class="flex items-center gap-3" autocomplete="off">
@@ -111,7 +111,7 @@
              name="case_id"
              value="{{ current_case_id if current_case_id is defined and current_case_id else '' }}"
              placeholder="Search by case ID (e.g. 7e2a67ea...)"
-             class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-outline-variant/40 bg-surface text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+             class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-outline-variant/20 bg-surface text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
              autocomplete="off"/>
 
       <!-- Dropdown -->
@@ -153,7 +153,7 @@
 }
 .suggestion-row:last-child { border-bottom: none; }
 .suggestion-row:hover,
-.suggestion-row.active { background: rgba(27,55,94,0.07); }
+.suggestion-row.active { background: rgba(0,6,102,0.07); }
 .dark .suggestion-row:hover,
 .dark .suggestion-row.active { background: rgba(173,199,255,0.07); }
 </style>
@@ -170,8 +170,8 @@
   let items  = [];
 
   const sev = s => ({ critical:'#ba1a1a', high:'rgba(186,26,26,0.7)' }[s] || '#737784');
-  const stBg = s => ({ completed:'rgba(0,62,63,0.1)', failed:'rgba(186,26,26,0.1)', escalated:'rgba(186,26,26,0.1)' }[s] || 'rgba(107,70,193,0.1)');
-  const stCl = s => ({ completed:'#003e3f', failed:'#ba1a1a', escalated:'#ba1a1a' }[s] || '#6b46c1');
+  const stBg = s => ({ completed:'rgba(0,62,63,0.1)', failed:'rgba(186,26,26,0.1)', escalated:'rgba(186,26,26,0.1)' }[s] || 'rgba(0,6,102,0.1)');
+  const stCl = s => ({ completed:'#003e3f', failed:'#ba1a1a', escalated:'#ba1a1a' }[s] || '#000666');
 
   function render(data) {
     items  = data;
@@ -181,7 +181,7 @@
     results.innerHTML = data.map((r, i) => `
       <div class="suggestion-row" data-i="${i}">
         <div style="min-width:0;">
-          <div style="font-family:monospace;font-size:12px;font-weight:700;color:#1b375e;" class="trace-accent">#${r.case_id}</div>
+          <div style="font-family:monospace;font-size:12px;font-weight:700;color:#000666;" class="trace-accent">#${r.case_id}</div>
           <div style="font-size:10px;color:#737784;margin-top:1px;">${r.started_at}</div>
         </div>
         <div style="display:flex;align-items:center;gap:5px;flex-shrink:0;">
@@ -262,11 +262,12 @@
   <div class="flex items-center gap-4">
     {% set status_styles = {
       "completed":           "background:rgba(0,62,63,0.1);color:#003e3f;",
-      "partially_completed": "background:rgba(107,70,193,0.1);color:#6b46c1;",
+      "partially_completed": "background:rgba(0,6,102,0.1);color:#000666;",
       "escalated":           "background:rgba(186,26,26,0.12);color:#ba1a1a;",
       "failed":              "background:rgba(186,26,26,0.12);color:#ba1a1a;",
     } %}
     <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
+          id="run-status-badge"
           style="{{ status_styles.get(run.run_status, 'background:#e0e3e5;color:#737784;') }}">
       {{ run.run_status or 'unknown' }}
     </span>
@@ -276,16 +277,58 @@
       </h1>
       <p class="text-sm trace-muted mt-1">
         {% if run.started_at %}Started at {{ run.started_at.strftime('%H:%M:%S') }}{% endif %}
-        &middot; <span class="font-mono font-semibold trace-accent">{{ total_latency }}ms</span> total
-        &middot; <span class="font-semibold">{{ step_count }}</span> steps
-        {% if run.final_route %}&middot; <span class="font-semibold trace-accent">{{ run.final_route | replace('_',' ') | title }}</span>{% endif %}
-        {% if run.final_severity %}&middot; <span class="font-semibold {% if run.final_severity == 'critical' %}trace-failure-text{% else %}trace-accent{% endif %}">{{ run.final_severity | upper }}</span>{% endif %}
+        &middot; <span class="font-mono font-semibold trace-accent" id="run-total-latency">{{ total_latency }}ms</span> total
+        &middot; <span class="font-semibold" id="run-step-count">{{ step_count }}</span> steps
+        {% if run.final_route %}&middot; <span class="font-semibold trace-accent" id="run-final-route">{{ run.final_route | replace('_',' ') | title }}</span>{% else %}<span id="run-final-route" class="hidden"></span>{% endif %}
+        {% if run.final_severity %}&middot; <span id="run-final-severity" class="font-semibold {% if run.final_severity == 'critical' %}trace-failure-text{% else %}trace-accent{% endif %}">{{ run.final_severity | upper }}</span>{% else %}<span id="run-final-severity" class="hidden"></span>{% endif %}
       </p>
     </div>
   </div>
   <div class="text-xs trace-muted bg-surface-container px-3 py-2 rounded-xl flex items-center gap-1">
     <span class="material-symbols-outlined text-sm">info</span>
     Hover cards for details
+  </div>
+</div>
+
+<!-- ═══ LIVE PROCESSING FEED ═══ -->
+<div class="mb-8">
+  <div class="trace-panel rounded-xl p-6">
+    <div class="flex items-center justify-between mb-5">
+      <div>
+        <h2 class="font-headline font-bold text-lg trace-panel-heading">Live Processing Feed</h2>
+        <p class="text-xs trace-muted mt-1">Node updates appear here as the backend persists each step.</p>
+      </div>
+      <div id="live-trace-indicator"
+           class="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full {% if live_enabled %}text-secondary{% else %}trace-muted{% endif %}"
+           style="{% if live_enabled %}background:rgba(0,106,98,0.12);{% else %}background:rgba(115,119,132,0.1);{% endif %}">
+        {% if live_enabled %}Live{% else %}Static{% endif %}
+      </div>
+    </div>
+    <div id="live-trace-feed" class="space-y-3">
+      {% for step in steps %}
+      {% set live_is_supervisor = step.node_name == 'supervisor' %}
+      {% set live_conf = (step.confidence * 100) | int if step.confidence else None %}
+      <div class="rounded-xl border border-outline-variant/15 bg-surface px-4 py-3" data-sequence="{{ step.sequence }}">
+        <div class="flex items-center justify-between gap-3">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <span class="seq-badge {{ 'supervisor' if live_is_supervisor else '' }}">#{{ step.sequence }}</span>
+              <span class="text-sm font-semibold trace-node-name {{ 'supervisor' if live_is_supervisor else '' }}">{{ step.node_name | replace('_',' ') | title }}</span>
+            </div>
+            <div class="mt-1 text-xs trace-muted">
+              {{ step.status | replace('_',' ') | title }}
+              {% if step.output and step.output.goto %} · Routed to {{ step.output.goto | replace('_',' ') | title }}{% endif %}
+              {% if step.error_message %} · {{ step.error_message[:120] }}{% endif %}
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <div class="text-xs font-mono trace-accent">{{ step.latency_ms }}ms</div>
+            <div class="text-[10px] trace-muted">{% if live_conf is not none %}{{ live_conf }}% conf{% elif step.model_name %}{{ step.model_name }}{% else %}persisted{% endif %}</div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
   </div>
 </div>
 
@@ -297,7 +340,7 @@
     {% set is_failure = step.status == 'failure' %}
     {% set is_supervisor = step.node_name == 'supervisor' %}
     {% set conf_pct = (step.confidence * 100) | int if step.confidence else 0 %}
-    {% set conf_color = '#003e3f' if (step.confidence and step.confidence >= 0.8) else ('#1b375e' if (step.confidence and step.confidence >= 0.6) else '#ba1a1a') %}
+    {% set conf_color = '#003e3f' if (step.confidence and step.confidence >= 0.8) else ('#000666' if (step.confidence and step.confidence >= 0.6) else '#ba1a1a') %}
 
     <!-- Store data as JSON for JS tooltip -->
     {% set goto = step.output.goto if (step.output and step.output.goto) else '' %}
@@ -344,7 +387,7 @@
           <span class="w-2 h-2 rounded-full shrink-0" style="background:#ba1a1a;"></span>
           <span class="text-[11px] font-semibold trace-failure-text">Failed</span>
           {% else %}
-          <span class="w-2 h-2 rounded-full shrink-0" style="background:#6b46c1;"></span>
+          <span class="w-2 h-2 rounded-full shrink-0" style="background:#000666;"></span>
           <span class="text-[11px] font-semibold trace-other">{{ step.status }}</span>
           {% endif %}
           {% if step.retry_number and step.retry_number > 0 %}
@@ -360,7 +403,7 @@
         </div>
         {% elif step.confidence %}
         {% set cp = (step.confidence * 100) | int %}
-        {% set cc = '#003e3f' if step.confidence >= 0.8 else ('#1b375e' if step.confidence >= 0.6 else '#ba1a1a') %}
+        {% set cc = '#003e3f' if step.confidence >= 0.8 else ('#000666' if step.confidence >= 0.6 else '#ba1a1a') %}
         <div class="flex items-center gap-2 text-[11px] trace-muted">
           <span>Conf:</span>
           <div class="flex-1 h-1.5 rounded-full trace-bar-track overflow-hidden">
@@ -380,7 +423,7 @@
       {% if not loop.last %}
       <div class="flex items-center shrink-0">
         <div class="w-5 h-px trace-connector"></div>
-        <div class="w-0 h-0" style="border-top:4px solid transparent;border-bottom:4px solid transparent;border-left:6px solid rgba(27,55,94,0.35);"></div>
+        <div class="w-0 h-0" style="border-top:4px solid transparent;border-bottom:4px solid transparent;border-left:6px solid rgba(0,6,102,0.35);"></div>
       </div>
       {% endif %}
     </div>
@@ -397,7 +440,7 @@
       <div class="space-y-3">
         {% for step in steps %}
         {% set pct = (step.latency_ms / total_latency * 100) | int if total_latency > 0 else 0 %}
-        {% set bar_color = 'rgba(27,55,94,0.45)' if step.node_name == 'supervisor' else ('#ba1a1a' if step.status == 'failure' else '#1b375e') %}
+        {% set bar_color = 'rgba(0,6,102,0.45)' if step.node_name == 'supervisor' else ('#ba1a1a' if step.status == 'failure' else '#000666') %}
         <div class="flex items-center gap-3">
           <div class="w-6 text-[10px] font-mono trace-muted text-right shrink-0">#{{ step.sequence }}</div>
           <div class="w-28 text-xs truncate trace-muted shrink-0">{{ step.node_name | replace('_',' ') }}</div>
@@ -439,7 +482,7 @@
         </div>
         {% endif %}
         {% if run.final_severity %}
-        {% set sev_color = '#ba1a1a' if run.final_severity == 'critical' else ('rgba(186,26,26,0.7)' if run.final_severity == 'high' else '#1b375e') %}
+        {% set sev_color = '#ba1a1a' if run.final_severity == 'critical' else ('rgba(186,26,26,0.7)' if run.final_severity == 'high' else '#000666') %}
         <div class="trace-cell rounded-xl p-3">
           <div class="text-[9px] uppercase tracking-widest mb-1 trace-cell-label">Severity</div>
           <div class="text-xs font-bold uppercase" style="color:{{ sev_color }};">{{ run.final_severity }}</div>
@@ -494,7 +537,7 @@
           <td class="py-3 pr-4">
             {% if step.confidence %}
             {% set cp = (step.confidence * 100) | int %}
-            {% set cc = '#003e3f' if step.confidence >= 0.8 else ('#1b375e' if step.confidence >= 0.6 else '#ba1a1a') %}
+            {% set cc = '#003e3f' if step.confidence >= 0.8 else ('#000666' if step.confidence >= 0.6 else '#ba1a1a') %}
             <span class="font-mono font-semibold" style="color:{{ cc }};">{{ cp }}%</span>
             {% else %}<span class="trace-muted">—</span>{% endif %}
           </td>
@@ -515,6 +558,134 @@
 
 <script>
 (function () {
+  const runId = {{ (run.run_id if run else None) | tojson }};
+  const liveEnabled = {{ (live_enabled if live_enabled is defined else false) | tojson }};
+  if (!runId) return;
+
+  const feed = document.getElementById('live-trace-feed');
+  const liveIndicator = document.getElementById('live-trace-indicator');
+  const statusBadge = document.getElementById('run-status-badge');
+  const stepCountEl = document.getElementById('run-step-count');
+  const totalLatencyEl = document.getElementById('run-total-latency');
+  const routeEl = document.getElementById('run-final-route');
+  const severityEl = document.getElementById('run-final-severity');
+
+  const steps = {{ steps | tojson }};
+  let totalLatency = steps.reduce((acc, step) => acc + (Number(step.latency_ms) || 0), 0);
+  const seenSequences = new Set(steps.map(step => step.sequence));
+
+  function statusStyle(status) {
+    const map = {
+      completed: { bg: 'rgba(0,62,63,0.1)', color: '#003e3f' },
+      running: { bg: 'rgba(0,106,98,0.12)', color: '#006a62' },
+      partially_completed: { bg: 'rgba(0,6,102,0.1)', color: '#000666' },
+      needs_follow_up: { bg: 'rgba(0,6,102,0.1)', color: '#000666' },
+      escalated: { bg: 'rgba(186,26,26,0.12)', color: '#ba1a1a' },
+      failed: { bg: 'rgba(186,26,26,0.12)', color: '#ba1a1a' },
+    };
+    return map[status] || { bg: '#e0e3e5', color: '#737784' };
+  }
+
+  function renderLiveStep(step) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'rounded-xl border border-outline-variant/15 bg-surface px-4 py-3';
+    wrapper.dataset.sequence = String(step.sequence);
+    const isSupervisor = step.node_name === 'supervisor';
+    const confidence = step.confidence != null ? Math.round(step.confidence * 100) : null;
+    const route = step.output && step.output.goto ? ` · Routed to ${String(step.output.goto).replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}` : '';
+    const error = step.error_message ? ` · ${String(step.error_message).slice(0, 120)}` : '';
+    wrapper.innerHTML = `
+      <div class="flex items-center justify-between gap-3">
+        <div class="min-w-0">
+          <div class="flex items-center gap-2">
+            <span class="seq-badge ${isSupervisor ? 'supervisor' : ''}">#${step.sequence}</span>
+            <span class="text-sm font-semibold trace-node-name ${isSupervisor ? 'supervisor' : ''}">${String(step.node_name).replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</span>
+          </div>
+          <div class="mt-1 text-xs trace-muted">
+            ${String(step.status).replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}${route}${error}
+          </div>
+        </div>
+        <div class="text-right shrink-0">
+          <div class="text-xs font-mono trace-accent">${step.latency_ms}ms</div>
+          <div class="text-[10px] trace-muted">${confidence != null ? `${confidence}% conf` : (step.model_name || 'persisted')}</div>
+        </div>
+      </div>
+    `;
+    return wrapper;
+  }
+
+  function updateRunStatus(payload) {
+    if (statusBadge) {
+      const styles = statusStyle(payload.run_status);
+      statusBadge.textContent = payload.run_status || 'unknown';
+      statusBadge.style.background = styles.bg;
+      statusBadge.style.color = styles.color;
+    }
+    if (payload.final_route && routeEl) {
+      routeEl.classList.remove('hidden');
+      routeEl.textContent = payload.final_route.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    }
+    if (payload.final_severity && severityEl) {
+      severityEl.classList.remove('hidden');
+      severityEl.textContent = String(payload.final_severity).toUpperCase();
+      severityEl.className = payload.final_severity === 'critical'
+        ? 'font-semibold trace-failure-text'
+        : 'font-semibold trace-accent';
+    }
+  }
+
+  function finalizeLiveState(status) {
+    if (!liveIndicator) return;
+    const done = ['completed', 'failed', 'escalated', 'needs_follow_up'].includes(status);
+    liveIndicator.textContent = done ? 'Completed' : 'Live';
+    liveIndicator.className = `text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full ${done ? 'trace-muted' : 'text-secondary'}`;
+    liveIndicator.style.background = done ? 'rgba(115,119,132,0.1)' : 'rgba(0,106,98,0.12)';
+  }
+
+  if (liveEnabled) {
+    const source = new EventSource(`/trace/${encodeURIComponent(runId)}/stream`);
+
+    source.addEventListener('step', (event) => {
+      const payload = JSON.parse(event.data || '{}');
+      const step = payload.step;
+      if (!step || seenSequences.has(step.sequence)) return;
+      seenSequences.add(step.sequence);
+      totalLatency += Number(step.latency_ms) || 0;
+      if (feed) {
+        feed.appendChild(renderLiveStep(step));
+      }
+      if (stepCountEl) {
+        stepCountEl.textContent = String(seenSequences.size);
+      }
+      if (totalLatencyEl) {
+        totalLatencyEl.textContent = `${Math.round(totalLatency * 10) / 10}ms`;
+      }
+      updateRunStatus(payload);
+    });
+
+    source.addEventListener('run', (event) => {
+      const payload = JSON.parse(event.data || '{}');
+      updateRunStatus(payload);
+      finalizeLiveState(payload.run_status);
+    });
+
+    source.addEventListener('done', (event) => {
+      const payload = JSON.parse(event.data || '{}');
+      updateRunStatus(payload);
+      finalizeLiveState(payload.run_status);
+      source.close();
+    });
+
+    source.addEventListener('error', () => {
+      finalizeLiveState('failed');
+      source.close();
+    });
+  }
+})();
+</script>
+
+<script>
+(function () {
   const tip = document.getElementById('trace-tooltip');
   const dark = () => document.documentElement.classList.contains('dark');
   let hideTimer = null;
@@ -527,11 +698,11 @@
       border:    d ? 'rgba(173,199,255,0.15)' : '#e0e3e5',
       text:      d ? '#dae2f3' : '#191c1e',
       muted:     d ? '#8d9db5' : '#737784',
-      accent:    d ? '#adc7f7' : '#1b375e',
+      accent:    d ? '#bdc2ff' : '#000666',
       subtle:    d ? 'rgba(173,199,255,0.06)' : '#f8f9fb',
       divider:   d ? 'rgba(173,199,255,0.08)' : '#f0f0f0',
       codeBg:    d ? '#0d1a27'  : '#f2f4f6',
-      codeText:  d ? '#adc7f7'  : '#1b375e',
+      codeText:  d ? '#bdc2ff'  : '#000666',
       barTrack:  d ? '#2a3a4d'  : '#e0e3e5',
     };
   }
@@ -584,7 +755,7 @@
     html += `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:2px;">`;
     if (d.status === 'success') html += badge('✓ SUCCESS', 'rgba(0,62,63,0.12)', '#003e3f');
     else if (d.status === 'failure') html += badge('✗ FAILED', 'rgba(186,26,26,0.12)', '#ba1a1a');
-    else html += badge(d.status.toUpperCase(), 'rgba(107,70,193,0.12)', '#6b46c1');
+    else html += badge(d.status.toUpperCase(), 'rgba(0,6,102,0.12)', '#000666');
     if (parseInt(d.retry) > 0) html += badge('RETRY #' + d.retry, 'rgba(186,26,26,0.1)', '#ba1a1a');
     if (d.model) html += badge(d.model, `rgba(115,119,132,0.1)`, c.muted);
     html += `</div>`;
@@ -741,20 +912,20 @@
     if (s === 'critical') return '#ba1a1a';
     if (s === 'high')     return 'rgba(186,26,26,0.7)';
     if (s === 'low')      return '#003e3f';
-    return '#1b375e';
+    return '#000666';
   }
 
   function statusBg(s) {
-    const m = { completed:'rgba(0,62,63,0.1)', partially_completed:'rgba(107,70,193,0.1)', escalated:'rgba(186,26,26,0.1)', failed:'rgba(186,26,26,0.1)' };
+    const m = { completed:'rgba(0,62,63,0.1)', partially_completed:'rgba(0,6,102,0.1)', escalated:'rgba(186,26,26,0.1)', failed:'rgba(186,26,26,0.1)' };
     return m[s] || 'rgba(115,119,132,0.1)';
   }
 
   function statusColor(s) {
-    const m = { completed:'#003e3f', partially_completed:'#6b46c1', escalated:'#ba1a1a', failed:'#ba1a1a' };
+    const m = { completed:'#003e3f', partially_completed:'#000666', escalated:'#ba1a1a', failed:'#ba1a1a' };
     return m[s] || '#737784';
   }
 
-  function accentColor() { return isDark() ? '#adc7f7' : '#1b375e'; }
+  function accentColor() { return isDark() ? '#bdc2ff' : '#000666'; }
   function textColor()   { return isDark() ? '#dae2f3' : '#191c1e'; }
   function mutedColor()  { return isDark() ? '#8d9db5' : '#737784'; }
   function hoverBg()     { return isDark() ? '#1c2a3a' : '#f2f4f6'; }

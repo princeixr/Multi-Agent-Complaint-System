@@ -1,71 +1,88 @@
 {% extends "base.html" %}
-{% block title %}Observatory | Multi-Agent Complaint System{% endblock %}
+{% block title %}TriageAI | Multi-Agent Complaint System{% endblock %}
 
 {% block head %}
 <style>
+  .marketing-page {
+    background: #fbf9f5;
+    color: #10111a;
+  }
   .brand-topnav {
     position: sticky;
     top: 0;
     z-index: 50;
     width: 100%;
     background: #ffffff;
-    box-shadow: 0px 1px 0px rgba(27, 55, 94, 0.08), 0px 4px 24px rgba(27, 55, 94, 0.06);
+    box-shadow: 0px 1px 0px rgba(0, 6, 102, 0.08), 0px 4px 24px rgba(0, 6, 102, 0.06);
   }
 </style>
 <script>
   /* Force light mode on the landing page regardless of saved preference */
   document.documentElement.classList.remove('dark');
+  localStorage.setItem('theme', 'light');
 </script>
 {% endblock %}
 
 {% block content %}
 {% if not user %}
 <style>
+  body { background: #fbf9f5 !important; color: #10111a !important; }
   main { margin-left: 0 !important; padding-top: 0 !important; }
   main > div { padding: 0 !important; }
+  .marketing-hero {
+    background:
+      radial-gradient(circle at 20% 24%, rgba(129, 243, 229, 0.12), transparent 18%),
+      radial-gradient(circle at 72% 40%, rgba(0, 106, 98, 0.10), transparent 20%),
+      linear-gradient(180deg, #fdfbf8 0%, #f6f3ee 100%);
+  }
 </style>
 
 <!-- ════════════ STICKY TOPNAV ════════════ -->
+<div class="marketing-page">
 <nav class="brand-topnav">
   <div class="flex justify-between items-center px-12 py-4 max-w-full mx-auto">
-    <div class="text-2xl font-bold tracking-tighter font-headline" style="color:#1b375e;">Observatory</div>
+    <a href="/" class="text-2xl font-bold tracking-tighter font-headline" style="color:#000666;">TriageAI</a>
     <div class="hidden md:flex items-center gap-8 font-headline font-semibold tracking-tight">
-      <a href="#" style="color:#1b375e; border-bottom:2px solid #1b375e; padding-bottom:4px;">Platform</a>
-      <a href="#" class="transition-all duration-300" style="color:#737784;" onmouseover="this.style.color='#1b375e'" onmouseout="this.style.color='#737784'">Solutions</a>
-      <a href="#" class="transition-all duration-300" style="color:#737784;" onmouseover="this.style.color='#1b375e'" onmouseout="this.style.color='#737784'">AI Agents</a>
-      <a href="#" class="transition-all duration-300" style="color:#737784;" onmouseover="this.style.color='#1b375e'" onmouseout="this.style.color='#737784'">Audit Hub</a>
-      <a href="#" class="transition-all duration-300" style="color:#737784;" onmouseover="this.style.color='#1b375e'" onmouseout="this.style.color='#737784'">Security</a>
+      <a href="/"
+         class="transition-all duration-300"
+         style="color:{% if active_nav == 'platform' %}#000666{% else %}#636573{% endif %};{% if active_nav == 'platform' %} border-bottom:2px solid #000666; padding-bottom:4px;{% endif %}">Platform</a>
+      <a href="/pain-points"
+         class="transition-all duration-300"
+         style="color:{% if active_nav == 'pain_points' %}#000666{% else %}#636573{% endif %};{% if active_nav == 'pain_points' %} border-bottom:2px solid #000666; padding-bottom:4px;{% endif %}">Pain Points</a>
+      <a href="/agentic-solution"
+         class="transition-all duration-300"
+         style="color:{% if active_nav == 'agentic_solution' %}#000666{% else %}#636573{% endif %};{% if active_nav == 'agentic_solution' %} border-bottom:2px solid #000666; padding-bottom:4px;{% endif %}">Agentic Solution</a>
     </div>
     <div class="flex items-center gap-4">
-      <a href="/login" class="font-headline font-semibold px-6 py-2 rounded-full transition-all" style="color:#1b375e;">Login</a>
-      <button type="button" class="px-8 py-3 rounded-full font-headline font-bold transition-transform cursor-default" style="background:linear-gradient(135deg,#1b375e,#344e76);color:#ffffff;">Get Started</button>
+      <a href="/login" class="font-headline font-semibold px-6 py-2 rounded-full transition-all" style="color:#000666;">Login</a>
+      <a href="/login" class="px-8 py-3 rounded-full font-headline font-bold transition-transform" style="background:linear-gradient(135deg,#000666,#1a237e);color:#ffffff;">Get Started</a>
     </div>
   </div>
 </nav>
 
 <!-- ════════════ HERO SECTION ════════════ -->
-<section class="relative min-h-[870px] flex items-center overflow-hidden hero-gradient text-white px-12">
+<section class="marketing-hero relative min-h-[870px] flex items-center overflow-hidden px-12">
   <div class="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
 
     <!-- Left: Copy -->
     <div class="lg:col-span-7 z-10">
       <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/20 border border-secondary/30 mb-8">
         <span class="material-symbols-outlined text-secondary-fixed-dim" style="font-variation-settings:'FILL' 1;">auto_awesome</span>
-        <span class="text-sm font-label font-bold tracking-widest uppercase text-secondary-fixed-dim">The Ethereal Vault Precision</span>
+        <span class="text-sm font-label font-bold tracking-widest uppercase" style="color:#3bcfc6;">The Ethereal Vault Precision</span>
       </div>
-      <h1 class="font-headline text-6xl md:text-7xl font-extrabold tracking-tighter leading-[1.1] mb-6">
-        The Future of <span class="text-secondary-fixed-dim">Complaint</span> Orchestration
+      <h1 class="font-headline text-6xl md:text-7xl font-extrabold tracking-tighter leading-[1.1] mb-6" style="color:#000666;">
+        The Future of <span style="color:#42d7cf;">Complaint</span> <span style="color:#0f1424;">Orchestration</span>
       </h1>
-      <p class="text-xl text-on-primary-container max-w-2xl leading-relaxed mb-10 font-body">
-        Transform manual friction into autonomous clarity. Observatory leverages a Multi-Agent architecture to orchestrate complex regulatory resolutions with cryptographic precision.
+      <p class="text-xl max-w-2xl leading-relaxed mb-10 font-body" style="color:#5c66f3;">
+        Transform manual friction into autonomous clarity. TriageAI leverages a Multi-Agent architecture to orchestrate complex regulatory resolutions with cryptographic precision.
       </p>
       <div class="flex flex-wrap gap-4">
-        <button type="button" class="bg-white text-primary px-10 py-5 rounded-full font-headline font-bold text-lg hover:shadow-xl transition-all cursor-default">
+        <a href="/agentic-solution" class="bg-white text-primary px-10 py-5 rounded-full font-headline font-bold text-lg hover:shadow-xl transition-all">
           Explore the Architecture
-        </button>
-        <button type="button" class="border-2 border-white/20 hover:bg-white/10 px-10 py-5 rounded-full font-headline font-bold text-lg transition-all cursor-default">
-          Watch the Trace
-        </button>
+        </a>
+        <a href="/pain-points" class="px-10 py-5 rounded-full font-headline font-bold text-lg transition-all border-2 hover:bg-[#eef6f4]" style="border-color:#c5d9d3;color:#006a62;background:rgba(255,255,255,0.68);">
+          See the Pain Points
+        </a>
       </div>
     </div>
 
@@ -82,14 +99,14 @@
 </section>
 
 <!-- ════════════ MULTI-AGENT BENTO GRID ════════════ -->
-<section class="py-24 px-12" style="background:#f7f9fb;">
+<section class="py-24 px-12" style="background:#f5f3ef;">
   <div class="max-w-7xl mx-auto">
     <div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
       <div class="max-w-2xl">
-        <h2 class="font-headline text-4xl font-bold tracking-tight mb-4" style="color:#1b375e;">The Multi-Agent Edge</h2>
+        <h2 class="font-headline text-4xl font-bold tracking-tight mb-4" style="color:#000666;">The Multi-Agent Edge</h2>
         <p class="text-lg" style="color:#434653;">Our Supervisor-Worker model ensures every complaint is handled by a specialized intelligence, overseen by a central orchestration layer.</p>
       </div>
-      <div class="font-label font-bold flex items-center gap-2 cursor-default select-none" style="color:#6b46c1;">
+      <div class="font-label font-bold flex items-center gap-2 cursor-default select-none" style="color:#000666;">
         VIEW SYSTEM MAP <span class="material-symbols-outlined">arrow_forward</span>
       </div>
     </div>
@@ -97,11 +114,11 @@
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
 
       <!-- Supervisor Card -->
-      <div class="md:col-span-2 p-10 rounded-xl flex flex-col justify-between shadow-lg relative overflow-hidden" style="background:#1b375e; color:white;">
+      <div class="md:col-span-2 p-10 rounded-xl flex flex-col justify-between shadow-lg relative overflow-hidden" style="background:linear-gradient(135deg,#000666,#1a237e); color:white;">
         <div class="relative z-10">
-          <span class="material-symbols-outlined text-4xl mb-6 block" style="color:#d0bcff;">verified_user</span>
+          <span class="material-symbols-outlined text-4xl mb-6 block" style="color:#81f3e5;">verified_user</span>
           <h3 class="font-headline text-3xl font-bold mb-4" style="color:#ffffff;">The Supervisor</h3>
-          <p style="color:#a5bfee;">The brain of the operation. Dynamically allocates complaints to specialized agents based on intent, urgency, and regulatory scope.</p>
+          <p style="color:rgba(255,255,255,0.75);">The brain of the operation. Dynamically allocates complaints to specialized agents based on intent, urgency, and regulatory scope.</p>
         </div>
         <div class="mt-8 pt-8 border-t border-white/10 relative z-10">
           <div class="flex items-center gap-3">
@@ -112,21 +129,21 @@
       </div>
 
       <!-- Intake Agent -->
-      <div class="p-8 rounded-xl border border-outline-variant/15 hover:shadow-md transition-all" style="background:#f2f4f6;">
-        <span class="material-symbols-outlined text-3xl mb-6 block" style="color:#1b375e;">input</span>
-        <h4 class="font-headline text-xl font-bold mb-2" style="color:#1b375e;">Intake Agent</h4>
+      <div class="p-8 rounded-xl hover:shadow-md transition-all" style="background:#f5f3ef;">
+        <span class="material-symbols-outlined text-3xl mb-6 block" style="color:#000666;">input</span>
+        <h4 class="font-headline text-xl font-bold mb-2" style="color:#000666;">Intake Agent</h4>
         <p class="text-sm" style="color:#434653;">Ingests multi-modal data from email, voice, and chat with 99.9% semantic accuracy.</p>
       </div>
 
       <!-- Risk Agent -->
-      <div class="p-8 rounded-xl border border-outline-variant/15 hover:shadow-md transition-all" style="background:#f2f4f6;">
+      <div class="p-8 rounded-xl hover:shadow-md transition-all" style="background:#f5f3ef;">
         <span class="material-symbols-outlined text-3xl mb-6 block" style="color:#ba1a1a;">warning</span>
-        <h4 class="font-headline text-xl font-bold mb-2" style="color:#1b375e;">Risk Agent</h4>
+        <h4 class="font-headline text-xl font-bold mb-2" style="color:#000666;">Risk Agent</h4>
         <p class="text-sm" style="color:#434653;">Real-time threat detection and escalation for high-liability consumer complaints.</p>
       </div>
 
       <!-- Compliance Agent -->
-      <div class="p-8 rounded-xl flex flex-col justify-between" style="background:#003e3f; color:white; border: 1px solid #005758;">
+      <div class="p-8 rounded-xl flex flex-col justify-between" style="background:#004d47; color:white; border: 1px solid #006a62;">
         <div>
           <span class="material-symbols-outlined text-3xl mb-6 block" style="color:#a5eff0;">gavel</span>
           <h4 class="font-headline text-xl font-bold mb-2" style="color:#ffffff;">Compliance Agent</h4>
@@ -135,20 +152,20 @@
       </div>
 
       <!-- Classification Agent -->
-      <div class="md:col-span-2 p-10 rounded-xl flex items-center gap-8" style="background:#e0e3e5;">
+      <div class="md:col-span-2 p-10 rounded-xl flex items-center gap-8" style="background:#eae8e4;">
         <div class="hidden sm:block w-1/3 shrink-0">
           <img alt="Data Classification"
                class="rounded-lg object-cover h-32 w-full"
                src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7z70khmKPS4WYh0kPO3C2TG0lPumWp9uYNsCmbsORmA3TX1UCglcOfBd-A7tD1d6SGGzyrE5IaYgKL6Xsae-bMI6K3f4LpEsO-Yyeu8-Ita-cPeMBmb5yottRX_4_dFN5KRk52HGo4MGjep2L-MVgY6RndCTaEhrmDSItNEquymyeHYUbIbTsqjEt5pJTs9sxUXkf4wRO7Sa09-8kut-NgE_5xaLBlb_lSd3xa4wzJhOekve_zDOtJil5l72rrWuZztLdP_aT2TjZ"/>
         </div>
         <div>
-          <h4 class="font-headline text-2xl font-bold mb-2" style="color:#1b375e;">Classification Agent</h4>
+          <h4 class="font-headline text-2xl font-bold mb-2" style="color:#000666;">Classification Agent</h4>
           <p style="color:#434653;">Automated tagging and routing that eliminates manual sorting fatigue, ensuring 0% routing error rates.</p>
         </div>
       </div>
 
       <!-- The Vault -->
-      <div class="p-8 rounded-xl" style="background:#6b46c1;">
+      <div class="p-8 rounded-xl" style="background:linear-gradient(135deg,#000666,#006a62);">
         <span class="material-symbols-outlined text-3xl mb-6 block" style="color:#ffffff;">lock</span>
         <h4 class="font-headline text-xl font-bold mb-2" style="color:#ffffff;">The Vault</h4>
         <p class="text-sm" style="color:rgba(255,255,255,0.85);">Cryptographic hashing of every agent interaction for immutable audit logging.</p>
@@ -159,13 +176,13 @@
 </section>
 
 <!-- ════════════ EXECUTION TRACE SECTION ════════════ -->
-<section class="py-24 px-12 tonal-shift relative overflow-hidden" style="background: linear-gradient(180deg, #f7f9fb 0%, #f2f4f6 100%);">
+<section class="py-24 px-12 tonal-shift relative overflow-hidden" style="background: linear-gradient(180deg, #fbf9f5 0%, #f5f3ef 100%);">
   <div class="max-w-7xl mx-auto">
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
 
       <!-- Left: Trace panel -->
       <div class="order-2 lg:order-1">
-        <div class="glass-panel p-8 rounded-xl shadow-[0px_24px_48px_rgba(27,55,94,0.06)] border border-white/40">
+        <div class="glass-panel p-8 rounded-xl shadow-[0px_8px_40px_rgba(0,6,102,0.06)]">
           <div class="flex items-center justify-between mb-8">
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white">
@@ -223,22 +240,22 @@
 
       <!-- Right: Copy -->
       <div class="order-1 lg:order-2">
-        <h2 class="font-headline text-5xl font-extrabold tracking-tight mb-6" style="color:#1b375e;">Unrivaled <br/>Audit Visibility</h2>
+        <h2 class="font-headline text-5xl font-extrabold tracking-tight mb-6" style="color:#000666;">Unrivaled <br/>Audit Visibility</h2>
         <p class="text-xl leading-relaxed mb-8" style="color:#434653;">
-          Traditional systems are black boxes. Observatory provides a high-fidelity execution trace that documents every micro-decision made by our AI agents.
+          Traditional systems are black boxes. TriageAI provides a high-fidelity execution trace that documents every micro-decision made by our AI agents.
         </p>
         <div class="space-y-6">
           <div class="flex items-start gap-4">
-            <span class="material-symbols-outlined shrink-0" style="color:#6b46c1; font-variation-settings:'FILL' 1;">verified</span>
+            <span class="material-symbols-outlined shrink-0" style="color:#000666; font-variation-settings:'FILL' 1;">verified</span>
             <div>
-              <h6 class="font-headline font-bold" style="color:#1b375e;">Cryptographic Proof</h6>
+              <h6 class="font-headline font-bold" style="color:#000666;">Cryptographic Proof</h6>
               <p class="text-sm" style="color:#434653;">Every trace is hashed and anchored to 'The Vault', providing an immutable record for regulators.</p>
             </div>
           </div>
           <div class="flex items-start gap-4">
-            <span class="material-symbols-outlined shrink-0" style="color:#6b46c1; font-variation-settings:'FILL' 1;">account_tree</span>
+            <span class="material-symbols-outlined shrink-0" style="color:#000666; font-variation-settings:'FILL' 1;">account_tree</span>
             <div>
-              <h6 class="font-headline font-bold" style="color:#1b375e;">Asymmetric Logic</h6>
+              <h6 class="font-headline font-bold" style="color:#000666;">Asymmetric Logic</h6>
               <p class="text-sm" style="color:#434653;">Agents work in parallel or series based on the complexity of the complaint, never following a rigid script.</p>
             </div>
           </div>
@@ -253,7 +270,7 @@
 <section class="py-24 px-12" style="background:#ffffff;">
   <div class="max-w-7xl mx-auto">
     <div class="text-center mb-16">
-      <h2 class="font-headline text-4xl font-bold mb-4 tracking-tight" style="color:#1b375e;">The Impact of Precision</h2>
+      <h2 class="font-headline text-4xl font-bold mb-4 tracking-tight" style="color:#000666;">The Impact of Precision</h2>
       <p class="max-w-xl mx-auto" style="color:#434653;">Quantifiable operational efficiency driven by multi-agent intelligence.</p>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
@@ -262,8 +279,8 @@
         <div class="text-sm font-label font-bold uppercase tracking-widest text-secondary mb-4">Resolution Speed</div>
         <p class="text-on-surface-variant text-sm leading-relaxed">Faster resolution times compared to traditional rule-based or manual workflows.</p>
       </div>
-      <div class="text-center p-8 rounded-xl scale-105 shadow-2xl relative" style="background:#1b375e; color:white;">
-        <div class="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-[10px] font-bold uppercase text-white whitespace-nowrap" style="background:#6b46c1;">Gold Standard</div>
+      <div class="text-center p-8 rounded-xl scale-105 shadow-2xl relative" style="background:linear-gradient(135deg,#000666,#1a237e); color:white;">
+        <div class="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-[10px] font-bold uppercase text-white whitespace-nowrap" style="background:#006a62;">Gold Standard</div>
         <div class="font-headline text-6xl font-extrabold text-white mb-2">99.9%</div>
         <div class="text-sm font-label font-bold uppercase tracking-widest text-secondary-fixed-dim mb-4">Compliance Readiness</div>
         <p class="text-on-primary-container text-sm leading-relaxed">Regulatory accuracy across diverse international and local frameworks.</p>
@@ -278,35 +295,36 @@
 </section>
 
 <!-- ════════════ FOOTER ════════════ -->
-<footer class="w-full border-t border-outline-variant/15" style="background:#f2f4f6;">
+<footer class="w-full border-t border-outline-variant/15" style="background:#f5f3ef;">
   <div class="grid grid-cols-1 md:grid-cols-2 gap-8 px-12 py-16 max-w-7xl mx-auto">
     <div class="space-y-6">
-      <div class="font-headline font-bold text-2xl" style="color:#1b375e;">Observatory</div>
-      <p class="text-sm max-w-xs leading-relaxed" style="color:#737784;">
+      <div class="font-headline font-bold text-2xl" style="color:#000666;">TriageAI</div>
+      <p class="text-sm max-w-xs leading-relaxed" style="color:#636573;">
         Automating the resolution process with multi-agent intelligence and cryptographic certainty.
       </p>
-      <div class="text-sm" style="color:#737784;">© 2024 Observatory AI. The Ethereal Vault Precision.</div>
+      <div class="text-sm" style="color:#636573;">© 2024 TriageAI. Multi-Agent Intelligence Platform.</div>
     </div>
     <div class="grid grid-cols-2 sm:grid-cols-3 gap-8">
       <div class="flex flex-col gap-4">
-        <span class="font-bold text-sm font-label uppercase tracking-widest" style="color:#1b375e;">Platform</span>
-        <a class="text-sm hover:underline" style="color:#737784;" href="#">Security Audit</a>
-        <a class="text-sm hover:underline" style="color:#737784;" href="#">System Status</a>
-        <a class="text-sm hover:underline" style="color:#737784;" href="#">API Documentation</a>
+        <span class="font-bold text-sm font-label uppercase tracking-widest" style="color:#000666;">Platform</span>
+        <a class="text-sm hover:underline" style="color:#636573;" href="#">Security Audit</a>
+        <a class="text-sm hover:underline" style="color:#636573;" href="#">System Status</a>
+        <a class="text-sm hover:underline" style="color:#636573;" href="#">API Documentation</a>
       </div>
       <div class="flex flex-col gap-4">
-        <span class="font-bold text-sm font-label uppercase tracking-widest" style="color:#1b375e;">Company</span>
-        <a class="text-sm hover:underline" style="color:#737784;" href="#">About Us</a>
-        <a class="text-sm hover:underline" style="color:#737784;" href="/login">Login</a>
+        <span class="font-bold text-sm font-label uppercase tracking-widest" style="color:#000666;">Company</span>
+        <a class="text-sm hover:underline" style="color:#636573;" href="#">About Us</a>
+        <a class="text-sm hover:underline" style="color:#636573;" href="/login">Login</a>
       </div>
       <div class="flex flex-col gap-4">
-        <span class="font-bold text-sm font-label uppercase tracking-widest" style="color:#1b375e;">Legal</span>
-        <a class="text-sm hover:underline" style="color:#737784;" href="#">Privacy Policy</a>
-        <a class="text-sm hover:underline" style="color:#737784;" href="#">Terms of Service</a>
+        <span class="font-bold text-sm font-label uppercase tracking-widest" style="color:#000666;">Legal</span>
+        <a class="text-sm hover:underline" style="color:#636573;" href="#">Privacy Policy</a>
+        <a class="text-sm hover:underline" style="color:#636573;" href="#">Terms of Service</a>
       </div>
     </div>
   </div>
 </footer>
+</div>
 
 {% else %}
 <!-- ════════════ AUTHENTICATED: Quick-access home ════════════ -->
@@ -314,18 +332,32 @@
   <p class="text-[10px] uppercase tracking-[0.15em] text-on-surface-variant mb-1">Welcome back</p>
   <h1 class="text-4xl font-headline font-extrabold tracking-tight">Good to see you, {{ user.username | title }}.</h1>
   <p class="text-sm text-on-surface-variant mt-2">
+    {% if user.role == 'user' %}
+    Your <a href="/profile" class="text-primary hover:underline font-semibold">profile</a> is ready — or open the
+    <a href="/" class="text-primary hover:underline font-semibold">dashboard</a> for complaints.
+    {% else %}
     Head to the <a href="/" class="text-primary hover:underline font-semibold">dashboard</a> to view your complaint queue.
+    {% endif %}
   </p>
 </div>
 <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 mt-10">
-  <a href="/" class="rounded-xl border border-outline-variant/40 bg-surface-container-low p-6 shadow hover:shadow-lg hover:-translate-y-1 transition-all">
+  {% if user.role == 'user' %}
+  <a href="/profile" class="rounded-xl bg-surface-container-low p-6 shadow hover:shadow-lg hover:-translate-y-1 transition-all">
+    <div class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+      <span class="material-symbols-outlined text-2xl">person</span>
+    </div>
+    <h2 class="text-base font-semibold text-on-surface">Profile</h2>
+    <p class="mt-2 text-sm text-on-surface-variant">Account settings and preferences.</p>
+  </a>
+  {% endif %}
+  <a href="/" class="rounded-xl bg-surface-container-low p-6 shadow hover:shadow-lg hover:-translate-y-1 transition-all">
     <div class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
       <span class="material-symbols-outlined text-2xl">dashboard</span>
     </div>
     <h2 class="text-base font-semibold text-on-surface">Dashboard</h2>
     <p class="mt-2 text-sm text-on-surface-variant">View all complaints and their current status.</p>
   </a>
-  <a href="/complaints/new" class="rounded-xl border border-outline-variant/40 bg-surface-container-low p-6 shadow hover:shadow-lg hover:-translate-y-1 transition-all">
+  <a href="/complaints/new" class="rounded-xl bg-surface-container-low p-6 shadow hover:shadow-lg hover:-translate-y-1 transition-all">
     <div class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
       <span class="material-symbols-outlined text-2xl">edit_square</span>
     </div>
@@ -333,14 +365,14 @@
     <p class="mt-2 text-sm text-on-surface-variant">Submit a new complaint via the intake chat.</p>
   </a>
   {% if user.role == 'admin' %}
-  <a href="/analytics" class="rounded-xl border border-outline-variant/40 bg-surface-container-low p-6 shadow hover:shadow-lg hover:-translate-y-1 transition-all">
+  <a href="/analytics" class="rounded-xl bg-surface-container-low p-6 shadow hover:shadow-lg hover:-translate-y-1 transition-all">
     <div class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-secondary/10 text-secondary">
       <span class="material-symbols-outlined text-2xl">analytics</span>
     </div>
     <h2 class="text-base font-semibold text-on-surface">Analytics</h2>
     <p class="mt-2 text-sm text-on-surface-variant">Trends, risk distribution, and team workload.</p>
   </a>
-  <a href="/settings" class="rounded-xl border border-outline-variant/40 bg-surface-container-low p-6 shadow hover:shadow-lg hover:-translate-y-1 transition-all">
+  <a href="/settings" class="rounded-xl bg-surface-container-low p-6 shadow hover:shadow-lg hover:-translate-y-1 transition-all">
     <div class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-tertiary/10 text-tertiary">
       <span class="material-symbols-outlined text-2xl">settings</span>
     </div>

@@ -27,3 +27,5 @@ __pycache__/
 !complaints 2.csv   # only if you really want to track a specific small sample
 ui_examples/
 .vscode/
+.zip
+stitch_*/

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import uuid
@@ -9,6 +10,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, Request, Response, Form, status
 from fastapi.responses import RedirectResponse
+from fastapi.responses import StreamingResponse
 from fastapi.templating import Jinja2Templates
 
 from app.db.session import get_db
@@ -25,10 +27,16 @@ from app.ui.context import (
     build_case_summary,
     build_case_detail,
     build_analytics_data,
+    build_production_evaluation_case_data,
+    build_evaluation_case_data,
+    build_evaluation_data,
     build_settings_data,
+    build_admin_overview_data,
+    _TERMINAL_STATUSES,
 )
-from app.debug_voice_log import dbg_voice
-from app.env_elevenlabs import elevenlabs_api_key, elevenlabs_voice_id, intake_tts_configured
+from app.evals.service import run_dataset_benchmark
+from app.env_elevenlabs import intake_tts_configured
+from app.utils.case_ids import resolve_case_record
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +44,46 @@ TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 router = APIRouter(tags=["ui"])
+
+
+def _serialize_trace_step(step: WorkflowStep) -> dict:
+    output = {}
+    if step.output_snapshot_json:
+        try:
+            output = json.loads(step.output_snapshot_json)
+        except (json.JSONDecodeError, TypeError):
+            output = {}
+
+    input_data = {}
+    if step.input_snapshot_json:
+        try:
+            input_data = json.loads(step.input_snapshot_json)
+        except (json.JSONDecodeError, TypeError):
+            input_data = {}
+
+    state_diff = {}
+    if step.state_diff_json:
+        try:
+            state_diff = json.loads(step.state_diff_json)
+        except (json.JSONDecodeError, TypeError):
+            state_diff = {}
+
+    return {
+        "node_name": step.node_name,
+        "sequence": step.sequence_number,
+        "status": step.status,
+        "latency_ms": round(step.latency_ms, 1) if step.latency_ms else 0,
+        "model_name": step.model_name,
+        "confidence": step.confidence,
+        "error_type": step.error_type,
+        "error_message": step.error_message,
+        "output": output,
+        "input": input_data,
+        "state_diff": state_diff,
+        "retry_number": step.retry_number,
+        "started_at": step.started_at.strftime("%H:%M:%S") if step.started_at else None,
+        "ended_at": step.ended_at.strftime("%H:%M:%S") if step.ended_at else None,
+    }
 
 
 def _get_current_user(request: Request) -> dict[str, str | None] | None:
@@ -64,11 +112,62 @@ def _redirect_to_dashboard() -> RedirectResponse:
     return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
 
 
+def _build_user_session_history_context(
+    db,
+    user: dict[str, str | None],
+    selected_case_id: str | None = None,
+    page: int = 1,
+    limit: int = 12,
+) -> dict:
+    offset = (page - 1) * limit
+    query = (
+        db.query(ComplaintCase)
+        .filter(ComplaintCase.user_id == user.get("user_id"))
+        .order_by(ComplaintCase.created_at.desc())
+    )
+    total = query.count()
+    rows = query.offset(offset).limit(limit).all()
+    cases = [build_case_summary(row) for row in rows]
+
+    selected_case = None
+    if cases:
+        selected_case = next(
+            (
+                case for case in cases
+                if case["id"] == selected_case_id or case.get("public_case_id") == selected_case_id
+            ),
+            cases[0],
+        )
+
+    total_pages = max(1, (total + limit - 1) // limit)
+    return {
+        "active_nav": "past_complaints",
+        "user": user,
+        "cases": cases,
+        "selected_case": selected_case,
+        "selected_case_id": selected_case["id"] if selected_case else None,
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "total_pages": total_pages,
+    }
+
+
+def _post_login_redirect_url(role: str) -> str:
+    """End-users land on profile first; admins and team use the app shell home."""
+    if role == "user":
+        return "/profile"
+    return "/"
+
+
 @router.get("/login", include_in_schema=False)
 async def login_form(request: Request, created: str = ""):
     user = _get_current_user(request)
     if user is not None:
-        return _redirect_to_dashboard()
+        return RedirectResponse(
+            url=_post_login_redirect_url(user["role"]),
+            status_code=status.HTTP_302_FOUND,
+        )
 
     return templates.TemplateResponse(request, "login.html", context={
         "error": None,
@@ -105,7 +204,10 @@ async def login_submit(
         u_user_id = user.user_id
         u_company = user.company
 
-    response = RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
+    response = RedirectResponse(
+        url=_post_login_redirect_url(u_role),
+        status_code=status.HTTP_302_FOUND,
+    )
     response.set_cookie("username", u_email, httponly=True)
     response.set_cookie("role", u_role, httponly=True)
     response.set_cookie("user_id", u_user_id, httponly=True)
@@ -160,30 +262,47 @@ async def home_or_dashboard(request: Request, page: int = 1, limit: int = 15):
     user = _get_current_user(request)
     if user is None:
         return templates.TemplateResponse(request, "home.html", context={
-            "active_nav": None,
+            "active_nav": "platform",
             "user": None,
         })
 
     offset = (page - 1) * limit
 
     with get_db() as db:
+        if user["role"] == "admin":
+            overview = build_admin_overview_data(db)
+            return templates.TemplateResponse(request, "admin_overview.html", context={
+                **overview,
+                "active_nav": "dashboard",
+                "user": user,
+            })
+
+        if user["role"] == "user":
+            context = _build_user_session_history_context(
+                db,
+                user,
+                selected_case_id=request.query_params.get("case"),
+                page=page,
+                limit=limit,
+            )
+            return templates.TemplateResponse(request, "chat_history.html", context=context)
+
         query = db.query(ComplaintCase).order_by(ComplaintCase.created_at.desc())
         if user["role"] == "team":
             query = query.filter(ComplaintCase.team_assignment == user.get("company"))
-        elif user["role"] != "admin":
+        else:
             query = query.filter(ComplaintCase.user_id == user.get("user_id"))
 
         total = query.count()
         rows = query.offset(offset).limit(limit).all()
         cases = [build_case_summary(row) for row in rows]
 
-        # KPI counts
         critical_query = db.query(RiskRecord).filter(RiskRecord.risk_level == "critical")
         if user["role"] == "team":
             critical_query = critical_query.join(
                 ComplaintCase, ComplaintCase.id == RiskRecord.case_id
             ).filter(ComplaintCase.team_assignment == user.get("company"))
-        elif user["role"] != "admin":
+        else:
             critical_query = critical_query.join(
                 ComplaintCase, ComplaintCase.id == RiskRecord.case_id
             ).filter(ComplaintCase.user_id == user.get("user_id"))
@@ -203,10 +322,99 @@ async def home_or_dashboard(request: Request, page: int = 1, limit: int = 15):
     })
 
 
+@router.get("/queue", include_in_schema=False)
+async def admin_queue(request: Request, page: int = 1, limit: int = 15):
+    """Admin complaint queue — full table + resolution history (design: admin_complaint_queue)."""
+    user = _get_current_user(request)
+    if user is None:
+        return _redirect_to_login()
+    if user["role"] != "admin":
+        return _redirect_to_dashboard()
+
+    offset = (page - 1) * limit
+
+    with get_db() as db:
+        active_query = (
+            db.query(ComplaintCase)
+            .filter(~ComplaintCase.status.in_(list(_TERMINAL_STATUSES)))
+            .order_by(ComplaintCase.created_at.desc())
+        )
+        total = active_query.count()
+        rows = active_query.offset(offset).limit(limit).all()
+        cases = [build_case_summary(row) for row in rows]
+
+        active_pipeline = total
+
+        critical_count = (
+            db.query(RiskRecord)
+            .join(ComplaintCase, ComplaintCase.id == RiskRecord.case_id)
+            .filter(
+                RiskRecord.risk_level == "critical",
+                ~ComplaintCase.status.in_(list(_TERMINAL_STATUSES)),
+            )
+            .count()
+        )
+
+        hist_rows = (
+            db.query(ComplaintCase)
+            .filter(ComplaintCase.status.in_(list(_TERMINAL_STATUSES)))
+            .order_by(ComplaintCase.updated_at.desc())
+            .limit(12)
+            .all()
+        )
+        resolved_history = [build_case_summary(row) for row in hist_rows]
+
+    total_pages = max(1, (total + limit - 1) // limit)
+
+    return templates.TemplateResponse(request, "admin_queue.html", context={
+        "cases": cases,
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "total_pages": total_pages,
+        "critical_count": critical_count,
+        "active_pipeline": active_pipeline,
+        "resolved_history": resolved_history,
+        "active_nav": "queue",
+        "user": user,
+    })
+
+
+@router.get("/profile", include_in_schema=False)
+async def user_profile_page(request: Request):
+    """End-user account profile and preferences."""
+    user = _get_current_user(request)
+    if user is None:
+        return _redirect_to_login()
+    if user["role"] != "user":
+        return _redirect_to_dashboard()
+
+    return templates.TemplateResponse(request, "user_profile.html", context={
+        "active_nav": "profile",
+        "user": user,
+    })
+
+
 @router.get("/brand", include_in_schema=False)
 async def brand_page(request: Request):
     return templates.TemplateResponse(request, "brand.html", context={
-        "active_nav": None,
+        "active_nav": "platform",
+        "user": _get_current_user(request),
+    })
+
+
+@router.get("/pain-points", include_in_schema=False)
+async def pain_points_page(request: Request):
+    return templates.TemplateResponse(request, "pain_points.html", context={
+        "active_nav": "pain_points",
+        "user": _get_current_user(request),
+    })
+
+
+@router.get("/agentic-solution", include_in_schema=False)
+async def agentic_solution_page(request: Request):
+    return templates.TemplateResponse(request, "agentic_solution.html", context={
+        "active_nav": "agentic_solution",
         "user": _get_current_user(request),
     })
 
@@ -218,32 +426,10 @@ async def lodge_complaint(request: Request):
     if user is None:
         return _redirect_to_login()
 
-    # region agent log
-    _tts = intake_tts_configured()
-    _k = elevenlabs_api_key()
-    _v = elevenlabs_voice_id()
-    dbg_voice(
-        "H1",
-        "ui/routes:lodge_complaint",
-        "lodge_tts_flags",
-        {
-            "intake_tts_configured": _tts,
-            "api_key_len": len(_k) if _k else 0,
-            "voice_id_len": len(_v) if _v else 0,
-            "tts_missing_reason": (
-                "missing_api_key"
-                if not _k
-                else "missing_voice_id"
-                if not _v
-                else "configured"
-            ),
-        },
-    )
-    # endregion
     return templates.TemplateResponse(request, "lodge.html", context={
         "active_nav": "lodge",
         "user": user,
-        "intake_tts_enabled": _tts,
+        "intake_tts_enabled": intake_tts_configured(),
     })
 
 
@@ -253,9 +439,14 @@ async def complaint_detail(request: Request, case_id: str):
     user = _get_current_user(request)
     if user is None:
         return _redirect_to_login()
+    if user["role"] == "user":
+        return RedirectResponse(
+            url=f"/past-complaints?case={case_id}",
+            status_code=status.HTTP_302_FOUND,
+        )
 
     with get_db() as db:
-        db_case = db.query(ComplaintCase).filter(ComplaintCase.id == case_id).first()
+        db_case = resolve_case_record(db, case_id)
         if db_case is None:
             return templates.TemplateResponse(request, "detail.html", context={
                 "case": None,
@@ -280,7 +471,7 @@ async def complaint_detail(request: Request, case_id: str):
         # Find associated workflow run for trace link
         run = (
             db.query(WorkflowRun)
-            .filter(WorkflowRun.case_id == case_id)
+            .filter(WorkflowRun.case_id == db_case.id)
             .order_by(WorkflowRun.started_at.desc())
             .first()
         )
@@ -292,6 +483,37 @@ async def complaint_detail(request: Request, case_id: str):
         "active_nav": "dashboard",
         "user": user,
     })
+
+
+@router.post("/complaints/{case_id}/status", include_in_schema=False)
+async def update_complaint_status(
+    request: Request,
+    case_id: str,
+    new_status: str = Form(...),
+):
+    """Allow admin and team users to manually set a complaint status to resolved or routed."""
+    user = _get_current_user(request)
+    if user is None:
+        return _redirect_to_login()
+    if user["role"] not in ("admin", "team"):
+        return _redirect_to_dashboard()
+
+    allowed = {"resolved", "routed"}
+    if new_status not in allowed:
+        return RedirectResponse(url=f"/complaints/{case_id}", status_code=302)
+
+    with get_db() as db:
+        db_case = resolve_case_record(db, case_id)
+        if db_case is None:
+            return _redirect_to_dashboard()
+
+        # Team users can only update cases assigned to their team
+        if user["role"] == "team" and db_case.team_assignment != user.get("company"):
+            return _redirect_to_dashboard()
+
+        db_case.status = new_status
+
+    return RedirectResponse(url=f"/complaints/{db_case.public_case_id or db_case.id}", status_code=302)
 
 
 @router.get("/trace/latest", include_in_schema=False)
@@ -363,12 +585,7 @@ async def trace_search(request: Request, case_id: str = ""):
         # 3. Match via ComplaintCase.id
         if run is None:
             case_row = (
-                db.query(ComplaintCase)
-                .filter(
-                    (ComplaintCase.id == case_id) |
-                    ComplaintCase.id.ilike(f"{case_id}%")
-                )
-                .first()
+                resolve_case_record(db, case_id)
             )
             if case_row:
                 run = (
@@ -425,7 +642,8 @@ async def trace_suggestions(request: Request, q: str = ""):
             cases = (
                 db.query(ComplaintCase)
                 .filter(
-                    ComplaintCase.id.ilike(f"{q}%"),
+                    (ComplaintCase.id.ilike(f"{q}%")) |
+                    (ComplaintCase.public_case_id.ilike(f"{q.upper()}%")),
                     ~ComplaintCase.id.in_(matched_case_ids)
                 )
                 .limit(6 - len(runs))
@@ -443,7 +661,7 @@ async def trace_suggestions(request: Request, q: str = ""):
 
         results = [
             {
-                "case_id": r.case_id,
+                "case_id": (db.query(ComplaintCase.public_case_id).filter(ComplaintCase.id == r.case_id).scalar() or r.case_id),
                 "run_id": r.run_id,
                 "run_status": r.run_status,
                 "started_at": r.started_at.strftime("%Y-%m-%d %H:%M") if r.started_at else "",
@@ -471,7 +689,11 @@ async def trace_autocomplete(request: Request, q: str = ""):
     with get_db() as db:
         runs = (
             db.query(WorkflowRun)
-            .filter(WorkflowRun.case_id.startswith(q))
+            .join(ComplaintCase, ComplaintCase.id == WorkflowRun.case_id)
+            .filter(
+                WorkflowRun.case_id.startswith(q) |
+                ComplaintCase.public_case_id.ilike(f"{q.upper()}%")
+            )
             .order_by(WorkflowRun.started_at.desc())
             .limit(8)
             .all()
@@ -479,7 +701,7 @@ async def trace_autocomplete(request: Request, q: str = ""):
         results = [
             {
                 "run_id":     r.run_id,
-                "case_id":    r.case_id or "",
+                "case_id":    (db.query(ComplaintCase.public_case_id).filter(ComplaintCase.id == r.case_id).scalar() or r.case_id or ""),
                 "status":     r.run_status or "",
                 "severity":   r.final_severity or "",
                 "route":      r.final_route or "",
@@ -512,7 +734,8 @@ async def supervisor_trace(request: Request, run_id: str):
         run = None
         current_case_id = ""
         if run_row is not None:
-            current_case_id = run_row.case_id or ""
+            linked_case = resolve_case_record(db, run_row.case_id or "")
+            current_case_id = (linked_case.public_case_id if linked_case is not None else (run_row.case_id or ""))
             run = {
                 "run_id": run_row.run_id,
                 "run_status": run_row.run_status,
@@ -524,43 +747,7 @@ async def supervisor_trace(request: Request, run_id: str):
 
         step_data = []
         for s in steps:
-            output = {}
-            if s.output_snapshot_json:
-                try:
-                    output = json.loads(s.output_snapshot_json)
-                except (json.JSONDecodeError, TypeError):
-                    pass
-
-            input_data = {}
-            if s.input_snapshot_json:
-                try:
-                    input_data = json.loads(s.input_snapshot_json)
-                except (json.JSONDecodeError, TypeError):
-                    pass
-
-            state_diff = {}
-            if s.state_diff_json:
-                try:
-                    state_diff = json.loads(s.state_diff_json)
-                except (json.JSONDecodeError, TypeError):
-                    pass
-
-            step_data.append({
-                "node_name": s.node_name,
-                "sequence": s.sequence_number,
-                "status": s.status,
-                "latency_ms": round(s.latency_ms, 1) if s.latency_ms else 0,
-                "model_name": s.model_name,
-                "confidence": s.confidence,
-                "error_type": s.error_type,
-                "error_message": s.error_message,
-                "output": output,
-                "input": input_data,
-                "state_diff": state_diff,
-                "retry_number": s.retry_number,
-                "started_at": s.started_at.strftime("%H:%M:%S") if s.started_at else None,
-                "ended_at": s.ended_at.strftime("%H:%M:%S") if s.ended_at else None,
-            })
+            step_data.append(_serialize_trace_step(s))
 
     total_latency = sum(s["latency_ms"] for s in step_data)
 
@@ -572,7 +759,87 @@ async def supervisor_trace(request: Request, run_id: str):
         "active_nav": "trace",
         "user": user,
         "current_case_id": current_case_id,
+        "live_enabled": bool(run and run.get("run_status") in {"running", "partially_completed", "needs_follow_up"}),
     })
+
+
+@router.get("/trace/{run_id}/stream", include_in_schema=False)
+async def trace_stream(request: Request, run_id: str):
+    """SSE stream for live workflow step updates on the trace page."""
+    user = _get_current_user(request)
+    if user is None:
+        return _redirect_to_login()
+    if user["role"] != "admin":
+        return _redirect_to_dashboard()
+
+    async def event_generator():
+        last_sequence = 0
+        last_status = None
+        while True:
+            if await request.is_disconnected():
+                break
+
+            with get_db() as db:
+                run_row = db.query(WorkflowRun).filter(WorkflowRun.run_id == run_id).first()
+                if run_row is None:
+                    payload = {"type": "not_found", "run_id": run_id}
+                    yield f"event: error\ndata: {json.dumps(payload)}\n\n"
+                    break
+
+                steps = (
+                    db.query(WorkflowStep)
+                    .filter(
+                        WorkflowStep.run_id == run_id,
+                        WorkflowStep.sequence_number > last_sequence,
+                    )
+                    .order_by(WorkflowStep.sequence_number.asc())
+                    .all()
+                )
+                for step in steps:
+                    last_sequence = max(last_sequence, step.sequence_number)
+                    payload = {
+                        "type": "step",
+                        "run_id": run_id,
+                        "run_status": run_row.run_status,
+                        "step": _serialize_trace_step(step),
+                    }
+                    yield f"event: step\ndata: {json.dumps(payload)}\n\n"
+
+                if run_row.run_status != last_status:
+                    last_status = run_row.run_status
+                    run_payload = {
+                        "type": "run",
+                        "run_id": run_id,
+                        "run_status": run_row.run_status,
+                        "final_route": run_row.final_route,
+                        "final_severity": run_row.final_severity,
+                        "ended_at": run_row.ended_at.strftime("%H:%M:%S") if run_row.ended_at else None,
+                    }
+                    yield f"event: run\ndata: {json.dumps(run_payload)}\n\n"
+
+                if run_row.run_status in {"completed", "failed", "escalated", "needs_follow_up"}:
+                    done_payload = {
+                        "type": "done",
+                        "run_id": run_id,
+                        "run_status": run_row.run_status,
+                        "final_route": run_row.final_route,
+                        "final_severity": run_row.final_severity,
+                    }
+                    yield f"event: done\ndata: {json.dumps(done_payload)}\n\n"
+                    break
+
+            yield "event: heartbeat\ndata: {}\n\n"
+            await asyncio.sleep(1.0)
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @router.get("/analytics", include_in_schema=False)
@@ -594,6 +861,26 @@ async def analytics(request: Request):
     })
 
 
+@router.get("/analytics/cases/{case_id}", include_in_schema=False)
+async def analytics_case_evaluation(request: Request, case_id: str):
+    """Admin production-evaluation report for a real complaint case."""
+    user = _get_current_user(request)
+    if user is None:
+        return _redirect_to_login()
+    if user["role"] != "admin":
+        return _redirect_to_dashboard()
+
+    with get_db() as db:
+        db_case = resolve_case_record(db, case_id)
+        resolved_id = db_case.id if db_case is not None else case_id
+    data = build_production_evaluation_case_data(resolved_id)
+    return templates.TemplateResponse(request, "analytics_case_detail.html", context={
+        "data": data,
+        "active_nav": "analytics",
+        "user": user,
+    })
+
+
 @router.get("/settings", include_in_schema=False)
 async def settings(request: Request):
     """Company settings — taxonomy, rubrics, routing rules."""
@@ -608,5 +895,136 @@ async def settings(request: Request):
     return templates.TemplateResponse(request, "settings.html", context={
         "data": data,
         "active_nav": "settings",
+        "user": user,
+    })
+
+
+@router.get("/evaluation", include_in_schema=False)
+async def evaluation(request: Request):
+    """Admin benchmark dashboard — datasets, runs, and disagreement queue."""
+    user = _get_current_user(request)
+    if user is None:
+        return _redirect_to_login()
+    if user["role"] != "admin":
+        return _redirect_to_dashboard()
+
+    data = build_evaluation_data()
+
+    return templates.TemplateResponse(request, "evaluation.html", context={
+        "data": data,
+        "active_nav": "evaluation",
+        "user": user,
+    })
+
+
+@router.get("/evaluation/cases/{eval_case_id}", include_in_schema=False)
+async def evaluation_case_detail(request: Request, eval_case_id: str):
+    """Admin benchmark case detail — weak gold, system output, judge, and review state."""
+    user = _get_current_user(request)
+    if user is None:
+        return _redirect_to_login()
+    if user["role"] != "admin":
+        return _redirect_to_dashboard()
+
+    data = build_evaluation_case_data(eval_case_id)
+    return templates.TemplateResponse(request, "evaluation_case_detail.html", context={
+        "data": data,
+        "active_nav": "evaluation",
+        "user": user,
+    })
+
+
+@router.post("/evaluation/datasets/{dataset_id}/run", include_in_schema=False)
+async def evaluation_run_dataset(
+    request: Request,
+    dataset_id: str,
+    limit: int = Form(0),
+):
+    """Run one benchmark dataset through the production workflow."""
+    user = _get_current_user(request)
+    if user is None:
+        return _redirect_to_login()
+    if user["role"] != "admin":
+        return _redirect_to_dashboard()
+
+    run_dataset_benchmark(dataset_id, limit=limit or None)
+    return RedirectResponse(url="/evaluation", status_code=status.HTTP_302_FOUND)
+
+
+@router.get("/chat-history", include_in_schema=False)
+async def chat_history(request: Request, page: int = 1, limit: int = 9):
+    """User's intake chat sessions — their past complaint conversations."""
+    user = _get_current_user(request)
+    if user is None:
+        return _redirect_to_login()
+    if user["role"] not in ("user",):
+        return _redirect_to_dashboard()
+    return RedirectResponse(url="/past-complaints", status_code=status.HTTP_302_FOUND)
+
+
+@router.get("/past-complaints", include_in_schema=False)
+@router.get("/documents", include_in_schema=False)
+async def saved_documents(request: Request, page: int = 1, limit: int = 12):
+    """Unified user complaint history with transcript, intake payload, and documents."""
+    user = _get_current_user(request)
+    if user is None:
+        return _redirect_to_login()
+    if user["role"] not in ("user",):
+        return _redirect_to_dashboard()
+    with get_db() as db:
+        context = _build_user_session_history_context(
+            db,
+            user,
+            selected_case_id=request.query_params.get("case"),
+            page=page,
+            limit=limit,
+        )
+    return templates.TemplateResponse(request, "chat_history.html", context=context)
+
+
+@router.get("/resolutions", include_in_schema=False)
+async def resolution_history(request: Request):
+    """User's resolution history — outcomes of all closed complaints."""
+    user = _get_current_user(request)
+    if user is None:
+        return _redirect_to_login()
+    if user["role"] not in ("user",):
+        return _redirect_to_dashboard()
+
+    with get_db() as db:
+        all_cases = (
+            db.query(ComplaintCase)
+            .filter(ComplaintCase.user_id == user.get("user_id"))
+            .order_by(ComplaintCase.created_at.desc())
+            .all()
+        )
+        resolved_cases_raw = [c for c in all_cases if c.status in ("resolved", "closed", "dismissed")]
+        pending_cases_raw = [c for c in all_cases if c.status not in ("resolved", "closed", "dismissed")]
+
+        resolved_cases = [build_case_summary(c) for c in resolved_cases_raw]
+        latest_resolution = build_case_summary(resolved_cases_raw[0]) if resolved_cases_raw else None
+
+    return templates.TemplateResponse(request, "resolution_history.html", context={
+        "active_nav": "resolutions",
+        "user": user,
+        "resolved_cases": resolved_cases,
+        "latest_resolution": latest_resolution,
+        "resolved_count": len(resolved_cases),
+        "pending_count": len(pending_cases_raw),
+    })
+
+
+
+@router.get("/team", include_in_schema=False)
+async def team(request: Request):
+    """Team feedback management — human-in-the-loop reviews."""
+    user = _get_current_user(request)
+    if user is None:
+        return _redirect_to_login()
+    if user["role"] != "admin":
+        return _redirect_to_dashboard()
+
+    return templates.TemplateResponse(request, "team.html", context={
+        "active_nav": "team",
         "user": user,
     })

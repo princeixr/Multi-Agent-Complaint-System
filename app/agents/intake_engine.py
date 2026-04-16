@@ -86,7 +86,7 @@ class _temp_disable_langsmith_tracing:
 
 
 def _load_prompt() -> str:
-    return _PROMPT_PATH.read_text()
+    return _PROMPT_PATH.read_text(encoding="utf-8")
 
 
 def _build_company_intake_context() -> dict[str, Any]:
@@ -278,6 +278,31 @@ def _sanitize_packet_data(packet_data: dict[str, Any]) -> dict[str, Any]:
     return cleaned
 
 
+def _infer_currency_from_amount_packet(packet: IntakePacket) -> IntakePacket:
+    """If currency is unset but the amount string contains a symbol, set currency (e.g. $ → USD)."""
+    if (packet.currency or "").strip():
+        return packet
+    amt = (packet.amount or "").strip()
+    if not amt:
+        return packet
+    inferred: str | None = None
+    if amt.startswith("€") or amt.startswith("EUR"):
+        inferred = "EUR"
+    elif amt.startswith("£") or amt.startswith("GBP"):
+        inferred = "GBP"
+    elif amt.startswith("$") or amt.startswith("US$") or amt.startswith("USD"):
+        inferred = "USD"
+    elif "€" in amt:
+        inferred = "EUR"
+    elif "£" in amt:
+        inferred = "GBP"
+    elif "$" in amt:
+        inferred = "USD"
+    if inferred:
+        return packet.model_copy(update={"currency": inferred})
+    return packet
+
+
 def _build_issue_label(packet: IntakePacket) -> str | None:
     parts = [packet.issue_hint, packet.sub_issue_hint]
     label = " / ".join(part.strip() for part in parts if part and part.strip())
@@ -325,6 +350,8 @@ def _compute_sufficiency(packet: IntakePacket) -> IntakePacket:
         missing.append("complaint_description")
     if not has_product_or_issue:
         missing.append("product_or_issue")
+    if packet.prior_contact_attempted is None:
+        missing.append("reported_to_bank")
 
     if missing:
         packet.information_sufficiency = (
@@ -359,6 +386,7 @@ def _build_case_payload(packet: IntakePacket) -> dict:
         "external_product_category": packet.product_hint,
         "external_issue_type": _build_issue_label(packet),
         "requested_resolution": packet.desired_resolution,
+        "intake_prior_contact_attempted": packet.prior_contact_attempted,
         "intake_intent": packet.intent.value,
         "intake_urgency": packet.urgency,
         "intake_recommended_handoff": packet.recommended_handoff.value,
@@ -374,14 +402,36 @@ def _build_case_payload(packet: IntakePacket) -> dict:
 
 
 def _submission_offer_message(packet: IntakePacket) -> str:
-    product = (packet.product_hint or "this issue").strip()
-    issue = _build_issue_label(packet) or "the complaint"
+    """Short line — the lodge UI shows a persistent in-chat summary card with full details."""
     urgency_note = ""
     if packet.recommended_handoff is RecommendedHandoff.HUMAN_ESCALATION:
-        urgency_note = " I’m also marking it for urgent internal review."
+        urgency_note = " I'm also flagging this for urgent internal review."
     return (
-        f"I have the minimum information needed to file your complaint about {product} and {issue}."
-        f"{urgency_note} If you want, you can submit it now, or continue sharing more details or documents first."
+        "I have the minimum information needed to document your complaint."
+        f"{urgency_note} Review the summary card below — submit when you're ready, or keep chatting to add details."
+    )
+
+
+def _needs_bank_registration_question(packet: IntakePacket) -> bool:
+    """Ask whether the issue has already been reported to the bank before completion."""
+    has_description = bool((packet.narrative_for_case or "").strip() or (packet.customer_summary or "").strip())
+    has_product_or_issue = bool(
+        (packet.product_hint and packet.product_hint.strip())
+        or (packet.issue_hint and packet.issue_hint.strip())
+        or (packet.sub_issue_hint and packet.sub_issue_hint.strip())
+    )
+    return packet.prior_contact_attempted is None and (has_description or has_product_or_issue)
+
+
+def _bank_registration_follow_up(packet: IntakePacket) -> str:
+    if packet.intent.value == "fraud_report":
+        return (
+            "Before I finalize this report, have you already reported this to Mock Bank "
+            "or spoken with a bank representative about the fraud?"
+        )
+    return (
+        "Before I finalize the complaint, have you already reported this issue to Mock Bank "
+        "or spoken with the bank about it?"
     )
 
 
@@ -402,7 +452,8 @@ def start_intake_session(channel: str = "web_chat") -> Tuple[str, IntakeSessionS
     )
     greeting = (
         "Thanks for reaching out. I'm here to help document your complaint. "
-        "Please briefly describe what happened and which financial product or service it relates to. "
+        "Please briefly describe what happened, which financial product or service it relates to, "
+        "and whether you've already reported it to Mock Bank. "
         "Do not include full card numbers, bank account numbers, or your Social Security number."
     )
     state.last_agent_message = greeting
@@ -463,6 +514,7 @@ def process_intake_message(session_id: str, user_message: str, model_name: str |
         merged_data = state.packet.model_dump(mode="python")
         merged_data.update(_sanitize_packet_data(packet_data))
         merged = IntakePacket.model_validate(merged_data)
+        merged = _infer_currency_from_amount_packet(merged)
         merged = _compute_sufficiency(merged)
         merged.intake_case = _build_case_payload(merged)
 
@@ -470,6 +522,9 @@ def process_intake_message(session_id: str, user_message: str, model_name: str |
             "Please tell me what happened, which product or service it relates to, "
             "and any date or amount involved if you know it."
         )
+
+        if _needs_bank_registration_question(merged):
+            assistant_message = _bank_registration_follow_up(merged)
 
         state.packet = merged
         state.completed = merged.information_sufficiency is InformationSufficiency.SUFFICIENT
@@ -479,6 +534,7 @@ def process_intake_message(session_id: str, user_message: str, model_name: str |
             state.last_agent_message = assistant_message
     except Exception:
         logger.exception("Intake turn processing failed; returning safe fallback")
+        state.packet = _infer_currency_from_amount_packet(state.packet)
         state.packet = _compute_sufficiency(state.packet)
         state.packet.intake_case = _build_case_payload(state.packet)
         state.completed = state.packet.information_sufficiency is InformationSufficiency.SUFFICIENT

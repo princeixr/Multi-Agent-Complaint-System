@@ -22,7 +22,7 @@ class CaseStatus(str, Enum):
     COMPLIANCE_CHECKED = "compliance_checked"
     REVIEWED = "reviewed"
     ROUTED = "routed"
-    CLOSED = "closed"
+    RESOLVED = "resolved"
 
 
 class Channel(str, Enum):
@@ -46,6 +46,11 @@ class CaseCreate(BaseModel):
     """
 
     model_config = ConfigDict(extra="ignore")
+
+    case_id: Optional[str] = Field(
+        None,
+        description="Optional preassigned case identifier used when the UI registers a complaint before backend enrichment finishes.",
+    )
 
     consumer_narrative: Optional[str] = Field(
         None,
@@ -86,6 +91,9 @@ class CaseCreate(BaseModel):
     )
     requested_resolution: Optional[str] = Field(
         None, description="Optional externally requested resolution"
+    )
+    intake_prior_contact_attempted: Optional[bool] = Field(
+        None, description="Whether the customer says they already reported this issue to the bank."
     )
     intake_intent: Optional[str] = Field(
         None, description="Optional intake-stage intent label from the interactive intake agent"
@@ -128,6 +136,7 @@ class CaseRead(BaseModel):
     """Full case representation returned by the API."""
 
     id: str = Field(default_factory=lambda: uuid.uuid4().hex)
+    public_case_id: Optional[str] = None
     status: CaseStatus = CaseStatus.RECEIVED
     consumer_narrative: str = ""
     product: Optional[str] = None
@@ -164,6 +173,10 @@ class CaseRead(BaseModel):
     team_assignment: Optional[str] = None
     sla_class: Optional[str] = None
     root_cause_hypothesis: Optional[dict] = None
+    case_documents: list[dict[str, Any]] = Field(default_factory=list)
+    case_document_summary: Optional[dict[str, Any]] = None
+    document_gate_result: Optional[dict[str, Any]] = None
+    document_consistency: Optional[dict[str, Any]] = None
 
     # Jira integration (populated after routing)
     jira_issue_key: Optional[str] = None   # e.g. "KAN-7"

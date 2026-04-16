@@ -25,8 +25,15 @@ from app.agents.root_cause import run_root_cause_hypothesis
 from app.agents.routing import run_routing
 from app.agents.supervisor import run_supervisor
 from app.integrations.jira_client import create_complaint_ticket
+from app.documents.service import (
+    build_case_document_summary,
+    compare_case_to_documents,
+    list_case_documents,
+    wait_for_case_documents,
+)
 from app.knowledge.mock_company_pack import deployment_label
 from app.observability.context import ActiveRun, reset_active_run, set_active_run, set_trace_id
+from app.observability.cost import TokenCostCallback
 from app.observability.events import log_workflow_event
 from app.observability.instrumentation import wrap_node, wrap_supervisor_node
 from app.observability.persistence import (
@@ -44,6 +51,8 @@ logger = logging.getLogger(__name__)
 # Node names that avoid collisions with WorkflowState keys.
 # LangGraph does not allow a node name to match a state key.
 _NODE_CLASSIFY = "classify"
+_NODE_DOCUMENT_GATE = "document_gate"
+_NODE_DOCUMENT_CONSISTENCY = "check_document_consistency"
 _NODE_RISK = "risk"
 _NODE_ROOT_CAUSE = "root_cause"
 _NODE_RESOLVE = "resolve"
@@ -67,9 +76,51 @@ def intake_node(state: WorkflowState) -> WorkflowState:
     return {
         **state,
         "case": case,
+        "document_gate_result": {
+            "required": False,
+            "status": "not_run",
+        },
+        "document_consistency": {
+            "status": "not_run",
+            "conflicts": [],
+            "verified_facts": {},
+        },
         "completed_steps": [],
         "step_count": 0,
         "max_steps": state.get("max_steps", 15),
+    }
+
+
+def document_gate_node(state: WorkflowState) -> WorkflowState:
+    """Wait for attached documents to finish background processing before supervisor starts."""
+    case = state["case"]
+    if not case.id:
+        return state
+
+    gate_result = wait_for_case_documents(case.id)
+    case.case_documents = [doc.model_dump() for doc in list_case_documents(case.id)] if gate_result.get("required") else []
+    case.case_document_summary = build_case_document_summary(case.id).model_dump()
+    case.document_gate_result = gate_result
+    return {
+        **state,
+        "case": case,
+        "document_gate_result": gate_result,
+    }
+
+
+def document_consistency_node(state: WorkflowState) -> WorkflowState:
+    """Deterministically compare claimant narrative with extracted document facts."""
+    case = state["case"]
+    doc_summary = case.case_document_summary or {}
+    consistency = compare_case_to_documents(
+        narrative_text=case.consumer_narrative or "",
+        document_summary=doc_summary,
+    )
+    case.document_consistency = consistency
+    return {
+        **state,
+        "case": case,
+        "document_consistency": consistency,
     }
 
 
@@ -177,7 +228,7 @@ def compliance_node(state: WorkflowState) -> WorkflowState:
         case=case,
         classification=state["classification"],
         risk=state["risk_assessment"],
-        resolution=state["resolution"],
+        resolution=state.get("resolution"),
         instructions=instructions,
     )
 
@@ -371,6 +422,8 @@ def build_workflow() -> StateGraph:
 
     # Deterministic entry
     graph.add_node("intake", wrap_node("intake", intake_node))
+    graph.add_node(_NODE_DOCUMENT_GATE, wrap_node("document_gate", document_gate_node))
+    graph.add_node(_NODE_DOCUMENT_CONSISTENCY, wrap_node("check_document_consistency", document_consistency_node))
 
     # Supervisor (the brain — routes via Command)
     graph.add_node("supervisor", wrap_supervisor_node(supervisor_node))
@@ -386,7 +439,9 @@ def build_workflow() -> StateGraph:
 
     # Entry: intake always runs first, then supervisor takes over
     graph.set_entry_point("intake")
-    graph.add_edge("intake", "supervisor")
+    graph.add_edge("intake", _NODE_DOCUMENT_GATE)
+    graph.add_edge(_NODE_DOCUMENT_GATE, _NODE_DOCUMENT_CONSISTENCY)
+    graph.add_edge(_NODE_DOCUMENT_CONSISTENCY, "supervisor")
 
     # Every specialist returns to supervisor after completing
     for node_name in SPECIALIST_NODES:
@@ -412,6 +467,7 @@ def process_complaint(payload: dict) -> WorkflowState:
     ar = ActiveRun(run_id=run_id, company_id=log_label)
     ctx_token = set_active_run(ar)
     tracer = get_workflow_tracer()
+    cost_cb = TokenCostCallback()
 
     initial_state: WorkflowState = {
         "raw_payload": payload,
@@ -426,6 +482,7 @@ def process_complaint(payload: dict) -> WorkflowState:
             "deployment": log_label,
             "workflow_version": workflow_version(),
         },
+        "callbacks": [cost_cb],
     }
 
     final_state: WorkflowState | None = None
@@ -464,6 +521,8 @@ def process_complaint(payload: dict) -> WorkflowState:
                     final_severity=None,
                     manual_review_required=False,
                     retry_count_total=int(initial_state.get("retry_count") or 0),
+                    token_total=cost_cb.total_tokens or None,
+                    cost_estimate_usd=cost_cb.cost_usd() or None,
                 )
                 raise
 
@@ -478,6 +537,8 @@ def process_complaint(payload: dict) -> WorkflowState:
             final_severity=sev,
             manual_review_required=manual,
             retry_count_total=retries,
+            token_total=cost_cb.total_tokens or None,
+            cost_estimate_usd=cost_cb.cost_usd() or None,
         )
         log_workflow_event(
             "workflow_completed",

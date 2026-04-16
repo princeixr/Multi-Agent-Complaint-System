@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Sign In — Triage AI{% endblock %}
+{% block title %}Sign In — TriageAI{% endblock %}
 
 {% block head %}
 <style>
@@ -53,8 +53,8 @@ main > div { padding: 0 !important; height: 100vh !important; }
   outline: none;
 }
 .input-field:focus {
-  border-color: #1b375e;
-  box-shadow: 0 0 0 4px rgba(27, 55, 94, 0.08);
+  border-color: #000666;
+  box-shadow: 0 0 0 4px rgba(0, 6, 102, 0.08);
 }
 .input-field::placeholder { color: #9ba3af; }
 
@@ -69,7 +69,7 @@ main > div { padding: 0 !important; height: 100vh !important; }
   transition: background 0.2s, color 0.2s;
 }
 .tab-btn.active {
-  background: #1b375e;
+  background: #000666;
   color: #ffffff;
 }
 .tab-btn.inactive {
@@ -77,7 +77,7 @@ main > div { padding: 0 !important; height: 100vh !important; }
   color: #737784;
 }
 .tab-btn.inactive:hover {
-  color: #1b375e;
+  color: #000666;
 }
 
 /* Modal overlay */
@@ -110,7 +110,7 @@ main > div { padding: 0 !important; height: 100vh !important; }
        LEFT PANEL — Brand / Hero
   ══════════════════════════════════ -->
   <div class="hidden lg:flex lg:w-[52%] flex-col justify-between p-12 relative overflow-hidden"
-       style="background: radial-gradient(circle at 60% 40%, #344e76 0%, #1b375e 50%, #0f2240 100%);">
+       style="background: radial-gradient(circle at 60% 40%, #1a237e 0%, #000666 50%, #0f2240 100%);">
 
     <!-- Decorative background -->
     <div class="absolute inset-0 pointer-events-none overflow-hidden">
@@ -124,8 +124,8 @@ main > div { padding: 0 !important; height: 100vh !important; }
         <rect width="100%" height="100%" fill="url(#grid)"/>
       </svg>
       <!-- Glowing orbs -->
-      <div class="absolute top-1/3 right-1/4 w-72 h-72 rounded-full blur-[100px]" style="background:rgba(107,70,193,0.2);"></div>
-      <div class="absolute bottom-1/4 left-1/4 w-56 h-56 rounded-full blur-[80px]" style="background:rgba(0,87,88,0.2);"></div>
+      <div class="absolute top-1/3 right-1/4 w-72 h-72 rounded-full blur-[100px]" style="background:rgba(26,35,126,0.3);"></div>
+      <div class="absolute bottom-1/4 left-1/4 w-56 h-56 rounded-full blur-[80px]" style="background:rgba(0,106,98,0.25);"></div>
     </div>
 
     <!-- Top: Logo -->
@@ -134,7 +134,7 @@ main > div { padding: 0 !important; height: 100vh !important; }
         <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2);">
           <span class="material-symbols-outlined text-white text-xl">monitoring</span>
         </div>
-        <span class="font-headline font-extrabold text-white text-xl tracking-tight">Triage AI</span>
+        <span class="font-headline font-extrabold text-white text-xl tracking-tight">TriageAI</span>
       </div>
     </div>
 
@@ -151,7 +151,7 @@ main > div { padding: 0 !important; height: 100vh !important; }
         <!-- Center hub -->
         <div class="absolute inset-0 flex items-center justify-center">
           <div class="relative w-16 h-16 rounded-2xl flex items-center justify-center pulse-ring"
-               style="background:linear-gradient(135deg,rgba(107,70,193,0.7),rgba(27,55,94,0.9)); border:1px solid rgba(208,188,255,0.3);">
+               style="background:linear-gradient(135deg,rgba(0,6,102,0.85),rgba(26,35,126,0.95)); border:1px solid rgba(189,194,255,0.2);">
             <span class="material-symbols-outlined text-white text-3xl" style="font-variation-settings:'FILL' 1;">hub</span>
           </div>
         </div>
@@ -164,7 +164,7 @@ main > div { padding: 0 !important; height: 100vh !important; }
         </div>
         <!-- Right -->
         <div class="node-2 absolute right-0 top-1/2 translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full flex items-center justify-center"
-             style="background:rgba(107,70,193,0.35); border:1px solid rgba(208,188,255,0.3);">
+             style="background:rgba(0,6,102,0.35); border:1px solid rgba(189,194,255,0.2);">
           <span class="material-symbols-outlined text-white" style="font-size:16px;">analytics</span>
         </div>
         <!-- Bottom -->
@@ -243,10 +243,10 @@ main > div { padding: 0 !important; height: 100vh !important; }
 
       <!-- Mobile logo (shown only on small screens) -->
       <div class="lg:hidden flex items-center gap-2 mb-10">
-        <div class="w-8 h-8 rounded-xl flex items-center justify-center" style="background:#1b375e;">
+        <div class="w-8 h-8 rounded-xl flex items-center justify-center" style="background:#000666;">
           <span class="material-symbols-outlined text-white text-base">monitoring</span>
         </div>
-        <span class="font-headline font-extrabold text-xl tracking-tight" style="color:#1b375e;">Triage AI</span>
+        <span class="font-headline font-extrabold text-xl tracking-tight" style="color:#000666;">TriageAI</span>
       </div>
 
       <!-- Tab switcher -->
@@ -260,9 +260,9 @@ main > div { padding: 0 !important; height: 100vh !important; }
 
         <!-- Form header -->
         <div class="mb-6 fade-up-1">
-          <p class="text-xs font-bold uppercase tracking-[0.2em] mb-2" style="color:#6b46c1;">Welcome back</p>
+          <p class="text-xs font-bold uppercase tracking-[0.2em] mb-2" style="color:#000666;">Welcome back</p>
           <h2 class="font-headline font-extrabold text-3xl tracking-tight" style="color:#191c1e;">Sign in to your workspace</h2>
-          <p class="mt-2 text-sm" style="color:#737784;">Enter your credentials to access the Triage AI dashboard.</p>
+          <p class="mt-2 text-sm" style="color:#737784;">Enter your credentials to access the TriageAI dashboard.</p>
         </div>
 
         <!-- Error / success message -->
@@ -308,8 +308,8 @@ main > div { padding: 0 !important; height: 100vh !important; }
           <div class="pt-2 fade-up-4">
             <button type="submit"
                     class="w-full py-4 rounded-xl font-headline font-bold text-white text-sm tracking-wide transition-all hover:opacity-90 hover:shadow-lg active:scale-[0.98]"
-                    style="background:linear-gradient(135deg, #1b375e, #344e76); box-shadow: 0 4px 16px rgba(27,55,94,0.3);">
-              Sign In to Triage AI
+                    style="background:linear-gradient(135deg, #000666, #1a237e); box-shadow: 0 4px 16px rgba(0,6,102,0.3);">
+              Sign In to TriageAI
             </button>
           </div>
         </form>
@@ -318,7 +318,7 @@ main > div { padding: 0 !important; height: 100vh !important; }
         <div class="text-center mt-4 fade-up-5">
           <button type="button" onclick="document.getElementById('forgot-modal').classList.remove('hidden')"
                   class="text-sm font-medium transition-colors"
-                  style="color:#6b46c1; background:none; border:none; cursor:pointer;">
+                  style="color:#000666; background:none; border:none; cursor:pointer;">
             Forgot password?
           </button>
         </div>
@@ -330,9 +330,9 @@ main > div { padding: 0 !important; height: 100vh !important; }
 
         <!-- Form header -->
         <div class="mb-6 fade-up-1">
-          <p class="text-xs font-bold uppercase tracking-[0.2em] mb-2" style="color:#6b46c1;">New here?</p>
+          <p class="text-xs font-bold uppercase tracking-[0.2em] mb-2" style="color:#000666;">New here?</p>
           <h2 class="font-headline font-extrabold text-3xl tracking-tight" style="color:#191c1e;">Create your account</h2>
-          <p class="mt-2 text-sm" style="color:#737784;">Sign up to start managing complaints with Triage AI.</p>
+          <p class="mt-2 text-sm" style="color:#737784;">Sign up to start managing complaints with TriageAI.</p>
         </div>
 
         <!-- Signup error (shown when show_signup=True on POST) -->
@@ -370,7 +370,7 @@ main > div { padding: 0 !important; height: 100vh !important; }
           <div class="pt-2 fade-up-4">
             <button type="submit"
                     class="w-full py-4 rounded-xl font-headline font-bold text-white text-sm tracking-wide transition-all hover:opacity-90 hover:shadow-lg active:scale-[0.98]"
-                    style="background:linear-gradient(135deg, #6b46c1, #7c5cbf); box-shadow: 0 4px 16px rgba(107,70,193,0.3);">
+                    style="background:linear-gradient(135deg, #000666, #1a237e); box-shadow: 0 4px 16px rgba(0,6,102,0.3);">
               Create Account
             </button>
           </div>
@@ -396,15 +396,15 @@ main > div { padding: 0 !important; height: 100vh !important; }
 <div id="forgot-modal" class="modal-overlay hidden">
   <div class="modal-box">
     <div class="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4"
-         style="background:#f0ecff;">
-      <span class="material-symbols-outlined" style="color:#6b46c1; font-size:24px;">support_agent</span>
+         style="background:#e0e0ff;">
+      <span class="material-symbols-outlined" style="color:#000666; font-size:24px;">support_agent</span>
     </div>
     <h3 class="font-headline font-extrabold text-xl mb-2" style="color:#191c1e;">Need help signing in?</h3>
     <p class="text-sm mb-1" style="color:#737784;">Please call Company Customer Care at</p>
-    <p class="font-bold text-lg mb-6" style="color:#1b375e;">+1 (123) 4567-890</p>
+    <p class="font-bold text-lg mb-6" style="color:#000666;">+1 (123) 4567-890</p>
     <button onclick="document.getElementById('forgot-modal').classList.add('hidden')"
             class="w-full py-3 rounded-xl font-semibold text-sm text-white transition-all hover:opacity-90"
-            style="background:#1b375e;">
+            style="background:#000666;">
       Close
     </button>
   </div>
