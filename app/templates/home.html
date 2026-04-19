@@ -81,10 +81,152 @@
     height: 1px;
     background: linear-gradient(90deg, rgba(198, 197, 212, 0), rgba(198, 197, 212, 1), rgba(198, 197, 212, 0));
   }
+  .architecture-atlas {
+    position: relative;
+    overflow: hidden;
+    border-radius: 2.75rem;
+    background:
+      radial-gradient(circle at 50% 48%, rgba(129, 243, 229, 0.18), transparent 18%),
+      radial-gradient(circle at 25% 18%, rgba(26, 35, 126, 0.08), transparent 18%),
+      radial-gradient(circle at 80% 78%, rgba(26, 35, 126, 0.08), transparent 16%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.74), rgba(245, 243, 239, 0.92));
+    box-shadow: 0px 8px 40px rgba(27, 28, 26, 0.06);
+  }
+  .architecture-stage {
+    position: relative;
+    min-height: 44rem;
+  }
+  .architecture-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.55) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.55) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(circle at center, rgba(0, 0, 0, 0.85), transparent 82%);
+    opacity: 0.25;
+    pointer-events: none;
+  }
+  .architecture-lines {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+  .architecture-lines line {
+    stroke: url(#architecture-link-gradient);
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-dasharray: 8 10;
+    opacity: 0.82;
+  }
+  .supervisor-hub {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 20;
+    display: flex;
+    width: 15rem;
+    height: 15rem;
+    transform: translate(-50%, -50%);
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #000666 0%, #1a237e 100%);
+    box-shadow: 0px 12px 46px rgba(0, 6, 102, 0.24);
+  }
+  .supervisor-hub::before {
+    content: "";
+    position: absolute;
+    inset: -1rem;
+    border-radius: 999px;
+    border: 1px solid rgba(129, 243, 229, 0.34);
+  }
+  .supervisor-core {
+    display: flex;
+    width: 9rem;
+    height: 9rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+  }
+  .agent-node {
+    position: absolute;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.9rem;
+    text-align: center;
+  }
+  .agent-node__icon {
+    display: flex;
+    width: 5.75rem;
+    height: 5.75rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0px 6px 26px rgba(27, 28, 26, 0.08);
+  }
+  .agent-node__label {
+    padding: 0.55rem 1rem;
+    border-radius: 999px;
+    background: rgba(245, 243, 239, 0.96);
+    color: #1a237e;
+    font-family: Manrope, sans-serif;
+    font-size: 0.95rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+  }
+  .agent-classification { top: 8%; left: 15%; }
+  .agent-risk { top: 0; left: 50%; transform: translateX(-50%); }
+  .agent-compliance { top: 8%; right: 15%; }
+  .agent-root-cause { top: 50%; right: 2%; transform: translateY(-50%); }
+  .agent-routing { bottom: 8%; right: 16%; }
+  .agent-review { bottom: 8%; left: 16%; }
+  .agent-resolution { top: 50%; left: 2%; transform: translateY(-50%); }
+  .architecture-note {
+    border-radius: 1.75rem;
+    background: rgba(255, 255, 255, 0.72);
+    padding: 2rem;
+  }
   @media (max-width: 768px) {
     .marketing-shell {
       width: min(100vw - 24px, 1280px);
     }
+    .architecture-stage {
+      min-height: 38rem;
+    }
+    .supervisor-hub {
+      width: 10.5rem;
+      height: 10.5rem;
+    }
+    .supervisor-core {
+      width: 6.5rem;
+      height: 6.5rem;
+    }
+    .agent-node__icon {
+      width: 4rem;
+      height: 4rem;
+    }
+    .agent-node__label {
+      font-size: 0.78rem;
+      padding: 0.4rem 0.8rem;
+    }
+    .agent-classification { top: 10%; left: 4%; }
+    .agent-risk { top: 2%; }
+    .agent-compliance { top: 10%; right: 4%; }
+    .agent-root-cause { right: 0; }
+    .agent-routing { bottom: 12%; right: 6%; }
+    .agent-review { bottom: 12%; left: 6%; }
+    .agent-resolution { left: 0; }
   }
 </style>
 <script>
@@ -294,70 +436,100 @@ TriageAI uses an agentic architecture to classify complaints, assess risk, route
         </div>
       </div>
 
-      <div class="mt-16 rounded-[2.5rem] px-6 py-12 md:px-10" style="background:#f5f3ef;">
-        <div class="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div>
-            <h3 class="font-headline text-3xl font-extrabold tracking-tight md:text-4xl" style="color:#000666;">Autonomous Intelligence Architecture</h3>
-            <p class="mt-3 max-w-2xl text-base leading-7" style="color:#454652;">A central supervisor orchestrates specialist agents for classification, routing, risk, auditability, root-cause analysis, and resolution.</p>
-          </div>
-        </div>
-
-        <div class="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-          <div class="grid gap-6 md:grid-cols-2">
-            <article class="tonal-card rounded-[2rem] p-8 md:col-span-2">
-              <div class="flex items-center gap-4">
-                <div class="flex h-16 w-16 items-center justify-center rounded-full aurora-cta">
-                  <span class="material-symbols-outlined text-3xl">hub</span>
-                </div>
-                <div>
-                  <p class="text-xs font-bold uppercase tracking-[0.18em]" style="color:#006f66;">Central Orchestration</p>
-                  <h4 class="font-headline text-3xl font-extrabold tracking-tight" style="color:#000666;">Supervisor</h4>
-                </div>
-              </div>
-              <p class="mt-6 max-w-2xl text-base leading-7" style="color:#454652;">The supervisor assigns specialist agents dynamically, chooses parallel or serial execution, and acts as the final quality gate before the system produces a response or escalation.</p>
-            </article>
-            <article class="tonal-card rounded-[2rem] p-7">
-              <span class="material-symbols-outlined text-3xl" style="color:#000666;">category</span>
-              <h5 class="mt-5 font-headline text-2xl font-extrabold tracking-tight" style="color:#000666;">Classification</h5>
-              <p class="mt-3 text-sm leading-6" style="color:#454652;">Structures incoming complaints into the right taxonomy and urgency lane.</p>
-            </article>
-            <article class="tonal-card rounded-[2rem] p-7">
-              <span class="material-symbols-outlined text-3xl" style="color:#006a62;">security</span>
-              <h5 class="mt-5 font-headline text-2xl font-extrabold tracking-tight" style="color:#000666;">Risk</h5>
-              <p class="mt-3 text-sm leading-6" style="color:#454652;">Flags liability, vulnerability, and escalation signals before they disappear in the queue.</p>
-            </article>
-            <article class="tonal-card rounded-[2rem] p-7">
-              <span class="material-symbols-outlined text-3xl" style="color:#343d96;">psychology</span>
-              <h5 class="mt-5 font-headline text-2xl font-extrabold tracking-tight" style="color:#000666;">Root Cause</h5>
-              <p class="mt-3 text-sm leading-6" style="color:#454652;">Looks past the single case to identify patterns that create repeat complaints.</p>
-            </article>
-            <article class="tonal-card rounded-[2rem] p-7">
-              <span class="material-symbols-outlined text-3xl" style="color:#000666;">verified</span>
-              <h5 class="mt-5 font-headline text-2xl font-extrabold tracking-tight" style="color:#000666;">Resolution</h5>
-              <p class="mt-3 text-sm leading-6" style="color:#454652;">Builds the next action, response, or handoff with policy-aware context.</p>
-            </article>
+      <div class="architecture-atlas mt-16 px-6 py-12 md:px-10 md:py-14">
+        <div class="relative z-10">
+          <div class="mx-auto max-w-3xl text-center">
+            <span class="editorial-kicker justify-center">Supervisor-Led Flow</span>
+            <h3 class="mt-8 font-headline text-4xl font-extrabold tracking-tight md:text-6xl" style="color:#000666;">Our Agentic Architecture</h3>
+            <p class="mt-5 text-lg leading-8" style="color:#454652;">A living ecosystem of specialist agents coordinated by a central supervisor that classifies, routes, audits, and resolves every complaint with shared context.</p>
           </div>
 
-          <div class="section-card rounded-[2.25rem] p-8 md:p-10">
-            <p class="text-sm font-bold uppercase tracking-[0.2em]" style="color:#006f66;">Execution Value</p>
-            <div class="mt-8 space-y-6">
-              <div class="rounded-[1.5rem] bg-white p-6">
-                <h5 class="font-headline text-2xl font-extrabold tracking-tight" style="color:#000666;">36%</h5>
-                <p class="mt-2 text-sm font-bold uppercase tracking-[0.16em]" style="color:#006f66;">Resolution Speed</p>
-                <p class="mt-3 text-sm leading-6" style="color:#454652;">Faster complaint movement compared with manual or rule-only operations.</p>
+          <div class="architecture-stage mt-14">
+            <div class="architecture-grid"></div>
+            <svg class="architecture-lines" viewBox="0 0 1000 700" aria-hidden="true">
+              <defs>
+                <linearGradient id="architecture-link-gradient" x1="140" y1="90" x2="860" y2="610" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#1a237e"></stop>
+                  <stop offset="100%" stop-color="#81f3e5"></stop>
+                </linearGradient>
+              </defs>
+              <line x1="500" y1="350" x2="260" y2="140"></line>
+              <line x1="500" y1="350" x2="500" y2="72"></line>
+              <line x1="500" y1="350" x2="740" y2="140"></line>
+              <line x1="500" y1="350" x2="860" y2="350"></line>
+              <line x1="500" y1="350" x2="735" y2="560"></line>
+              <line x1="500" y1="350" x2="265" y2="560"></line>
+              <line x1="500" y1="350" x2="140" y2="350"></line>
+            </svg>
+
+            <article class="supervisor-hub">
+              <div class="text-center">
+                <div class="supervisor-core mx-auto">
+                  <span class="material-symbols-outlined text-6xl text-white" style="font-variation-settings:'FILL' 1;">hub</span>
+                </div>
+                <p class="mt-4 text-xs font-bold uppercase tracking-[0.24em]" style="color:#81f3e5;">Central Hub</p>
+                <h4 class="font-headline text-2xl font-extrabold tracking-[0.08em] text-white">SUPERVISOR</h4>
               </div>
-              <div class="rounded-[1.5rem] aurora-cta p-6">
-                <h5 class="font-headline text-2xl font-extrabold tracking-tight text-white">99.9%</h5>
-                <p class="mt-2 text-sm font-bold uppercase tracking-[0.16em]" style="color:#81f3e5;">Compliance Readiness</p>
-                <p class="mt-3 text-sm leading-6" style="color:rgba(255,255,255,0.82);">Designed for consistent regulatory handling with stronger documentation and traceability.</p>
+            </article>
+
+            <article class="agent-node agent-classification">
+              <div class="agent-node__icon">
+                <span class="material-symbols-outlined text-4xl" style="color:#000666;">category</span>
               </div>
-              <div class="rounded-[1.5rem] bg-white p-6">
-                <h5 class="font-headline text-2xl font-extrabold tracking-tight" style="color:#000666;">80%</h5>
-                <p class="mt-2 text-sm font-bold uppercase tracking-[0.16em]" style="color:#006f66;">Overhead Reduction</p>
-                <p class="mt-3 text-sm leading-6" style="color:#454652;">Less manual sorting, less queue management, and less wasted reviewer effort.</p>
+              <div class="agent-node__label">Classification</div>
+            </article>
+            <article class="agent-node agent-risk">
+              <div class="agent-node__icon">
+                <span class="material-symbols-outlined text-4xl" style="color:#006a62;">shield</span>
               </div>
-            </div>
+              <div class="agent-node__label">Risk</div>
+            </article>
+            <article class="agent-node agent-compliance">
+              <div class="agent-node__icon">
+                <span class="material-symbols-outlined text-4xl" style="color:#000666;">gavel</span>
+              </div>
+              <div class="agent-node__label">Compliance</div>
+            </article>
+            <article class="agent-node agent-root-cause">
+              <div class="agent-node__icon">
+                <span class="material-symbols-outlined text-4xl" style="color:#343d96;">psychology</span>
+              </div>
+              <div class="agent-node__label">Root Cause</div>
+            </article>
+            <article class="agent-node agent-routing">
+              <div class="agent-node__icon">
+                <span class="material-symbols-outlined text-4xl" style="color:#006a62;">route</span>
+              </div>
+              <div class="agent-node__label">Routing</div>
+            </article>
+            <article class="agent-node agent-review">
+              <div class="agent-node__icon">
+                <span class="material-symbols-outlined text-4xl" style="color:#000666;">fact_check</span>
+              </div>
+              <div class="agent-node__label">Review</div>
+            </article>
+            <article class="agent-node agent-resolution">
+              <div class="agent-node__icon">
+                <span class="material-symbols-outlined text-4xl" style="color:#000666;">verified</span>
+              </div>
+              <div class="agent-node__label">Resolution</div>
+            </article>
           </div>
+
+          <section class="mt-12 grid gap-6 lg:grid-cols-3">
+            <article class="architecture-note">
+              <h4 class="font-headline text-2xl font-extrabold tracking-tight" style="color:#000666;">Orchestrated Logic</h4>
+              <p class="mt-4 text-sm leading-7" style="color:#454652;">The supervisor choreographs specialist execution so classification, risk, compliance, review, and routing stay synchronized instead of branching into disconnected queues.</p>
+            </article>
+            <article class="architecture-note">
+              <h4 class="font-headline text-2xl font-extrabold tracking-tight" style="color:#000666;">Continuous Review</h4>
+              <p class="mt-4 text-sm leading-7" style="color:#454652;">Every spoke contributes context back to the hub, giving the final resolution pass an auditable chain of reasoning rather than a stitched-together summary.</p>
+            </article>
+            <article class="architecture-note">
+              <h4 class="font-headline text-2xl font-extrabold tracking-tight" style="color:#000666;">Dynamic Routing</h4>
+              <p class="mt-4 text-sm leading-7" style="color:#454652;">The dotted supervisor links now reach every sub-agent in the system, making the hub visually and operationally responsible for each route and outcome.</p>
+            </article>
+          </section>
         </div>
       </div>
 
