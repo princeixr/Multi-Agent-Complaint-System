@@ -217,7 +217,7 @@ architecture.md    deeper knowledge-base and regulatory architecture
 ## Product Highlights
 
 - Supervisor-led LangGraph workflow
-- complaint intake via chat with optional voice mode
+- complaint Intake Agent
 - document-aware complaint processing
 - scanned-PDF and image OCR
 - complaint similarity retrieval with pgvector
@@ -225,7 +225,6 @@ architecture.md    deeper knowledge-base and regulatory architecture
 - live workflow trace UI
 - production evaluation reports
 - benchmark dataset and judge infrastructure
-- website-friendly case IDs such as `CASE00001`
 
 ## Tech Stack
 
