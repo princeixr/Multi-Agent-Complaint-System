@@ -2,20 +2,45 @@
 
 TriageAI is a supervisor-led, multi-agent complaint intelligence system for financial services. It does not stop at intake or classification. The codebase implements a full complaint operating model: conversational intake, document ingestion and OCR, agent orchestration, risk and root-cause analysis, compliance checks, routing, resolution planning, live traces, and evaluation infrastructure.
 
-This repository is meant to show depth. The architecture on the home page is not a concept graphic. It maps directly to the workflow, storage, retrieval, observability, and evaluation code in this repo.
+This repository documents an ongoing effort to build a complaint-handling platform that is structured, evidence-aware, inspectable, and extensible. The architecture shown on the home page is reflected in the implementation across the workflow, storage, retrieval, observability, and evaluation layers in this codebase.
 
-## Why This Repo Is Different
+## Project Overview
 
-Most complaint demos stop at "classify a complaint with an LLM."
+TriageAI is being developed as a complaint operations system for regulated environments where narrative intake alone is not enough. The central idea is that complaint handling should be treated as a coordinated operational process rather than a single-model classification task.
 
-TriageAI goes further:
+The project combines:
 
-- A central supervisor coordinates specialist agents instead of running one monolithic prompt.
-- Uploaded evidence is processed before downstream analysis, including OCR for scanned PDFs and images.
-- Complaint decisions are persisted as workflow runs and workflow steps with token, latency, and cost rollups.
-- Historical complaints and company knowledge are retrievable through PostgreSQL + pgvector.
-- Production complaints can be evaluated after execution, and benchmark datasets can be materialized and scored.
-- The product includes admin-facing visibility: traces, analytics, evaluation views, and case detail pages.
+- structured intake
+- document-aware complaint processing
+- specialist agents for classification, risk, root cause, compliance, routing, review, and resolution
+- persistent workflow traces and cost visibility
+- retrieval over prior complaints and company knowledge
+- evaluation tooling for both benchmark and production cases
+
+## Guiding Idea
+
+The guiding idea behind TriageAI is that complaint handling should evolve from a queue-based manual workflow into a system of coordinated judgment.
+
+In practical terms, that means:
+
+- complaints should be grounded in evidence, not only narrative
+- specialist reasoning should be separated by responsibility
+- orchestration should be explicit and reviewable
+- operational decisions should leave a trace
+- evaluation should be part of the product, not an afterthought
+
+## Current State
+
+Today, the repository already contains a working end-to-end foundation for that vision.
+
+- A supervisor-led LangGraph workflow coordinates specialist agents.
+- Complaint intake is available through chat, with optional voice support.
+- Uploaded PDFs and images are stored, processed, and OCR'd when needed.
+- Document summaries and contradiction checks are generated before downstream reasoning.
+- Risk, root cause, compliance, routing, review, and resolution outputs are produced as structured system steps.
+- Workflow runs, workflow steps, token usage, latency, and cost are persisted.
+- Admin-facing trace, analytics, and evaluation pages are included in the product.
+- Benchmark and production evaluation infrastructure already exists in the codebase.
 
 ## Architecture
 
@@ -58,9 +83,9 @@ flowchart TD
 
 The implementation lives in [app/orchestrator/workflow.py](app/orchestrator/workflow.py).
 
-## What Exists In Code
+## How It Works
 
-### 1. Evidence-First Complaint Processing
+### 1. Intake And Evidence Processing
 
 This system treats uploaded evidence as a first-class input, not an attachment afterthought.
 
@@ -73,7 +98,7 @@ This system treats uploaded evidence as a first-class input, not an attachment a
 
 See [app/documents/service.py](app/documents/service.py).
 
-### 2. Specialist Agents, Not One Giant Prompt
+### 2. Supervisor And Specialist Agents
 
 The system has separate agents and schemas for:
 
@@ -88,9 +113,9 @@ The system has separate agents and schemas for:
 
 This is backed by dedicated prompts, structured schemas, and a supervisor router across the `app/agents`, `app/prompts`, and `app/schemas` packages.
 
-### 3. Retrieval Backed By Real Infrastructure
+### 3. Retrieval And Knowledge Support
 
-Retrieval is not mocked behind an in-memory demo.
+Retrieval is backed by PostgreSQL and pgvector, allowing the workflow to pull supporting context from stored complaint history and knowledge assets.
 
 - complaint similarity search is backed by PostgreSQL + pgvector
 - embeddings support local HuggingFace models or OpenAI
@@ -98,9 +123,9 @@ Retrieval is not mocked behind an in-memory demo.
 
 See [app/retrieval/complaint_index.py](app/retrieval/complaint_index.py) and [app/retrieval/ingest.py](app/retrieval/ingest.py).
 
-### 4. Observability Built Into The Workflow
+### 4. Observability And Traceability
 
-The repo includes a real forensic layer for AI execution:
+The workflow includes a persistent operational record of how each case moved through the system:
 
 - workflow runs persisted to Postgres
 - per-step snapshots and state diffs
@@ -111,9 +136,9 @@ The repo includes a real forensic layer for AI execution:
 
 See [app/observability/persistence.py](app/observability/persistence.py), [app/observability/tracing.py](app/observability/tracing.py), and [app/templates/trace.html](app/templates/trace.html).
 
-### 5. Evaluation Infrastructure, Not Just Manual Spot Checks
+### 5. Evaluation Layer
 
-This repo includes both production evaluation and benchmark-style evaluation:
+The evaluation layer supports both iterative development and ongoing operational review:
 
 - database-backed evaluation datasets
 - weak-gold label generation
@@ -123,7 +148,7 @@ This repo includes both production evaluation and benchmark-style evaluation:
 
 See [app/evals/service.py](app/evals/service.py) and [app/evals/judge.py](app/evals/judge.py).
 
-### 6. Product Surface Beyond The API
+### 6. Product Surface
 
 The repo includes a server-rendered product, not only backend endpoints.
 
@@ -136,6 +161,38 @@ The repo includes a server-rendered product, not only backend endpoints.
 - case detail and resolution history pages
 
 The UI templates live under [app/templates](app/templates).
+
+## Achievements So Far
+
+- Designed and implemented a supervisor-led multi-agent complaint workflow.
+- Built document ingestion with OCR support for scanned PDFs and images.
+- Added evidence summaries and narrative-to-document consistency checks.
+- Implemented structured agent outputs for classification, risk, root cause, resolution, and compliance.
+- Added workflow run persistence with step-level tracing, versioning, and cost rollups.
+- Built retrieval infrastructure over complaint history using pgvector.
+- Added production evaluation and benchmark evaluation workflows.
+- Shipped admin-facing views for trace inspection, analytics, evaluations, and case review.
+
+## Direction Of The Project
+
+The project is moving toward a more complete complaint intelligence and governance system.
+
+Near-term directions:
+
+- deepen the knowledge layer used by risk and root-cause agents
+- strengthen regulatory and policy grounding
+- improve retrieval quality and evidence selection
+- expand disagreement review and adjudication workflows
+- tighten routing and operational ownership signals
+- improve evaluation coverage on real complaint patterns
+
+Longer-term directions:
+
+- richer regulatory knowledge graphs and effective-dated policy context
+- stronger precedent reasoning across historical complaint clusters
+- deeper human-in-the-loop review and escalation controls
+- more robust remediation guidance and operational feedback loops
+- stronger enterprise reporting around quality, risk, and model behavior
 
 ## Repository Map
 
