@@ -1,0 +1,19 @@
+{
+  "source_family_id": "govinfo_cfr_bulk_xml",
+  "source_group_id": "federal_regulatory_feeds",
+  "source_url": "https://www.govinfo.gov/app/collection/cfr/",
+  "title": "GovInfo CFR bulk XML and API",
+  "document_type": "html",
+  "raw_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/raw/federal_regulatory_feeds/govinfo_cfr_bulk_xml/www_govinfo_gov_app_collection_cfr.html",
+  "checksum": "e0569c9ffe9db76bbd125533e611e9ce96037e66d7d16a2c834161152d1ace8f",
+  "raw_text": "-->\n \n \n Govinfo \n \n -->",
+  "supports_layers": [
+    "canonical_regulatory_graph",
+    "lightrag_evidence_layer"
+  ],
+  "outputs": [
+    "canonical section identity",
+    "structured CFR snapshots",
+    "source metadata"
+  ]
+}

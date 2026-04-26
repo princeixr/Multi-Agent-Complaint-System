@@ -1,0 +1,41 @@
+{
+  "generated_at": "2026-04-25T03:16:31.503124+00:00",
+  "results": [
+    {
+      "family": "cfpb_credit_card_agreements",
+      "url": "https://www.consumerfinance.gov/credit-cards/agreements/",
+      "raw_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/raw/agreements_and_disclosures/cfpb_credit_card_agreements/www_consumerfinance_gov_credit_cards_agreements.html",
+      "normalized_doc_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/docs/agreements_and_disclosures/cfpb_credit_card_agreements/www_consumerfinance_gov_credit_cards_agreements.json",
+      "normalized_sections_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/sections/agreements_and_disclosures/cfpb_credit_card_agreements/www_consumerfinance_gov_credit_cards_agreements.json",
+      "document_id": "e5ab1b39a17c4d63992cf629d2bd13d7",
+      "sections": 24
+    },
+    {
+      "family": "cfpb_credit_card_agreements",
+      "url": "https://www.consumerfinance.gov/credit-cards/agreements/archive/",
+      "raw_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/raw/agreements_and_disclosures/cfpb_credit_card_agreements/www_consumerfinance_gov_credit_cards_agreements_archive.html",
+      "normalized_doc_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/docs/agreements_and_disclosures/cfpb_credit_card_agreements/www_consumerfinance_gov_credit_cards_agreements_archive.json",
+      "normalized_sections_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/sections/agreements_and_disclosures/cfpb_credit_card_agreements/www_consumerfinance_gov_credit_cards_agreements_archive.json",
+      "document_id": "60d4f17f320347fb913c13f35c57590c",
+      "sections": 8
+    },
+    {
+      "family": "cfpb_prepaid_agreements",
+      "url": "https://www.consumerfinance.gov/data-research/prepaid-accounts/",
+      "raw_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/raw/agreements_and_disclosures/cfpb_prepaid_agreements/www_consumerfinance_gov_data_research_prepaid_accounts.html",
+      "normalized_doc_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/docs/agreements_and_disclosures/cfpb_prepaid_agreements/www_consumerfinance_gov_data_research_prepaid_accounts.json",
+      "normalized_sections_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/sections/agreements_and_disclosures/cfpb_prepaid_agreements/www_consumerfinance_gov_data_research_prepaid_accounts.json",
+      "document_id": "a692ff8368c14f798e418e1a8bab3f22",
+      "sections": 17
+    },
+    {
+      "family": "cfpb_prepaid_agreements",
+      "url": "https://www.consumerfinance.gov/data-research/prepaid-accounts/download-agreements/",
+      "raw_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/raw/agreements_and_disclosures/cfpb_prepaid_agreements/www_consumerfinance_gov_data_research_prepaid_accounts_download_agreements.html",
+      "normalized_doc_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/docs/agreements_and_disclosures/cfpb_prepaid_agreements/www_consumerfinance_gov_data_research_prepaid_accounts_download_agreements.json",
+      "normalized_sections_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/sections/agreements_and_disclosures/cfpb_prepaid_agreements/www_consumerfinance_gov_data_research_prepaid_accounts_download_agreements.json",
+      "document_id": "b0fffa143bfc4009ae4dc865a4777ae5",
+      "sections": 24
+    }
+  ]
+}

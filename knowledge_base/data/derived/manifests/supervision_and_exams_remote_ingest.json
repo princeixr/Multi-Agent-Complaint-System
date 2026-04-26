@@ -1,0 +1,95 @@
+{
+  "generated_at": "2026-04-25T03:17:00.505473+00:00",
+  "results": [
+    {
+      "family": "cfpb_supervision_manual",
+      "url": "https://www.consumerfinance.gov/compliance/supervision-examinations/",
+      "raw_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/raw/supervision_and_exams/cfpb_supervision_manual/www_consumerfinance_gov_compliance_supervision_examinations.html",
+      "normalized_doc_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/docs/supervision_and_exams/cfpb_supervision_manual/www_consumerfinance_gov_compliance_supervision_examinations.json",
+      "normalized_sections_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/sections/supervision_and_exams/cfpb_supervision_manual/www_consumerfinance_gov_compliance_supervision_examinations.json",
+      "document_id": "04c7039c8ca540cab103aef993a5da87",
+      "sections": 8
+    },
+    {
+      "family": "cfpb_supervision_manual",
+      "url": "https://files.consumerfinance.gov/f/documents/cfpb_supervision-and-examination-manual.pdf",
+      "raw_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/raw/supervision_and_exams/cfpb_supervision_manual/files_consumerfinance_gov_f_documents_cfpb_supervision_and_examination_manual_pdf.pdf",
+      "normalized_doc_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/docs/supervision_and_exams/cfpb_supervision_manual/files_consumerfinance_gov_f_documents_cfpb_supervision_and_examination_manual_pdf.json",
+      "normalized_sections_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/sections/supervision_and_exams/cfpb_supervision_manual/files_consumerfinance_gov_f_documents_cfpb_supervision_and_examination_manual_pdf.json",
+      "document_id": "03318691fbb14d129eabfcdb49173fdb",
+      "sections": 9601
+    },
+    {
+      "family": "cfpb_cmr_exam_procedures",
+      "url": "https://www.consumerfinance.gov/compliance/supervision-examinations/compliance-management-review-examination-procedures/",
+      "raw_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/raw/supervision_and_exams/cfpb_cmr_exam_procedures/www_consumerfinance_gov_compliance_supervision_examinations_compliance_management_review_examination_procedures.html",
+      "normalized_doc_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/docs/supervision_and_exams/cfpb_cmr_exam_procedures/www_consumerfinance_gov_compliance_supervision_examinations_compliance_management_review_examination_procedures.json",
+      "normalized_sections_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/sections/supervision_and_exams/cfpb_cmr_exam_procedures/www_consumerfinance_gov_compliance_supervision_examinations_compliance_management_review_examination_procedures.json",
+      "document_id": "03a72c9d0e1b4f4c9f8a3add275bdde6",
+      "sections": 17
+    },
+    {
+      "family": "occ_comptrollers_handbook",
+      "url": "https://www.occ.treas.gov/publications-and-resources/publications/comptrollers-handbook/index-comptrollers-handbook.html",
+      "raw_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/raw/supervision_and_exams/occ_comptrollers_handbook/www_occ_treas_gov_publications_and_resources_publications_comptrollers_handbook_index_comptrollers_handbook_html.html",
+      "normalized_doc_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/docs/supervision_and_exams/occ_comptrollers_handbook/www_occ_treas_gov_publications_and_resources_publications_comptrollers_handbook_index_comptrollers_handbook_html.json",
+      "normalized_sections_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/sections/supervision_and_exams/occ_comptrollers_handbook/www_occ_treas_gov_publications_and_resources_publications_comptrollers_handbook_index_comptrollers_handbook_html.json",
+      "document_id": "9fa635bd05a949fc8b4bd9a3f3d2ecd4",
+      "sections": 104
+    },
+    {
+      "family": "occ_comptrollers_handbook",
+      "url": "https://www.occ.treas.gov/publications-and-resources/publications/comptrollers-handbook/files/compliance-mgmt-systems/index-compliance-management-systems.html",
+      "raw_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/raw/supervision_and_exams/occ_comptrollers_handbook/www_occ_treas_gov_publications_and_resources_publications_comptrollers_handbook_files_compliance_mgmt_systems_index_compliance_management_systems_html.html",
+      "normalized_doc_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/docs/supervision_and_exams/occ_comptrollers_handbook/www_occ_treas_gov_publications_and_resources_publications_comptrollers_handbook_files_compliance_mgmt_systems_index_compliance_management_systems_html.json",
+      "normalized_sections_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/sections/supervision_and_exams/occ_comptrollers_handbook/www_occ_treas_gov_publications_and_resources_publications_comptrollers_handbook_files_compliance_mgmt_systems_index_compliance_management_systems_html.json",
+      "document_id": "045324f9a325428caebf9500e3fe8d81",
+      "sections": 12
+    },
+    {
+      "family": "fdic_compliance_manual",
+      "url": "https://www.fdic.gov/consumer-compliance-examination-manual",
+      "raw_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/raw/supervision_and_exams/fdic_compliance_manual/www_fdic_gov_consumer_compliance_examination_manual.html",
+      "normalized_doc_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/docs/supervision_and_exams/fdic_compliance_manual/www_fdic_gov_consumer_compliance_examination_manual.json",
+      "normalized_sections_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/sections/supervision_and_exams/fdic_compliance_manual/www_fdic_gov_consumer_compliance_examination_manual.json",
+      "document_id": "0e28901e970a41b7a5fd90d62050fc9a",
+      "sections": 9
+    },
+    {
+      "family": "fdic_compliance_manual",
+      "url": "https://www.fdic.gov/consumer-compliance-examination-manual/table-contents",
+      "raw_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/raw/supervision_and_exams/fdic_compliance_manual/www_fdic_gov_consumer_compliance_examination_manual_table_contents.html",
+      "normalized_doc_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/docs/supervision_and_exams/fdic_compliance_manual/www_fdic_gov_consumer_compliance_examination_manual_table_contents.json",
+      "normalized_sections_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/sections/supervision_and_exams/fdic_compliance_manual/www_fdic_gov_consumer_compliance_examination_manual_table_contents.json",
+      "document_id": "934023cbb42c49768965d5910081ee51",
+      "sections": 15
+    },
+    {
+      "family": "ffiec_bsa_aml_manual",
+      "url": "https://bsaaml.ffiec.gov/manual",
+      "raw_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/raw/supervision_and_exams/ffiec_bsa_aml_manual/bsaaml_ffiec_gov_manual.html",
+      "normalized_doc_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/docs/supervision_and_exams/ffiec_bsa_aml_manual/bsaaml_ffiec_gov_manual.json",
+      "normalized_sections_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/sections/supervision_and_exams/ffiec_bsa_aml_manual/bsaaml_ffiec_gov_manual.json",
+      "document_id": "b0d26a102bfa47a28863c9a728cd0fa9",
+      "sections": 87
+    },
+    {
+      "family": "ffiec_bsa_aml_manual",
+      "url": "https://bsaaml.ffiec.gov/examprocedures",
+      "raw_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/raw/supervision_and_exams/ffiec_bsa_aml_manual/bsaaml_ffiec_gov_examprocedures.html",
+      "normalized_doc_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/docs/supervision_and_exams/ffiec_bsa_aml_manual/bsaaml_ffiec_gov_examprocedures.json",
+      "normalized_sections_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/sections/supervision_and_exams/ffiec_bsa_aml_manual/bsaaml_ffiec_gov_examprocedures.json",
+      "document_id": "aa9b658fbb5347cb9c6a2f72f7fdfc9b",
+      "sections": 63
+    },
+    {
+      "family": "fincen_guidance",
+      "url": "https://www.fincen.gov/resources/statutes-regulations/guidance",
+      "raw_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/raw/supervision_and_exams/fincen_guidance/www_fincen_gov_resources_statutes_regulations_guidance.html",
+      "normalized_doc_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/docs/supervision_and_exams/fincen_guidance/www_fincen_gov_resources_statutes_regulations_guidance.json",
+      "normalized_sections_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/sections/supervision_and_exams/fincen_guidance/www_fincen_gov_resources_statutes_regulations_guidance.json",
+      "document_id": "002e56721c664687997c454c2c008d11",
+      "sections": 15
+    }
+  ]
+}

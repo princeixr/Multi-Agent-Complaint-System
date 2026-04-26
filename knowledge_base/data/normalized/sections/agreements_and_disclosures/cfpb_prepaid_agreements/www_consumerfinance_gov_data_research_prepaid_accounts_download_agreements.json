@@ -1,0 +1,290 @@
+[
+  {
+    "section_key": "www_consumerfinance_gov_data_research_prepaid_accounts_download_agreements_section_1",
+    "section_title": "United States government",
+    "section_path": [
+      "United States government"
+    ],
+    "citation_anchor": "United States government",
+    "section_text": "(855) 411-2372",
+    "metadata": {
+      "line_count": 154
+    }
+  },
+  {
+    "section_key": "www_consumerfinance_gov_data_research_prepaid_accounts_download_agreements_section_2",
+    "section_title": "Consumer Advisories",
+    "section_path": [
+      "Consumer Advisories"
+    ],
+    "citation_anchor": "Consumer Advisories",
+    "section_text": "(855) 411-2372\n/",
+    "metadata": {
+      "line_count": 1816
+    }
+  },
+  {
+    "section_key": "www_consumerfinance_gov_data_research_prepaid_accounts_download_agreements_section_3",
+    "section_title": "Data & Research",
+    "section_path": [
+      "Data & Research"
+    ],
+    "citation_anchor": "Data & Research",
+    "section_text": "/",
+    "metadata": {
+      "line_count": 9
+    }
+  },
+  {
+    "section_key": "www_consumerfinance_gov_data_research_prepaid_accounts_download_agreements_section_4",
+    "section_title": "Download the data",
+    "section_path": [
+      "Download the data"
+    ],
+    "citation_anchor": "Download the data",
+    "section_text": "Explore prepaid product agreement data with the software of your choice.\nData is submitted on a rolling basis by issuers and is refreshed nightly. Read more about the data .",
+    "metadata": {
+      "line_count": 61
+    }
+  },
+  {
+    "section_key": "www_consumerfinance_gov_data_research_prepaid_accounts_download_agreements_section_5",
+    "section_title": "Download agreement files",
+    "section_path": [
+      "Download agreement files"
+    ],
+    "citation_anchor": "Download agreement files",
+    "section_text": "The bulk download contains all agreement files (PDFs) submitted by issuers to the Bureau, and is refreshed nightly.\nAs a companion to the bulk download, you may also wish to\u00a0download metadata for all agreement files .",
+    "metadata": {
+      "line_count": 19
+    }
+  },
+  {
+    "section_key": "www_consumerfinance_gov_data_research_prepaid_accounts_download_agreements_section_6",
+    "section_title": "Download metadata files",
+    "section_path": [
+      "Download metadata files"
+    ],
+    "citation_anchor": "Download metadata files",
+    "section_text": "Metadata consists of information entered by the issuer about the prepaid product agreement. Also\u00a0 see metadata field references below .",
+    "metadata": {
+      "line_count": 59
+    }
+  },
+  {
+    "section_key": "www_consumerfinance_gov_data_research_prepaid_accounts_download_agreements_section_7",
+    "section_title": "issuer_name",
+    "section_path": [
+      "issuer_name"
+    ],
+    "citation_anchor": "issuer_name",
+    "section_text": "The name of the issuer of the prepaid account to which a consumer is legally obligated under the terms of the prepaid agreement.",
+    "metadata": {
+      "line_count": 71
+    }
+  },
+  {
+    "section_key": "www_consumerfinance_gov_data_research_prepaid_accounts_download_agreements_section_8",
+    "section_title": "product_name",
+    "section_path": [
+      "product_name"
+    ],
+    "citation_anchor": "product_name",
+    "section_text": "The name of the prepaid product.",
+    "metadata": {
+      "line_count": 7
+    }
+  },
+  {
+    "section_key": "www_consumerfinance_gov_data_research_prepaid_accounts_download_agreements_section_9",
+    "section_title": "product_ID",
+    "section_path": [
+      "product_ID"
+    ],
+    "citation_anchor": "product_ID",
+    "section_text": "A unique identifier generated when an issuer enters a new prepaid product record into the database.",
+    "metadata": {
+      "line_count": 7
+    }
+  },
+  {
+    "section_key": "www_consumerfinance_gov_data_research_prepaid_accounts_download_agreements_section_10",
+    "section_title": "agreement_effective_date",
+    "section_path": [
+      "agreement_effective_date"
+    ],
+    "citation_anchor": "agreement_effective_date",
+    "section_text": "The effective date of the prepaid account agreement.",
+    "metadata": {
+      "line_count": 7
+    }
+  },
+  {
+    "section_key": "www_consumerfinance_gov_data_research_prepaid_accounts_download_agreements_section_11",
+    "section_title": "agreement_ID",
+    "section_path": [
+      "agreement_ID"
+    ],
+    "citation_anchor": "agreement_ID",
+    "section_text": "A unique identifier generated when an issuer uploads a set of agreement files into the database.",
+    "metadata": {
+      "line_count": 7
+    }
+  },
+  {
+    "section_key": "www_consumerfinance_gov_data_research_prepaid_accounts_download_agreements_section_12",
+    "section_title": "most_recent_agreement",
+    "section_path": [
+      "most_recent_agreement"
+    ],
+    "citation_anchor": "most_recent_agreement",
+    "section_text": "Indicates whether this set of files represents the most recent effective agreement, based on the agreement_effective_date. If more than one set of files for a prepaid product share the same effective date, the system uses the created_date value instead. (Yes or no)",
+    "metadata": {
+      "line_count": 7
+    }
+  },
+  {
+    "section_key": "www_consumerfinance_gov_data_research_prepaid_accounts_download_agreements_section_13",
+    "section_title": "created_date",
+    "section_path": [
+      "created_date"
+    ],
+    "citation_anchor": "created_date",
+    "section_text": "The date and time that the prepaid product agreement is created in our system. This value may be useful to distinguish which set of files is the most recent effective agreement.",
+    "metadata": {
+      "line_count": 7
+    }
+  },
+  {
+    "section_key": "www_consumerfinance_gov_data_research_prepaid_accounts_download_agreements_section_14",
+    "section_title": "current_status",
+    "section_path": [
+      "current_status"
+    ],
+    "citation_anchor": "current_status",
+    "section_text": "Status of the prepaid account agreement\u2014either active or withdrawn. Issuers must submit their currently-offered prepaid account agreements.\u00a0 If an issuer no longer offers a prepaid account agreement that was previously submitted to the Bureau, the issuer must notify the Bureau that it is withdrawing the agreement.",
+    "metadata": {
+      "line_count": 7
+    }
+  },
+  {
+    "section_key": "www_consumerfinance_gov_data_research_prepaid_accounts_download_agreements_section_15",
+    "section_title": "withdrawal_date",
+    "section_path": [
+      "withdrawal_date"
+    ],
+    "citation_anchor": "withdrawal_date",
+    "section_text": "The date the prepaid product agreement was withdrawn.",
+    "metadata": {
+      "line_count": 7
+    }
+  },
+  {
+    "section_key": "www_consumerfinance_gov_data_research_prepaid_accounts_download_agreements_section_16",
+    "section_title": "prepaid_product_type",
+    "section_path": [
+      "prepaid_product_type"
+    ],
+    "citation_anchor": "prepaid_product_type",
+    "section_text": "The type of prepaid account: GPR (General Purpose Reloadable), Payroll,\u00a0Government Benefits, Digital wallet/P2P, Prison Release, Refunds, Student, Tax, Travel, or Other. If blank, this means the issuer did not select a prepaid account type.",
+    "metadata": {
+      "line_count": 7
+    }
+  },
+  {
+    "section_key": "www_consumerfinance_gov_data_research_prepaid_accounts_download_agreements_section_17",
+    "section_title": "program_manager",
+    "section_path": [
+      "program_manager"
+    ],
+    "citation_anchor": "program_manager",
+    "section_text": "The name of the program manager for the prepaid account. For some prepaid accounts, program managers are responsible for designing, managing, marketing, and operating certain prepaid account programs. Some issuers act as the program manager for their prepaid accounts.",
+    "metadata": {
+      "line_count": 13
+    }
+  },
+  {
+    "section_key": "www_consumerfinance_gov_data_research_prepaid_accounts_download_agreements_section_18",
+    "section_title": "other_relevant_parties",
+    "section_path": [
+      "other_relevant_parties"
+    ],
+    "citation_anchor": "other_relevant_parties",
+    "section_text": "The names of other relevant parties, if applicable, for each agreement (e.g., the employer for a payroll card program or the government agency for a government benefit program).",
+    "metadata": {
+      "line_count": 7
+    }
+  },
+  {
+    "section_key": "www_consumerfinance_gov_data_research_prepaid_accounts_download_agreements_section_19",
+    "section_title": "path",
+    "section_path": [
+      "path"
+    ],
+    "citation_anchor": "path",
+    "section_text": "Path to agreement files within the bulk download folder.",
+    "metadata": {
+      "line_count": 7
+    }
+  },
+  {
+    "section_key": "www_consumerfinance_gov_data_research_prepaid_accounts_download_agreements_section_20",
+    "section_title": "direct_download",
+    "section_path": [
+      "direct_download"
+    ],
+    "citation_anchor": "direct_download",
+    "section_text": "Direct link to download agreement files.",
+    "metadata": {
+      "line_count": 26
+    }
+  },
+  {
+    "section_key": "www_consumerfinance_gov_data_research_prepaid_accounts_download_agreements_section_21",
+    "section_title": "Page last modified Dec. 19, 2023",
+    "section_path": [
+      "Page last modified Dec. 19, 2023"
+    ],
+    "citation_anchor": "Page last modified Dec. 19, 2023",
+    "section_text": "@",
+    "metadata": {
+      "line_count": 4
+    }
+  },
+  {
+    "section_key": "www_consumerfinance_gov_data_research_prepaid_accounts_download_agreements_section_22",
+    "section_title": "11:07 AM EST",
+    "section_path": [
+      "11:07 AM EST"
+    ],
+    "citation_anchor": "11:07 AM EST",
+    "section_text": "View older versions of this page at our public archive.",
+    "metadata": {
+      "line_count": 36
+    }
+  },
+  {
+    "section_key": "www_consumerfinance_gov_data_research_prepaid_accounts_download_agreements_section_23",
+    "section_title": "Support and inquiries",
+    "section_path": [
+      "Support and inquiries"
+    ],
+    "citation_anchor": "Support and inquiries",
+    "section_text": "If you have technical questions or issues, \u00a0contac t Collect_Support@cfpb.gov .\nFor general information about prepaid cards, visit our prepaid card resources .",
+    "metadata": {
+      "line_count": 28
+    }
+  },
+  {
+    "section_key": "www_consumerfinance_gov_data_research_prepaid_accounts_download_agreements_section_24",
+    "section_title": "DATABASE DISCLAIMER",
+    "section_path": [
+      "DATABASE DISCLAIMER"
+    ],
+    "citation_anchor": "DATABASE DISCLAIMER",
+    "section_text": "We display the prepaid account agreements in this database as the respective issuers submitted them. The CFPB is not responsible for the content of the agreements, including any discrepancies between an agreement as presented in this database and the agreement as offered to the public, or for any omissions or other errors in the agreement as submitted by the issuer. Use of information downloaded from our website, and any alteration or representation regarding such information by a party, is the responsibility of such party.\u00a0 Prepaid product agreement data from 2020 to 2021 may include omissions due to the Bureau\u2019s COVID-19 regulatory flexibility statement.\nThe agreements on file will have general terms and conditions, pricing, and fee information. They are not specific to an individual's account information. If you have questions about the agreements themselves, contact the prepaid issuer directly.",
+    "metadata": {
+      "line_count": 41
+    }
+  }
+]

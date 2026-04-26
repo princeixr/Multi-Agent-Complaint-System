@@ -1,0 +1,41 @@
+{
+  "generated_at": "2026-04-25T03:12:15.441385+00:00",
+  "results": [
+    {
+      "family": "govinfo_cfr_bulk_xml",
+      "url": "https://www.govinfo.gov/app/collection/cfr/",
+      "raw_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/raw/federal_regulatory_feeds/govinfo_cfr_bulk_xml/www_govinfo_gov_app_collection_cfr.html",
+      "normalized_doc_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/docs/federal_regulatory_feeds/govinfo_cfr_bulk_xml/www_govinfo_gov_app_collection_cfr.json",
+      "normalized_sections_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/sections/federal_regulatory_feeds/govinfo_cfr_bulk_xml/www_govinfo_gov_app_collection_cfr.json",
+      "document_id": "1c43f8c06b374514a6226d5a605b51ae",
+      "sections": 2
+    },
+    {
+      "family": "govinfo_cfr_bulk_xml",
+      "url": "https://www.govinfo.gov/bulkdata/",
+      "raw_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/raw/federal_regulatory_feeds/govinfo_cfr_bulk_xml/www_govinfo_gov_bulkdata.html",
+      "normalized_doc_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/docs/federal_regulatory_feeds/govinfo_cfr_bulk_xml/www_govinfo_gov_bulkdata.json",
+      "normalized_sections_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/sections/federal_regulatory_feeds/govinfo_cfr_bulk_xml/www_govinfo_gov_bulkdata.json",
+      "document_id": "a113e01c7fd94d2b919a4096755980d5",
+      "sections": 12
+    },
+    {
+      "family": "federal_register_updates",
+      "url": "https://www.federalregister.gov/developers/documentation/api/v1",
+      "raw_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/raw/federal_regulatory_feeds/federal_register_updates/www_federalregister_gov_developers_documentation_api_v1.html",
+      "normalized_doc_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/docs/federal_regulatory_feeds/federal_register_updates/www_federalregister_gov_developers_documentation_api_v1.json",
+      "normalized_sections_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/sections/federal_regulatory_feeds/federal_register_updates/www_federalregister_gov_developers_documentation_api_v1.json",
+      "document_id": "a72e08f23558480eb191ec3da261b16c",
+      "sections": 10
+    },
+    {
+      "family": "federal_register_updates",
+      "url": "https://www.federalregister.gov/reader-aids/developer-resources",
+      "raw_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/raw/federal_regulatory_feeds/federal_register_updates/www_federalregister_gov_reader_aids_developer_resources.html",
+      "normalized_doc_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/docs/federal_regulatory_feeds/federal_register_updates/www_federalregister_gov_reader_aids_developer_resources.json",
+      "normalized_sections_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/sections/federal_regulatory_feeds/federal_register_updates/www_federalregister_gov_reader_aids_developer_resources.json",
+      "document_id": "ab7f0989650142b7add6ccf004f1d71e",
+      "sections": 15
+    }
+  ]
+}

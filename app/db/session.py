@@ -143,10 +143,10 @@ def init_db() -> None:
             ("external_id", "VARCHAR(64)"),
             ("split", "VARCHAR(32) DEFAULT 'evaluation'"),
             ("consumer_narrative", "TEXT"),
-            ("product", "VARCHAR(120)"),
-            ("sub_product", "VARCHAR(120)"),
-            ("issue", "VARCHAR(120)"),
-            ("sub_issue", "VARCHAR(120)"),
+            ("product", "TEXT"),
+            ("sub_product", "TEXT"),
+            ("issue", "TEXT"),
+            ("sub_issue", "TEXT"),
             ("company", "VARCHAR(200)"),
             ("state", "VARCHAR(2)"),
             ("submitted_via", "VARCHAR(20)"),
@@ -226,6 +226,17 @@ def init_db() -> None:
                         f"ALTER TABLE {table_name} ADD COLUMN {col_name} {col_type}"
                     )
                 )
+
+        # Widen raw source-ingestion taxonomy columns to handle full CFPB labels
+        # and other future external source labels without truncation.
+        for col_name in ("product", "sub_product", "issue", "sub_issue"):
+            logger.info("Ensuring source_dataset_items.%s uses TEXT", col_name)
+            conn.execute(
+                text(
+                    f"ALTER TABLE source_dataset_items "
+                    f"ALTER COLUMN {col_name} TYPE TEXT"
+                )
+            )
         conn.commit()
 
     try:

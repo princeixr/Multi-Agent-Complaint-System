@@ -1,0 +1,122 @@
+[
+  {
+    "section_key": "www_federalregister_gov_developers_documentation_api_v1_section_1",
+    "section_title": "Federal Register",
+    "section_path": [
+      "Federal Register"
+    ],
+    "citation_anchor": "Federal Register",
+    "section_text": "::",
+    "metadata": {
+      "line_count": 1
+    }
+  },
+  {
+    "section_key": "www_federalregister_gov_developers_documentation_api_v1_section_2",
+    "section_title": "Register, and does not replace the official print version or the official",
+    "section_path": [
+      "Register, and does not replace the official print version or the official"
+    ],
+    "citation_anchor": "Register, and does not replace the official print version or the official",
+    "section_text": "electronic version on GPO\u2019s govinfo.gov.",
+    "metadata": {
+      "line_count": 314
+    }
+  },
+  {
+    "section_key": "www_federalregister_gov_developers_documentation_api_v1_section_3",
+    "section_title": "informational resource until the Administrative Committee of the Federal",
+    "section_path": [
+      "informational resource until the Administrative Committee of the Federal"
+    ],
+    "citation_anchor": "informational resource until the Administrative Committee of the Federal",
+    "section_text": "Register (ACFR) issues a regulation granting it official legal status.",
+    "metadata": {
+      "line_count": 1
+    }
+  },
+  {
+    "section_key": "www_federalregister_gov_developers_documentation_api_v1_section_4",
+    "section_title": "About the Federal Register",
+    "section_path": [
+      "About the Federal Register"
+    ],
+    "citation_anchor": "About the Federal Register",
+    "section_text": "on NARA's archives.gov.",
+    "metadata": {
+      "line_count": 6
+    }
+  },
+  {
+    "section_key": "www_federalregister_gov_developers_documentation_api_v1_section_5",
+    "section_title": "rendition of the daily Federal Register on FederalRegister.gov does not",
+    "section_path": [
+      "rendition of the daily Federal Register on FederalRegister.gov does not"
+    ],
+    "citation_anchor": "rendition of the daily Federal Register on FederalRegister.gov does not",
+    "section_text": "provide legal notice to the public or judicial notice to the courts.",
+    "metadata": {
+      "line_count": 3
+    }
+  },
+  {
+    "section_key": "www_federalregister_gov_developers_documentation_api_v1_section_6",
+    "section_title": "modal#forceClose\">",
+    "section_path": [
+      "modal#forceClose\">"
+    ],
+    "citation_anchor": "modal#forceClose\">",
+    "section_text": "Enter a search term or FR citation e.g.",
+    "metadata": {
+      "line_count": 21
+    }
+  },
+  {
+    "section_key": "www_federalregister_gov_developers_documentation_api_v1_section_7",
+    "section_title": "will bring you to those results. Pressing enter in the search box",
+    "section_path": [
+      "will bring you to those results. Pressing enter in the search box"
+    ],
+    "citation_anchor": "will bring you to those results. Pressing enter in the search box",
+    "section_text": "will also bring you to search results.",
+    "metadata": {
+      "line_count": 5
+    }
+  },
+  {
+    "section_key": "www_federalregister_gov_developers_documentation_api_v1_section_8",
+    "section_title": "suggestions",
+    "section_path": [
+      "suggestions"
+    ],
+    "citation_anchor": "suggestions",
+    "section_text": "will bring you directly to the content.",
+    "metadata": {
+      "line_count": 4
+    }
+  },
+  {
+    "section_key": "www_federalregister_gov_developers_documentation_api_v1_section_9",
+    "section_title": "Search & Navigation",
+    "section_path": [
+      "Search & Navigation"
+    ],
+    "citation_anchor": "Search & Navigation",
+    "section_text": "guide.",
+    "metadata": {
+      "line_count": 16
+    }
+  },
+  {
+    "section_key": "www_federalregister_gov_developers_documentation_api_v1_section_10",
+    "section_title": "FR API Documentation",
+    "section_path": [
+      "FR API Documentation"
+    ],
+    "citation_anchor": "FR API Documentation",
+    "section_text": "FederalRegister.gov provides multiple public API endpoints.\nEach endpoint is detailed below and can be explored interactively by clicking the 'Try it out' button.\nAt the bottom of this page in the 'Schemas' section, valid options for various inputs such as agency names are listed in detail.\nFederalRegister.gov APIs do not require API keys; all you need is an HTTP client or browser.",
+    "metadata": {
+      "line_count": 52
+    }
+  }
+]

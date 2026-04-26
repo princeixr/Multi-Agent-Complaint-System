@@ -1,0 +1,23 @@
+{
+  "generated_at": "2026-04-25T03:12:15.010336+00:00",
+  "results": [
+    {
+      "family": "cfpb_regulations_portal",
+      "url": "https://www.consumerfinance.gov/rules-policy/regulations/",
+      "raw_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/raw/cfpb_regulations/cfpb_regulations_portal/www_consumerfinance_gov_rules_policy_regulations.html",
+      "normalized_doc_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/docs/cfpb_regulations/cfpb_regulations_portal/www_consumerfinance_gov_rules_policy_regulations.json",
+      "normalized_sections_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/sections/cfpb_regulations/cfpb_regulations_portal/www_consumerfinance_gov_rules_policy_regulations.json",
+      "document_id": "4becca89acb249e7a63a2a89b6c38b93",
+      "sections": 9
+    },
+    {
+      "family": "cfpb_regulations_portal",
+      "url": "https://www.consumerfinance.gov/rules-policy/final-rules/code-federal-regulations/",
+      "raw_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/raw/cfpb_regulations/cfpb_regulations_portal/www_consumerfinance_gov_rules_policy_final_rules_code_federal_regulations.html",
+      "normalized_doc_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/docs/cfpb_regulations/cfpb_regulations_portal/www_consumerfinance_gov_rules_policy_final_rules_code_federal_regulations.json",
+      "normalized_sections_path": "/Users/nandanprince/Desktop/AI Agent for Complaint Classification/knowledge_base/data/normalized/sections/cfpb_regulations/cfpb_regulations_portal/www_consumerfinance_gov_rules_policy_final_rules_code_federal_regulations.json",
+      "document_id": "7965683b77b84013ad8c3b9bfba1ac75",
+      "sections": 9
+    }
+  ]
+}

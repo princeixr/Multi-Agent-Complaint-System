@@ -1,0 +1,26 @@
+[
+  {
+    "section_key": "www_govinfo_gov_app_collection_cfr_section_1",
+    "section_title": "Introduction",
+    "section_path": [
+      "Introduction"
+    ],
+    "citation_anchor": "Introduction",
+    "section_text": "-->",
+    "metadata": {
+      "line_count": 3
+    }
+  },
+  {
+    "section_key": "www_govinfo_gov_app_collection_cfr_section_2",
+    "section_title": "Govinfo",
+    "section_path": [
+      "Govinfo"
+    ],
+    "citation_anchor": "Govinfo",
+    "section_text": "-->",
+    "metadata": {
+      "line_count": 2
+    }
+  }
+]

@@ -1,0 +1,746 @@
+{
+  "source": "local_cfpb_complaints",
+  "files": 29,
+  "rows": 14047888,
+  "narratives_present": 3744510,
+  "top_products": [
+    [
+      "Credit reporting or other personal consumer reports",
+      8811028
+    ],
+    [
+      "Credit reporting, credit repair services, or other personal consumer reports",
+      2163800
+    ],
+    [
+      "Debt collection",
+      1035942
+    ],
+    [
+      "Mortgage",
+      442801
+    ],
+    [
+      "Checking or savings account",
+      350416
+    ],
+    [
+      "Credit card",
+      295635
+    ],
+    [
+      "Credit card or prepaid card",
+      206364
+    ],
+    [
+      "Money transfer, virtual currency, or money service",
+      171669
+    ],
+    [
+      "Credit reporting",
+      140428
+    ],
+    [
+      "Student loan",
+      123053
+    ],
+    [
+      "Vehicle loan or lease",
+      90395
+    ],
+    [
+      "Bank account or service",
+      86202
+    ],
+    [
+      "Consumer Loan",
+      31566
+    ],
+    [
+      "Payday loan, title loan, or personal loan",
+      30625
+    ],
+    [
+      "Payday loan, title loan, personal loan, or advance loan",
+      27909
+    ],
+    [
+      "Prepaid card",
+      20081
+    ],
+    [
+      "Debt or credit management",
+      8012
+    ],
+    [
+      "Payday loan",
+      5533
+    ],
+    [
+      "Money transfers",
+      5354
+    ],
+    [
+      "Other financial service",
+      1057
+    ],
+    [
+      "Virtual currency",
+      18
+    ]
+  ],
+  "top_issues": [
+    [
+      "Incorrect information on your report",
+      5985190
+    ],
+    [
+      "Improper use of your report",
+      2724430
+    ],
+    [
+      "Problem with a company's investigation into an existing problem",
+      1638454
+    ],
+    [
+      "Problem with a credit reporting company's investigation into an existing problem",
+      589321
+    ],
+    [
+      "Attempts to collect debt not owed",
+      408800
+    ],
+    [
+      "Written notification about debt",
+      206672
+    ],
+    [
+      "Managing an account",
+      204751
+    ],
+    [
+      "Loan modification,collection,foreclosure",
+      112300
+    ],
+    [
+      "Took or threatened to take negative or legal action",
+      110591
+    ],
+    [
+      "False statements or representation",
+      105984
+    ],
+    [
+      "Trouble during payment process",
+      104502
+    ],
+    [
+      "Incorrect information on credit report",
+      102683
+    ],
+    [
+      "Problem with a purchase shown on your statement",
+      95990
+    ],
+    [
+      "Loan servicing, payments, escrow account",
+      77317
+    ],
+    [
+      "Communication tactics",
+      73486
+    ],
+    [
+      "Other transaction problem",
+      68649
+    ],
+    [
+      "Cont'd attempts collect debt not owed",
+      60576
+    ],
+    [
+      "Dealing with your lender or servicer",
+      59797
+    ],
+    [
+      "Struggling to pay mortgage",
+      58212
+    ],
+    [
+      "Unable to get your credit report or credit score",
+      55378
+    ],
+    [
+      "Getting a credit card",
+      49101
+    ],
+    [
+      "Fraud or scam",
+      46307
+    ],
+    [
+      "Problem with fraud alerts or security freezes",
+      45668
+    ],
+    [
+      "Closing an account",
+      45051
+    ],
+    [
+      "Managing the loan or lease",
+      43705
+    ]
+  ],
+  "top_clusters": [
+    {
+      "cluster_key": "cfpb_local_credit_reporting_or_other_personal_consumer_reports_incorrect_information_on_your_report",
+      "name": "Credit reporting or other personal consumer reports / Incorrect information on your report",
+      "product": "Credit reporting or other personal consumer reports",
+      "issue": "Incorrect information on your report",
+      "complaint_count": 4908867,
+      "metadata": {
+        "rank": 1,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_credit_reporting_or_other_personal_consumer_reports_improper_use_of_your_report",
+      "name": "Credit reporting or other personal consumer reports / Improper use of your report",
+      "product": "Credit reporting or other personal consumer reports",
+      "issue": "Improper use of your report",
+      "complaint_count": 2205207,
+      "metadata": {
+        "rank": 2,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_credit_reporting_or_other_personal_consumer_reports_problem_with_a_company_s_investigation_into_an_existing_problem",
+      "name": "Credit reporting or other personal consumer reports / Problem with a company's investigation into an existing problem",
+      "product": "Credit reporting or other personal consumer reports",
+      "issue": "Problem with a company's investigation into an existing problem",
+      "complaint_count": 1609400,
+      "metadata": {
+        "rank": 3,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_credit_reporting_credit_repair_services_or_other_personal_consumer_reports_incorrect_information_on_your_report",
+      "name": "Credit reporting, credit repair services, or other personal consumer reports / Incorrect information on your report",
+      "product": "Credit reporting, credit repair services, or other personal consumer reports",
+      "issue": "Incorrect information on your report",
+      "complaint_count": 1014599,
+      "metadata": {
+        "rank": 4,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_credit_reporting_credit_repair_services_or_other_personal_consumer_reports_problem_with_a_credit_reporting_company_s_investigation_into_an_existing_problem",
+      "name": "Credit reporting, credit repair services, or other personal consumer reports / Problem with a credit reporting company's investigation into an existing problem",
+      "product": "Credit reporting, credit repair services, or other personal consumer reports",
+      "issue": "Problem with a credit reporting company's investigation into an existing problem",
+      "complaint_count": 577520,
+      "metadata": {
+        "rank": 5,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_credit_reporting_credit_repair_services_or_other_personal_consumer_reports_improper_use_of_your_report",
+      "name": "Credit reporting, credit repair services, or other personal consumer reports / Improper use of your report",
+      "product": "Credit reporting, credit repair services, or other personal consumer reports",
+      "issue": "Improper use of your report",
+      "complaint_count": 510348,
+      "metadata": {
+        "rank": 6,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_debt_collection_attempts_to_collect_debt_not_owed",
+      "name": "Debt collection / Attempts to collect debt not owed",
+      "product": "Debt collection",
+      "issue": "Attempts to collect debt not owed",
+      "complaint_count": 408800,
+      "metadata": {
+        "rank": 7,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_debt_collection_written_notification_about_debt",
+      "name": "Debt collection / Written notification about debt",
+      "product": "Debt collection",
+      "issue": "Written notification about debt",
+      "complaint_count": 206672,
+      "metadata": {
+        "rank": 8,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_checking_or_savings_account_managing_an_account",
+      "name": "Checking or savings account / Managing an account",
+      "product": "Checking or savings account",
+      "issue": "Managing an account",
+      "complaint_count": 204750,
+      "metadata": {
+        "rank": 9,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_mortgage_loan_modification_collection_foreclosure",
+      "name": "Mortgage / Loan modification,collection,foreclosure",
+      "product": "Mortgage",
+      "issue": "Loan modification,collection,foreclosure",
+      "complaint_count": 112300,
+      "metadata": {
+        "rank": 10,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_debt_collection_took_or_threatened_to_take_negative_or_legal_action",
+      "name": "Debt collection / Took or threatened to take negative or legal action",
+      "product": "Debt collection",
+      "issue": "Took or threatened to take negative or legal action",
+      "complaint_count": 110591,
+      "metadata": {
+        "rank": 11,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_debt_collection_false_statements_or_representation",
+      "name": "Debt collection / False statements or representation",
+      "product": "Debt collection",
+      "issue": "False statements or representation",
+      "complaint_count": 105984,
+      "metadata": {
+        "rank": 12,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_mortgage_trouble_during_payment_process",
+      "name": "Mortgage / Trouble during payment process",
+      "product": "Mortgage",
+      "issue": "Trouble during payment process",
+      "complaint_count": 104500,
+      "metadata": {
+        "rank": 13,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_credit_reporting_incorrect_information_on_credit_report",
+      "name": "Credit reporting / Incorrect information on credit report",
+      "product": "Credit reporting",
+      "issue": "Incorrect information on credit report",
+      "complaint_count": 102683,
+      "metadata": {
+        "rank": 14,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_mortgage_loan_servicing_payments_escrow_account",
+      "name": "Mortgage / Loan servicing, payments, escrow account",
+      "product": "Mortgage",
+      "issue": "Loan servicing, payments, escrow account",
+      "complaint_count": 77317,
+      "metadata": {
+        "rank": 15,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_debt_collection_communication_tactics",
+      "name": "Debt collection / Communication tactics",
+      "product": "Debt collection",
+      "issue": "Communication tactics",
+      "complaint_count": 73486,
+      "metadata": {
+        "rank": 16,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_money_transfer_virtual_currency_or_money_service_other_transaction_problem",
+      "name": "Money transfer, virtual currency, or money service / Other transaction problem",
+      "product": "Money transfer, virtual currency, or money service",
+      "issue": "Other transaction problem",
+      "complaint_count": 68649,
+      "metadata": {
+        "rank": 17,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_debt_collection_cont_d_attempts_collect_debt_not_owed",
+      "name": "Debt collection / Cont'd attempts collect debt not owed",
+      "product": "Debt collection",
+      "issue": "Cont'd attempts collect debt not owed",
+      "complaint_count": 60576,
+      "metadata": {
+        "rank": 18,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_student_loan_dealing_with_your_lender_or_servicer",
+      "name": "Student loan / Dealing with your lender or servicer",
+      "product": "Student loan",
+      "issue": "Dealing with your lender or servicer",
+      "complaint_count": 59791,
+      "metadata": {
+        "rank": 19,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_mortgage_struggling_to_pay_mortgage",
+      "name": "Mortgage / Struggling to pay mortgage",
+      "product": "Mortgage",
+      "issue": "Struggling to pay mortgage",
+      "complaint_count": 58211,
+      "metadata": {
+        "rank": 20,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_credit_card_or_prepaid_card_problem_with_a_purchase_shown_on_your_statement",
+      "name": "Credit card or prepaid card / Problem with a purchase shown on your statement",
+      "product": "Credit card or prepaid card",
+      "issue": "Problem with a purchase shown on your statement",
+      "complaint_count": 51089,
+      "metadata": {
+        "rank": 21,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_checking_or_savings_account_closing_an_account",
+      "name": "Checking or savings account / Closing an account",
+      "product": "Checking or savings account",
+      "issue": "Closing an account",
+      "complaint_count": 45049,
+      "metadata": {
+        "rank": 22,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_credit_card_problem_with_a_purchase_shown_on_your_statement",
+      "name": "Credit card / Problem with a purchase shown on your statement",
+      "product": "Credit card",
+      "issue": "Problem with a purchase shown on your statement",
+      "complaint_count": 44899,
+      "metadata": {
+        "rank": 23,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_money_transfer_virtual_currency_or_money_service_fraud_or_scam",
+      "name": "Money transfer, virtual currency, or money service / Fraud or scam",
+      "product": "Money transfer, virtual currency, or money service",
+      "issue": "Fraud or scam",
+      "complaint_count": 41065,
+      "metadata": {
+        "rank": 24,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_bank_account_or_service_account_opening_closing_or_management",
+      "name": "Bank account or service / Account opening, closing, or management",
+      "product": "Bank account or service",
+      "issue": "Account opening, closing, or management",
+      "complaint_count": 37959,
+      "metadata": {
+        "rank": 25,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_checking_or_savings_account_problem_with_a_lender_or_other_company_charging_your_account",
+      "name": "Checking or savings account / Problem with a lender or other company charging your account",
+      "product": "Checking or savings account",
+      "issue": "Problem with a lender or other company charging your account",
+      "complaint_count": 37688,
+      "metadata": {
+        "rank": 26,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_checking_or_savings_account_opening_an_account",
+      "name": "Checking or savings account / Opening an account",
+      "product": "Checking or savings account",
+      "issue": "Opening an account",
+      "complaint_count": 32739,
+      "metadata": {
+        "rank": 27,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_debt_collection_disclosure_verification_of_debt",
+      "name": "Debt collection / Disclosure verification of debt",
+      "product": "Debt collection",
+      "issue": "Disclosure verification of debt",
+      "complaint_count": 30747,
+      "metadata": {
+        "rank": 28,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_credit_card_incorrect_information_on_your_report",
+      "name": "Credit card / Incorrect information on your report",
+      "product": "Credit card",
+      "issue": "Incorrect information on your report",
+      "complaint_count": 29843,
+      "metadata": {
+        "rank": 29,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_credit_reporting_or_other_personal_consumer_reports_problem_with_fraud_alerts_or_security_freezes",
+      "name": "Credit reporting or other personal consumer reports / Problem with fraud alerts or security freezes",
+      "product": "Credit reporting or other personal consumer reports",
+      "issue": "Problem with fraud alerts or security freezes",
+      "complaint_count": 29766,
+      "metadata": {
+        "rank": 30,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_credit_reporting_or_other_personal_consumer_reports_unable_to_get_your_credit_report_or_credit_score",
+      "name": "Credit reporting or other personal consumer reports / Unable to get your credit report or credit score",
+      "product": "Credit reporting or other personal consumer reports",
+      "issue": "Unable to get your credit report or credit score",
+      "complaint_count": 29437,
+      "metadata": {
+        "rank": 31,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_vehicle_loan_or_lease_managing_the_loan_or_lease",
+      "name": "Vehicle loan or lease / Managing the loan or lease",
+      "product": "Vehicle loan or lease",
+      "issue": "Managing the loan or lease",
+      "complaint_count": 28443,
+      "metadata": {
+        "rank": 32,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_checking_or_savings_account_problem_caused_by_your_funds_being_low",
+      "name": "Checking or savings account / Problem caused by your funds being low",
+      "product": "Checking or savings account",
+      "issue": "Problem caused by your funds being low",
+      "complaint_count": 27871,
+      "metadata": {
+        "rank": 33,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_mortgage_applying_for_a_mortgage_or_refinancing_an_existing_mortgage",
+      "name": "Mortgage / Applying for a mortgage or refinancing an existing mortgage",
+      "product": "Mortgage",
+      "issue": "Applying for a mortgage or refinancing an existing mortgage",
+      "complaint_count": 27029,
+      "metadata": {
+        "rank": 34,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_credit_card_getting_a_credit_card",
+      "name": "Credit card / Getting a credit card",
+      "product": "Credit card",
+      "issue": "Getting a credit card",
+      "complaint_count": 25883,
+      "metadata": {
+        "rank": 35,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_credit_reporting_credit_repair_services_or_other_personal_consumer_reports_unable_to_get_your_credit_report_or_credit_score",
+      "name": "Credit reporting, credit repair services, or other personal consumer reports / Unable to get your credit report or credit score",
+      "product": "Credit reporting, credit repair services, or other personal consumer reports",
+      "issue": "Unable to get your credit report or credit score",
+      "complaint_count": 25265,
+      "metadata": {
+        "rank": 36,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_credit_card_problem_with_a_company_s_investigation_into_an_existing_problem",
+      "name": "Credit card / Problem with a company's investigation into an existing problem",
+      "product": "Credit card",
+      "issue": "Problem with a company's investigation into an existing problem",
+      "complaint_count": 24871,
+      "metadata": {
+        "rank": 37,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_credit_card_or_prepaid_card_getting_a_credit_card",
+      "name": "Credit card or prepaid card / Getting a credit card",
+      "product": "Credit card or prepaid card",
+      "issue": "Getting a credit card",
+      "complaint_count": 23206,
+      "metadata": {
+        "rank": 38,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_bank_account_or_service_deposits_and_withdrawals",
+      "name": "Bank account or service / Deposits and withdrawals",
+      "product": "Bank account or service",
+      "issue": "Deposits and withdrawals",
+      "complaint_count": 22851,
+      "metadata": {
+        "rank": 39,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_credit_card_or_prepaid_card_other_features_terms_or_problems",
+      "name": "Credit card or prepaid card / Other features, terms, or problems",
+      "product": "Credit card or prepaid card",
+      "issue": "Other features, terms, or problems",
+      "complaint_count": 22428,
+      "metadata": {
+        "rank": 40,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_credit_reporting_or_other_personal_consumer_reports_credit_monitoring_or_identity_theft_protection_services",
+      "name": "Credit reporting or other personal consumer reports / Credit monitoring or identity theft protection services",
+      "product": "Credit reporting or other personal consumer reports",
+      "issue": "Credit monitoring or identity theft protection services",
+      "complaint_count": 22332,
+      "metadata": {
+        "rank": 41,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_credit_card_or_prepaid_card_fees_or_interest",
+      "name": "Credit card or prepaid card / Fees or interest",
+      "product": "Credit card or prepaid card",
+      "issue": "Fees or interest",
+      "complaint_count": 20413,
+      "metadata": {
+        "rank": 42,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_credit_card_other_features_terms_or_problems",
+      "name": "Credit card / Other features, terms, or problems",
+      "product": "Credit card",
+      "issue": "Other features, terms, or problems",
+      "complaint_count": 19978,
+      "metadata": {
+        "rank": 43,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_student_loan_struggling_to_repay_your_loan",
+      "name": "Student loan / Struggling to repay your loan",
+      "product": "Student loan",
+      "issue": "Struggling to repay your loan",
+      "complaint_count": 17743,
+      "metadata": {
+        "rank": 44,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_credit_card_or_prepaid_card_problem_when_making_payments",
+      "name": "Credit card or prepaid card / Problem when making payments",
+      "product": "Credit card or prepaid card",
+      "issue": "Problem when making payments",
+      "complaint_count": 17741,
+      "metadata": {
+        "rank": 45,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_credit_card_fees_or_interest",
+      "name": "Credit card / Fees or interest",
+      "product": "Credit card",
+      "issue": "Fees or interest",
+      "complaint_count": 17734,
+      "metadata": {
+        "rank": 46,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_mortgage_closing_on_a_mortgage",
+      "name": "Mortgage / Closing on a mortgage",
+      "product": "Mortgage",
+      "issue": "Closing on a mortgage",
+      "complaint_count": 17642,
+      "metadata": {
+        "rank": 47,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_student_loan_dealing_with_my_lender_or_servicer",
+      "name": "Student loan / Dealing with my lender or servicer",
+      "product": "Student loan",
+      "issue": "Dealing with my lender or servicer",
+      "complaint_count": 17620,
+      "metadata": {
+        "rank": 48,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_mortgage_application_originator_mortgage_broker",
+      "name": "Mortgage / Application, originator, mortgage broker",
+      "product": "Mortgage",
+      "issue": "Application, originator, mortgage broker",
+      "complaint_count": 17220,
+      "metadata": {
+        "rank": 49,
+        "source": "local_cfpb_complaints"
+      }
+    },
+    {
+      "cluster_key": "cfpb_local_credit_reporting_credit_reporting_company_s_investigation",
+      "name": "Credit reporting / Credit reporting company's investigation",
+      "product": "Credit reporting",
+      "issue": "Credit reporting company's investigation",
+      "complaint_count": 16883,
+      "metadata": {
+        "rank": 50,
+        "source": "local_cfpb_complaints"
+      }
+    }
+  ]
+}

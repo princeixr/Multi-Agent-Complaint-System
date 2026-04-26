@@ -1,0 +1,182 @@
+[
+  {
+    "section_key": "www_federalregister_gov_reader_aids_developer_resources_section_1",
+    "section_title": "Federal Register",
+    "section_path": [
+      "Federal Register"
+    ],
+    "citation_anchor": "Federal Register",
+    "section_text": "::",
+    "metadata": {
+      "line_count": 1
+    }
+  },
+  {
+    "section_key": "www_federalregister_gov_reader_aids_developer_resources_section_2",
+    "section_title": "Register, and does not replace the official print version or the official",
+    "section_path": [
+      "Register, and does not replace the official print version or the official"
+    ],
+    "citation_anchor": "Register, and does not replace the official print version or the official",
+    "section_text": "electronic version on GPO\u2019s govinfo.gov.",
+    "metadata": {
+      "line_count": 314
+    }
+  },
+  {
+    "section_key": "www_federalregister_gov_reader_aids_developer_resources_section_3",
+    "section_title": "informational resource until the Administrative Committee of the Federal",
+    "section_path": [
+      "informational resource until the Administrative Committee of the Federal"
+    ],
+    "citation_anchor": "informational resource until the Administrative Committee of the Federal",
+    "section_text": "Register (ACFR) issues a regulation granting it official legal status.",
+    "metadata": {
+      "line_count": 1
+    }
+  },
+  {
+    "section_key": "www_federalregister_gov_reader_aids_developer_resources_section_4",
+    "section_title": "About the Federal Register",
+    "section_path": [
+      "About the Federal Register"
+    ],
+    "citation_anchor": "About the Federal Register",
+    "section_text": "on NARA's archives.gov.",
+    "metadata": {
+      "line_count": 6
+    }
+  },
+  {
+    "section_key": "www_federalregister_gov_reader_aids_developer_resources_section_5",
+    "section_title": "rendition of the daily Federal Register on FederalRegister.gov does not",
+    "section_path": [
+      "rendition of the daily Federal Register on FederalRegister.gov does not"
+    ],
+    "citation_anchor": "rendition of the daily Federal Register on FederalRegister.gov does not",
+    "section_text": "provide legal notice to the public or judicial notice to the courts.",
+    "metadata": {
+      "line_count": 3
+    }
+  },
+  {
+    "section_key": "www_federalregister_gov_reader_aids_developer_resources_section_6",
+    "section_title": "modal#forceClose\">",
+    "section_path": [
+      "modal#forceClose\">"
+    ],
+    "citation_anchor": "modal#forceClose\">",
+    "section_text": "Enter a search term or FR citation e.g.",
+    "metadata": {
+      "line_count": 23
+    }
+  },
+  {
+    "section_key": "www_federalregister_gov_reader_aids_developer_resources_section_7",
+    "section_title": "will bring you to those results. Pressing enter in the search box",
+    "section_path": [
+      "will bring you to those results. Pressing enter in the search box"
+    ],
+    "citation_anchor": "will bring you to those results. Pressing enter in the search box",
+    "section_text": "will also bring you to search results.",
+    "metadata": {
+      "line_count": 5
+    }
+  },
+  {
+    "section_key": "www_federalregister_gov_reader_aids_developer_resources_section_8",
+    "section_title": "suggestions",
+    "section_path": [
+      "suggestions"
+    ],
+    "citation_anchor": "suggestions",
+    "section_text": "will bring you directly to the content.",
+    "metadata": {
+      "line_count": 4
+    }
+  },
+  {
+    "section_key": "www_federalregister_gov_reader_aids_developer_resources_section_9",
+    "section_title": "Search & Navigation",
+    "section_path": [
+      "Search & Navigation"
+    ],
+    "citation_anchor": "Search & Navigation",
+    "section_text": "guide.",
+    "metadata": {
+      "line_count": 16
+    }
+  },
+  {
+    "section_key": "www_federalregister_gov_reader_aids_developer_resources_section_10",
+    "section_title": "suggestions#go\">",
+    "section_path": [
+      "suggestions#go\">"
+    ],
+    "citation_anchor": "suggestions#go\">",
+    "section_text": "Reader Aids Reader Aids help people use FederalRegister.gov and understand the federal rulemaking process. Reader Aids information is not published in the Federal Register .\nThis section of our Reader Aids is designed for anyone who wants to use Federal Register data programmatically. Explore our API interactively, get details about all of our API endpoints, and more.",
+    "metadata": {
+      "line_count": 50
+    }
+  },
+  {
+    "section_key": "www_federalregister_gov_reader_aids_developer_resources_section_11",
+    "section_title": "REST API & Interactive Documentation",
+    "section_path": [
+      "REST API & Interactive Documentation"
+    ],
+    "citation_anchor": "REST API & Interactive Documentation",
+    "section_text": "Federal Register data originates with the files used to produce the print and PDF editions. During the publication process these are transformed into bulk XML files made available by the Government Publishing Office (GPO). Additional MODS files that contain metadata about each document are also produced at the same time. Because these files are meant [\u2026]",
+    "metadata": {
+      "line_count": 10
+    }
+  },
+  {
+    "section_key": "www_federalregister_gov_reader_aids_developer_resources_section_12",
+    "section_title": "API Clients",
+    "section_path": [
+      "API Clients"
+    ],
+    "citation_anchor": "API Clients",
+    "section_text": "Ruby API Client The FederalRegister.gov team maintains a Ruby API client that is available as a Ruby gem. This client gem is used to power the web display of FederalRegister.gov. You can find it on GitHub and RubyGems. Other resources To learn more about our API you can read more here\u00a0and explore the API with [\u2026]",
+    "metadata": {
+      "line_count": 4
+    }
+  },
+  {
+    "section_key": "www_federalregister_gov_reader_aids_developer_resources_section_13",
+    "section_title": "FederalRegister.gov is Open Source",
+    "section_path": [
+      "FederalRegister.gov is Open Source"
+    ],
+    "citation_anchor": "FederalRegister.gov is Open Source",
+    "section_text": "Project Source Code FederalRegister.gov is a fully open source project and its source code is available on Github. The FederalRegister.gov source code is available in two repositories. The first, federalregister-api-core, contains the code that powers the import of Federal Register data from various sources and serves our API responses. This repo is undergoing active cleanup [\u2026]",
+    "metadata": {
+      "line_count": 4
+    }
+  },
+  {
+    "section_key": "www_federalregister_gov_reader_aids_developer_resources_section_14",
+    "section_title": "Bulk Data",
+    "section_path": [
+      "Bulk Data"
+    ],
+    "citation_anchor": "Bulk Data",
+    "section_text": "Bulk data is currently only available in XML format. The U.S. Government Publishing Office (GPO) and the National Archives\u2019 Office of the Federal Register (OFR) partnership is offering bulk data downloads of Federal Register XML files to the general public via Data.gov and FDsys at https://www.govinfo.gov/bulkdata/FR. Information on the legal status, authenticity, and schema of [\u2026]",
+    "metadata": {
+      "line_count": 4
+    }
+  },
+  {
+    "section_key": "www_federalregister_gov_reader_aids_developer_resources_section_15",
+    "section_title": "FederalRegister.gov API Case Study",
+    "section_path": [
+      "FederalRegister.gov API Case Study"
+    ],
+    "citation_anchor": "FederalRegister.gov API Case Study",
+    "section_text": "One of the difficulties for anyone seeking to use\u00a0government data is to match up datasets from various Federal sources. Identifiers such as field names and agency name references often are not identical. Further, the data is often complex and requires a fair amount of understanding of agency processes to create a coherent whole. On August [\u2026]",
+    "metadata": {
+      "line_count": 8
+    }
+  }
+]
